@@ -1,17 +1,14 @@
 <idea-plugin version="2">
-  <id>com.yourcompany.unique.plugin.id</id>
-  <name>Plugin display name here</name>
+  <id>agaricus.applysrg</id>
+  <name>ApplySrg2Source4IDEA</name>
   <version>1.0</version>
   <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
 
   <description><![CDATA[
-      Enter short description for your plugin here.<br>
-      <small>most HTML tags may be used</small>
+  Apply .srg class/field/method mappings to the source code of a project.
       ]]></description>
 
   <change-notes><![CDATA[
-      Add change notes here.<br>
-      <small>most HTML tags may be used</small>
       ]]>
   </change-notes>
 
@@ -34,6 +31,10 @@
 
   <actions>
     <!-- Add your actions here -->
+      <group id="applysrg.SampleMenu" text="_Srg" description="Srg menu">
+          <add-to-group group-id="MainMenu" anchor="last"  />
+          <action id="applysrg.applysrg" class="ApplySrgAction" text="Apply Srg" description="Apply .srg transformation" />
+      </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
