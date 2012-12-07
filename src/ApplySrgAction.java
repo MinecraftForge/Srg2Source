@@ -1,3 +1,4 @@
+import com.intellij.ide.actions.GotoSymbolAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -8,10 +9,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.JavaRefactoringFactory;
+import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
+import com.intellij.refactoring.actions.BasePlatformRefactoringAction;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.FileContentUtil;
 
@@ -38,7 +43,27 @@ public class ApplySrgAction extends AnAction {
 
         Messages.showMessageDialog(project, "Project file: " + file.getPath() + ", modules: " + modules.length + ", elements=" + psiElements.length, "Information", Messages.getInformationIcon());
 
-        // TODO RenameRefactoring
+        JavaRefactoringFactory refactoringFactory = JavaRefactoringFactory.getInstance(project);
+
+        Messages.showMessageDialog(project, "factory " + refactoringFactory, "Information", Messages.getInformationIcon());
+
+        for (int i = 0; i < psiElements.length; i += 1) {
+            Collection<PsiClass> children = PsiTreeUtil.findChildrenOfType(psiElements[i], PsiClass.class);
+
+            Messages.showMessageDialog(project, "s " + i + "=" + psiElements[i] + " class children="+children.size(), "Information", Messages.getInformationIcon());
+
+        }
+
+        // PsiElementVisitor
+        // BaseJavaLocalInspectionTool
+
+        //refactoringFactory.createRename(psiElements, newName);
+
+
+
+        // GotoSymbolAction
+        // ReferencesSearch
+        // RenameRefactoring
 
         /*  TODO: get filename of .srg
         String txt = Messages.showInputDialog(project, "What is your name?", "Input your name", Messages.getQuestionIcon());
