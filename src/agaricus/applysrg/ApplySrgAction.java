@@ -34,9 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 public class ApplySrgAction extends AnAction {
     public Project project;
@@ -59,63 +57,44 @@ public class ApplySrgAction extends AnAction {
         FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project, null);
         VirtualFile[] files = dialog.choose(null, project);
         if (files.length == 0) {
-            //Messages.showMessageDialog(project, "No .srg file selected", "Error", Messages.getErrorIcon());
             return;
         }
         VirtualFile file = files[0];
-
-        System.out.println("file="+file);
 
         if (!file.getExtension().equalsIgnoreCase("srg")) {
             Messages.showMessageDialog(project, file.getName() + " is not a .srg file", "Error", Messages.getErrorIcon());
             return;
         }
 
+        List<RenamingClass> classes = new ArrayList<RenamingClass>();
+        List<RenamingField> fields = new ArrayList<RenamingField>();
+        List<RenamingMethod> methods = new ArrayList<RenamingMethod>();
+
         try {
-            InputStreamReader inputStreamReader = new InputStreamReader(file.getInputStream());
-            BufferedReader reader = new BufferedReader(inputStreamReader);
-
-            do {
-                String line = reader.readLine();
-                if (line == null) break;
-
-                String[] tokens = line.split(" ");
-                if (tokens.length < 3) continue;
-
-                String kind = tokens[0];
-                if (kind.equals("CL:")) {
-                    String oldName = tokens[1];
-                    String newName = tokens[2];
-
-                    System.out.println("Class "+oldName+" -> "+newName);
-                } else if (kind.equals("FD:")) {
-                    String fullName = tokens[1];
-                    String[] parts = fullName.split("/");
-                    String className = StringUtils.join(Arrays.copyOfRange(parts, 0, parts.length - 1), "/");
-                    String oldName = parts[parts.length - 1];
-                    String newName = tokens[2];
-                    System.out.println("Field "+className+" "+oldName+" -> "+newName);
-                } else if (kind.equals("MD:")) {
-                    String fullName = tokens[1];
-                    String[] parts = fullName.split("/");
-                    String className = StringUtils.join(Arrays.copyOfRange(parts, 0, parts.length - 1), "/");
-                    String oldName = parts[parts.length - 1];
-
-                    String oldSignature = tokens[2];
-                    String newName = tokens[3];
-                    String newSignature = tokens[4]; // unused, changes types but otherwise ignored
-
-                    System.out.println("Field "+className+" "+oldName+" "+oldSignature+" -> "+newName);
-                }
-            } while (true);
+            loadSrg(file, classes, fields, methods);
         } catch (IOException e) {
-            System.out.println("IOException: " + e);
+            Messages.showMessageDialog(project, "Failed to load " + file.getName() + ": " + e.getLocalizedMessage(), "Error", Messages.getErrorIcon());
+            return;
         }
 
+        System.out.println("Loaded "+classes.size()+" classes, "+fields.size()+" fields, "+methods.size()+" methods");
+
+        /*
+        for (RenamingField field: fields) {
+            renameField(field.className, field.oldName, field.newName);
+        }
+
+        for (RenamingMethod method: methods) {
+            renameMethod(method.className, method.oldName, method.oldSignature, method.newName);
+        }
+
+        for (RenamingClass clazz: classes) {
+            renameClass(clazz.oldName, clazz.newName);
+        }
+        */
 
 
-        // this is a test, 2b, b, bee
-
+        /* test for renaming self
         if (renameClass("agaricus.applysrg.Sample" + "Class", "Sample" + "Class2"))  {
             Messages.showMessageDialog(project, "Renamed first", "Information", Messages.getInformationIcon());
         } else {
@@ -133,6 +112,68 @@ public class ApplySrgAction extends AnAction {
                 Messages.showMessageDialog(project, "Failed to rename anything!", "Information", Messages.getInformationIcon());
             }
         }
+        */
+    }
+
+    void loadSrg(VirtualFile file,
+                          List<RenamingClass> classes,
+                          List<RenamingField> fields,
+                          List<RenamingMethod> methods) throws IOException {
+        InputStreamReader inputStreamReader = new InputStreamReader(file.getInputStream());
+        BufferedReader reader = new BufferedReader(inputStreamReader);
+
+        do {
+            String line = reader.readLine();
+            if (line == null) break;
+
+            String[] tokens = line.split(" ");
+            if (tokens.length < 3) continue;
+
+            String kind = tokens[0];
+            if (kind.equals("CL:")) {
+                String oldName = tokens[1];
+                String newName = tokens[2];
+
+                classes.add(new RenamingClass(oldName, newName));
+            } else if (kind.equals("FD:")) {
+                String className = getPathComponent(tokens[1]);
+                String oldName = getNameComponent(tokens[1]);
+
+                String newName = tokens[2];
+                fields.add(new RenamingField(className, oldName, newName));
+            } else if (kind.equals("MD:")) {
+                String className = getPathComponent(tokens[1]);
+                String oldName = getNameComponent(tokens[1]);
+
+                String oldSignature = tokens[2];
+                String newName = tokens[3];
+                String newSignature = tokens[4]; // unused, changes types but otherwise ignored
+
+                methods.add(new RenamingMethod(className, oldName, oldSignature, newName));
+            }
+        } while (true);
+    }
+
+    /** Get last component of a slash-separated name (symbol name)
+     *
+     * @param fullName
+     * @return Name, for example, "a/b/c" will return "c"
+     */
+    public static String getNameComponent(String fullName) {
+        String[] parts = fullName.split("/");
+
+        return parts[parts.length - 1];
+    }
+
+    /** Get the path components of a slash-separated name
+     *
+     * @param fullName
+     * @return Path, for example, "a/b/c" will return "a/b"
+     */
+    public static String getPathComponent(String fullName) {
+        String[] parts = fullName.split("/");
+
+        return StringUtils.join(Arrays.copyOfRange(parts, 0, parts.length - 1), "/");
     }
 
     public boolean renameClass(String oldName, String newName) {
