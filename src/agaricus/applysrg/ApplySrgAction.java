@@ -16,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringFactory;
+import com.intellij.refactoring.JavaRenameRefactoring;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.actions.BasePlatformRefactoringAction;
@@ -49,11 +50,17 @@ public class ApplySrgAction extends AnAction {
 
         Messages.showMessageDialog(project, "Found class: "+psiClass, "Information", Messages.getInformationIcon());
 
+        JavaRenameRefactoring refactoring = refactoringFactory.createRename(psiClass, "SampleClass2");
+
+        // TODO: how to automatically accept? still prompts UI, Cancel / Do Refactor
+        //refactoring.setInteractive(null);
+        //refactoring.setPreviewUsages(false);
+
+        refactoring.run();
 
         // PsiElementVisitor
         // BaseJavaLocalInspectionTool
 
-        //refactoringFactory.createRename(psiElements, newName);
 
         // GotoSymbolAction
         // ReferencesSearch
