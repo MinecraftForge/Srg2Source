@@ -79,19 +79,30 @@ public class ApplySrgAction extends AnAction {
 
         System.out.println("Loaded "+classes.size()+" classes, "+fields.size()+" fields, "+methods.size()+" methods");
 
-        /*
+        int i = 0;
         for (RenamingField field: fields) {
-            renameField(field.className, field.oldName, field.newName);
+            if (renameField(field.className, field.oldName, field.newName)) {
+                System.out.println("Renamed "+field);
+            } else {
+                System.out.println("FAILED to rename "+field);
+            }
         }
 
         for (RenamingMethod method: methods) {
-            renameMethod(method.className, method.oldName, method.oldSignature, method.newName);
+            if (renameMethod(method.className, method.oldName, method.signature, method.newName)) {
+                System.out.println("Renamed "+method);
+            } else {
+                System.out.println("FAILED to rename "+method);
+            }
         }
 
         for (RenamingClass clazz: classes) {
-            renameClass(clazz.oldName, clazz.newName);
+            if (renameClass(clazz.oldName, clazz.newName)) {
+                System.out.println("Renamed "+clazz);
+            } else {
+                System.out.println("FAILED to rename "+clazz);
+            }
         }
-        */
 
 
         /* test for renaming self
@@ -139,15 +150,15 @@ public class ApplySrgAction extends AnAction {
                 String className = getPathComponent(tokens[1]);
                 String oldName = getNameComponent(tokens[1]);
 
-                String newName = tokens[2];
+                String newName = getNameComponent(tokens[2]);
                 fields.add(new RenamingField(className, oldName, newName));
             } else if (kind.equals("MD:")) {
                 String className = getPathComponent(tokens[1]);
                 String oldName = getNameComponent(tokens[1]);
 
                 String oldSignature = tokens[2];
-                String newName = tokens[3];
-                String newSignature = tokens[4]; // unused, changes types but otherwise ignored
+                String newName = getNameComponent(tokens[3]);
+                //String newSignature = tokens[4]; // unused, changes types but otherwise ignored
 
                 methods.add(new RenamingMethod(className, oldName, oldSignature, newName));
             }
@@ -168,12 +179,12 @@ public class ApplySrgAction extends AnAction {
     /** Get the path components of a slash-separated name
      *
      * @param fullName
-     * @return Path, for example, "a/b/c" will return "a/b"
+     * @return Path, for example, "a/b/c" will return "a.b"
      */
     public static String getPathComponent(String fullName) {
         String[] parts = fullName.split("/");
 
-        return StringUtils.join(Arrays.copyOfRange(parts, 0, parts.length - 1), "/");
+        return StringUtils.join(Arrays.copyOfRange(parts, 0, parts.length - 1), ".");
     }
 
     public boolean renameClass(String oldName, String newName) {
@@ -192,13 +203,13 @@ public class ApplySrgAction extends AnAction {
         PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
 
         if (psiClass == null) {
-            System.out.println("renameField(" + className + "/" + oldName + " -> " + newName + ") failed, no such class");
+            System.out.println("renameField(" + className + " " + oldName + " -> " + newName + ") failed, no such class");
             return false;
         }
 
         PsiField field = psiClass.findFieldByName(oldName, false);
         if (field == null) {
-            System.out.println("renameField(" + className + "/" + oldName + " -> " + newName + ") failed, no such field");
+            System.out.println("renameField(" + className + " " + oldName + " -> " + newName + ") failed, no such field");
             return false;
         }
 
@@ -320,7 +331,7 @@ public class ApplySrgAction extends AnAction {
         UsageInfo[] usages = refactoring.findUsages();
         Ref<UsageInfo[]> ref = Ref.create(usages);
         if (!refactoring.preprocessUsages(ref)) {
-            System.out.println("renameElement(" + psiElement + " -> " + newName + ") preprocessing failed - check for collisions. Usages = " + usages);
+            System.out.println("renameElement(" + psiElement + " -> " + newName + ") preprocessing failed - usages = " + usages);
             Messages.showMessageDialog(project, "Failed to preprocess usages for "+psiElement+" -> "+newName +"- check for collisions", "Information", Messages.getErrorIcon());
             return false;
         }
