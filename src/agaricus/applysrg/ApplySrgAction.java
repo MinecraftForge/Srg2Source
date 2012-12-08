@@ -29,29 +29,46 @@ import java.util.Collection;
 import java.util.Set;
 
 public class ApplySrgAction extends AnAction {
+    public Project project;
+    public JavaPsiFacade facade;
+
     public ApplySrgAction() {
         super("Apply Srg");
     }
 
     public void actionPerformed(AnActionEvent event) {
-        Project project = event.getData(PlatformDataKeys.PROJECT);
+        project = event.getData(PlatformDataKeys.PROJECT);
+        facade = JavaPsiFacade.getInstance(project);
 
-        Module[] modules = ModuleManager.getInstance(project).getModules();
+        //PsiManager psiManager = PsiManager.getInstance(project);
 
-        VirtualFile file = project.getBaseDir();
+        /*  TODO: get filename of .srg
+        String txt = Messages.showInputDialog(project, "What is your name?", "Input your name", Messages.getQuestionIcon());
+        Messages.showMessageDialog(project, "Hello, " + txt + "!\n I am glad to see you.", "Information", Messages.getInformationIcon());
+        */
+
+        if (renameClass("agaricus.applysrg.SampleClass", "SampleClass"))  {
+            Messages.showMessageDialog(project, "Renamed SampleClass -> SampleClass", "Information", Messages.getInformationIcon());
+        } else {
+            if (renameClass("agaricus.applysrg.SampleClass", "SampleClass")) {
+                Messages.showMessageDialog(project, "Renamed SampleClass -> SampleClass", "Information", Messages.getInformationIcon());
+            } else {
+                Messages.showMessageDialog(project, "Failed to rename anything!", "Information", Messages.getInformationIcon());
+            }
+        }
+    }
 
 
-        PsiManager psiManager = PsiManager.getInstance(project);
-
+     public boolean renameClass(String oldName, String newName) {
         JavaRefactoringFactory refactoringFactory = JavaRefactoringFactory.getInstance(project);
 
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+        PsiClass psiClass = facade.findClass(oldName, GlobalSearchScope.allScope(project));
 
-        PsiClass psiClass = facade.findClass("agaricus.applysrg.SampleClass2", GlobalSearchScope.allScope(project));
+        if (psiClass == null)
+            return false;
 
-        Messages.showMessageDialog(project, "Found class: "+psiClass, "Information", Messages.getInformationIcon());
 
-        JavaRenameRefactoring refactoring = refactoringFactory.createRename(psiClass, "SampleClass3");
+        JavaRenameRefactoring refactoring = refactoringFactory.createRename(psiClass, newName);
 
 
         // Rename
@@ -66,24 +83,12 @@ public class ApplySrgAction extends AnAction {
         Ref<UsageInfo[]> ref = Ref.create(usages);
         if (!refactoring.preprocessUsages(ref)) {
             Messages.showMessageDialog(project, "Failed to preprocess usages - check for collisions", "Information", Messages.getErrorIcon());
-            return;
+            return false;
         }
         refactoring.doRefactoring(usages);
 
-        // PsiMigration - Refactor > Migrate..., but only maps classes and packages (not fields or methods)
-        // PsiElementVisitor
-        // BaseJavaLocalInspectionTool
+        return true;
+     }
 
 
-        // GotoSymbolAction
-        // ReferencesSearch
-        // RenameRefactoring
-
-        /*  TODO: get filename of .srg
-        String txt = Messages.showInputDialog(project, "What is your name?", "Input your name", Messages.getQuestionIcon());
-        Messages.showMessageDialog(project, "Hello, " + txt + "!\n I am glad to see you.", "Information", Messages.getInformationIcon());
-        */
-
-        // TODO: apply
-    }
 }
