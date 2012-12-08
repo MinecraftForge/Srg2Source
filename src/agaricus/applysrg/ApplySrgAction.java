@@ -63,7 +63,7 @@ public class ApplySrgAction extends AnAction {
 
         System.out.println("file="+file);
 
-        // this is a test, 2b, a, bee
+        // this is a test, 2b, b, bee
 
         if (renameClass("agaricus.applysrg.Sample" + "Class", "Sample" + "Class2"))  {
             Messages.showMessageDialog(project, "Renamed first", "Information", Messages.getInformationIcon());
@@ -217,7 +217,10 @@ public class ApplySrgAction extends AnAction {
         refactoring.setInteractive(null);
         refactoring.setPreviewUsages(false);
 
-        //refactoring.setSearchInComments(false);
+        // While tempting, this is probably more trouble than it is worth - especially with
+        // obfuscated names like 'a', which would be translated in comments even though they are
+        // perfectly good English words, unrelated to the symbol names. Maybe try with a careful diff.
+        refactoring.setSearchInComments(false);
 
         // Instead of calling refactoring.run(), which is interactive (presents a UI asking to accept), do what it
         // does, ourselves - without user intervention.
