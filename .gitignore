@@ -2,3 +2,4 @@ workspace.xml
 **/.idea/workspace.xml
 *.jar
 out
+*.swp
