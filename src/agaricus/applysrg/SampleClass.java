@@ -1,13 +1,13 @@
 package agaricus.applysrg;
 
-public class SampleClass2 {
-    public int field1;
+public class SampleClass {
+    public int field2;
 
-    public SampleClass2()
+    public SampleClass()
     {
     }
 
-    public void a()
+    public void b()
     {
     }
 
@@ -20,7 +20,7 @@ public class SampleClass2 {
     {
     }
 
-    public SampleClass2 a(int var1, int var2)
+    public SampleClass a(int var1, int var2)
     {
         return this;
     }
