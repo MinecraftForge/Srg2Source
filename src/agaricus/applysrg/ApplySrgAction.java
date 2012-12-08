@@ -32,6 +32,7 @@ import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.*;
 import java.util.Collection;
 import java.util.Set;
 
@@ -62,6 +63,27 @@ public class ApplySrgAction extends AnAction {
         VirtualFile file = files[0];
 
         System.out.println("file="+file);
+
+        if (!file.getExtension().equalsIgnoreCase("srg")) {
+            Messages.showMessageDialog(project, file.getName() + " is not a .srg file", "Error", Messages.getErrorIcon());
+            return;
+        }
+
+        try {
+            InputStreamReader inputStreamReader = new InputStreamReader(file.getInputStream());
+            BufferedReader reader = new BufferedReader(inputStreamReader);
+
+            do {
+                String line = reader.readLine();
+                if (line == null) break;
+
+                System.out.println("line = "+line);
+            } while (true);
+        } catch (IOException e) {
+            System.out.println("IOException: " + e);
+        }
+
+
 
         // this is a test, 2b, b, bee
 
