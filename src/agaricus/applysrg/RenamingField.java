@@ -2,13 +2,13 @@ package agaricus.applysrg;
 
 public class RenamingField extends Renaming {
     public String className;
-    public String newName;
     public String oldName;
+    public String newName;
 
-    public RenamingField(String className, String newName, String oldName) {
+    public RenamingField(String className, String oldName, String newName) {
         this.className = className;
-        this.newName = newName;
         this.oldName = oldName;
+        this.newName = newName;
     }
 
     public String toString() {
