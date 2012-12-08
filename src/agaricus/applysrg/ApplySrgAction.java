@@ -31,6 +31,7 @@ import java.util.Set;
 public class ApplySrgAction extends AnAction {
     public Project project;
     public JavaPsiFacade facade;
+    public JavaRefactoringFactory refactoringFactory;
 
     public ApplySrgAction() {
         super("Apply Srg");
@@ -39,6 +40,9 @@ public class ApplySrgAction extends AnAction {
     public void actionPerformed(AnActionEvent event) {
         project = event.getData(PlatformDataKeys.PROJECT);
         facade = JavaPsiFacade.getInstance(project);
+        refactoringFactory = JavaRefactoringFactory.getInstance(project);
+
+        System.out.println("ApplySrgAction performing");
 
         //PsiManager psiManager = PsiManager.getInstance(project);
 
@@ -49,8 +53,13 @@ public class ApplySrgAction extends AnAction {
 
         if (renameClass("agaricus.applysrg.Sample" + "Class", "Sample" + "Class2"))  {
             Messages.showMessageDialog(project, "Renamed first", "Information", Messages.getInformationIcon());
+
         } else {
             if (renameClass("agaricus.applysrg.Sample" + "Class2", "Sample" + "Class")) {
+                if (!renameField("agaricus.applysrg.Sample" + "Class", "field" + "1", "field" + "2")) {
+                    renameField("agaricus.applysrg.Sample" + "Class", "field" + "2", "field" + "1");
+                }
+
                 Messages.showMessageDialog(project, "Renamed second", "Information", Messages.getInformationIcon());
             } else {
                 Messages.showMessageDialog(project, "Failed to rename anything!", "Information", Messages.getInformationIcon());
@@ -58,18 +67,34 @@ public class ApplySrgAction extends AnAction {
         }
     }
 
-
-     public boolean renameClass(String oldName, String newName) {
-        JavaRefactoringFactory refactoringFactory = JavaRefactoringFactory.getInstance(project);
-
+    public boolean renameClass(String oldName, String newName) {
         PsiClass psiClass = facade.findClass(oldName, GlobalSearchScope.allScope(project));
 
-        if (psiClass == null)
+        if (psiClass == null) {
             return false;
+        }
+
+        return renameElement(psiClass, newName);
+    }
 
 
-        JavaRenameRefactoring refactoring = refactoringFactory.createRename(psiClass, newName);
+    public boolean renameField(String className, String oldName, String newName) {
+        PsiClass psiClass = facade.findClass(oldName, GlobalSearchScope.allScope(project));
 
+        if (psiClass == null) {
+            return false;
+        }
+
+        PsiField field = psiClass.findFieldByName(oldName, false);
+        if (field == null) {
+            return false;
+        }
+
+        return renameElement(field, newName);
+    }
+
+    public boolean renameElement(PsiElement psiElement, String newName) {
+        JavaRenameRefactoring refactoring = refactoringFactory.createRename(psiElement, newName);
 
         // Rename
 
@@ -82,13 +107,12 @@ public class ApplySrgAction extends AnAction {
         UsageInfo[] usages = refactoring.findUsages();
         Ref<UsageInfo[]> ref = Ref.create(usages);
         if (!refactoring.preprocessUsages(ref)) {
-            Messages.showMessageDialog(project, "Failed to preprocess usages - check for collisions", "Information", Messages.getErrorIcon());
+            Messages.showMessageDialog(project, "Failed to preprocess usages for "+psiElement+" -> "+newName +"- check for collisions", "Information", Messages.getErrorIcon());
             return false;
         }
         refactoring.doRefactoring(usages);
 
         return true;
-     }
-
+    }
 
 }
