@@ -20,6 +20,7 @@ import com.intellij.refactoring.JavaRenameRefactoring;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.actions.BasePlatformRefactoringAction;
+import com.intellij.refactoring.migration.MigrationMap;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.FileContentUtil;
@@ -46,18 +47,30 @@ public class ApplySrgAction extends AnAction {
 
         JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
-        PsiClass psiClass = facade.findClass("agaricus.applysrg.SampleClass", GlobalSearchScope.allScope(project));
+        PsiClass psiClass = facade.findClass("agaricus.applysrg.SampleClass2", GlobalSearchScope.allScope(project));
 
         Messages.showMessageDialog(project, "Found class: "+psiClass, "Information", Messages.getInformationIcon());
 
-        JavaRenameRefactoring refactoring = refactoringFactory.createRename(psiClass, "SampleClass2");
+        JavaRenameRefactoring refactoring = refactoringFactory.createRename(psiClass, "SampleClass3");
 
-        // TODO: how to automatically accept? still prompts UI, Cancel / Do Refactor
-        //refactoring.setInteractive(null);
-        //refactoring.setPreviewUsages(false);
 
-        refactoring.run();
+        // Rename
 
+        refactoring.setInteractive(null);
+        refactoring.setPreviewUsages(false);
+
+        // Instead of calling refactoring.run(), which is interactive (presents a UI asking to accept), do what it
+        // does, ourselves - without user intervention.
+
+        UsageInfo[] usages = refactoring.findUsages();
+        Ref<UsageInfo[]> ref = Ref.create(usages);
+        if (!refactoring.preprocessUsages(ref)) {
+            Messages.showMessageDialog(project, "Failed to preprocess usages - check for collisions", "Information", Messages.getErrorIcon());
+            return;
+        }
+        refactoring.doRefactoring(usages);
+
+        // PsiMigration - Refactor > Migrate..., but only maps classes and packages (not fields or methods)
         // PsiElementVisitor
         // BaseJavaLocalInspectionTool
 
