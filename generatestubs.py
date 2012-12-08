@@ -8,6 +8,8 @@ ALL_CLASS_LIST_SRG = "../jars/cb2mcp.srg"
 MC_DEV_EXTRACTED_DIR = "../jars/mc-dev"
 OUT_STUB_DIR = "../CraftBukkit/src/main/java/"
 
+MC_DEV_SOURCE_DIR = "../mc-dev"
+
 """Get classes patched by CraftBukkit"""
 def getPatchedByCB():
     return set([x.strip() for x in file(CB_CLASS_LIST).readlines()])
@@ -101,23 +103,27 @@ import org.apache.commons.lang.NotImplementedException;
         f.write(line + "\n")
     f.close()
 
+def copyFromMcdev(fullClassPath, outputFilename):
+    os.system("cp -v " + MC_DEV_SOURCE_DIR + "/" + fullClassPath + ".java" + " " + outputFilename) # warning: inj
+
 def main():
     unpatched = getAll() - getPatchedByCB()
     for fullClassPath in sorted(list(unpatched)):
-        filename = OUT_STUB_DIR + fullClassPath + ".java"
-        if os.path.exists(filename):
-            #print "File already exists:",filename
+        outputFilename = OUT_STUB_DIR + fullClassPath + ".java"
+        if os.path.exists(outputFilename):
+            #print "File already exists:",outputFilename
             #raise SystemExit
             pass
 
-        if not os.path.exists(os.path.dirname(filename)):
+        if not os.path.exists(os.path.dirname(outputFilename)):
             # org/ dirs need to be created; CB only has net/
-            #os.mkdir(os.path.dirname(filename)) # need recursive mkdir
-            os.system("mkdir -p " + os.path.dirname(filename)) # warning: injection
+            #os.mkdir(os.path.dirname(outputFilename)) # need recursive mkdir
+            os.system("mkdir -p " + os.path.dirname(outputFilename)) # warning: injection
         
-        print filename
+        print outputFilename
 
-        generateStubFromJavap(fullClassPath, filename)
+        #generateStubFromJavap(fullClassPath, outputFilename)
+        copyFromMcdev(fullClassPath, outputFilename)
 
 if __name__ == "__main__":
     main()
