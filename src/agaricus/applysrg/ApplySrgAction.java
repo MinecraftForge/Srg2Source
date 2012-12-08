@@ -4,6 +4,10 @@ import com.intellij.ide.actions.GotoSymbolAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -25,6 +29,8 @@ import com.intellij.refactoring.migration.MigrationMap;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.FileContentUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -45,12 +51,19 @@ public class ApplySrgAction extends AnAction {
 
         System.out.println("ApplySrgAction performing");
 
-        //PsiManager psiManager = PsiManager.getInstance(project);
+        // Get filename of .srg from user
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+        FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project, null);
+        VirtualFile[] files = dialog.choose(null, project);
+        if (files.length == 0) {
+            //Messages.showMessageDialog(project, "No .srg file selected", "Error", Messages.getErrorIcon());
+            return;
+        }
+        VirtualFile file = files[0];
 
-        /*  TODO: get filename of .srg
-        String txt = Messages.showInputDialog(project, "What is your name?", "Input your name", Messages.getQuestionIcon());
-        Messages.showMessageDialog(project, "Hello, " + txt + "!\n I am glad to see you.", "Information", Messages.getInformationIcon());
-        */
+        System.out.println("file="+file);
+
+        // this is a test, 2b, a, bee
 
         if (renameClass("agaricus.applysrg.Sample" + "Class", "Sample" + "Class2"))  {
             Messages.showMessageDialog(project, "Renamed first", "Information", Messages.getInformationIcon());
@@ -61,7 +74,7 @@ public class ApplySrgAction extends AnAction {
                 }
 
                 if (!renameMethod("agaricus.applysrg.Sample" + "Class", "a", "()V", "b")) { // note: this changes
-                    renameMethod("agaricus.applysrg.Sample" + "Class", "b", "()V", "a"); // when renaming!
+                    renameMethod("agaricus.applysrg.Sample" + "Class", "b", "()V", "a"); // when renaming! supposed to be a<->b
                 }
 
                 Messages.showMessageDialog(project, "Renamed second", "Information", Messages.getInformationIcon());
@@ -203,6 +216,8 @@ public class ApplySrgAction extends AnAction {
 
         refactoring.setInteractive(null);
         refactoring.setPreviewUsages(false);
+
+        //refactoring.setSearchInComments(false);
 
         // Instead of calling refactoring.run(), which is interactive (presents a UI asking to accept), do what it
         // does, ourselves - without user intervention.
