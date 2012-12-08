@@ -1,3 +1,5 @@
+package agaricus.applysrg;
+
 import com.intellij.ide.actions.GotoSymbolAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -10,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringFactory;
@@ -37,29 +40,20 @@ public class ApplySrgAction extends AnAction {
 
 
         PsiManager psiManager = PsiManager.getInstance(project);
-        PsiDirectory psiDirectory = psiManager.findDirectory(file);
-
-        PsiElement[] psiElements = psiDirectory.getChildren();
-
-        Messages.showMessageDialog(project, "Project file: " + file.getPath() + ", modules: " + modules.length + ", elements=" + psiElements.length, "Information", Messages.getInformationIcon());
 
         JavaRefactoringFactory refactoringFactory = JavaRefactoringFactory.getInstance(project);
 
-        Messages.showMessageDialog(project, "factory " + refactoringFactory, "Information", Messages.getInformationIcon());
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
-        for (int i = 0; i < psiElements.length; i += 1) {
-            Collection<PsiClass> children = PsiTreeUtil.findChildrenOfType(psiElements[i], PsiClass.class);
+        PsiClass psiClass = facade.findClass("agaricus.applysrg.SampleClass", GlobalSearchScope.allScope(project));
 
-            Messages.showMessageDialog(project, "s " + i + "=" + psiElements[i] + " class children="+children.size(), "Information", Messages.getInformationIcon());
+        Messages.showMessageDialog(project, "Found class: "+psiClass, "Information", Messages.getInformationIcon());
 
-        }
 
         // PsiElementVisitor
         // BaseJavaLocalInspectionTool
 
         //refactoringFactory.createRename(psiElements, newName);
-
-
 
         // GotoSymbolAction
         // ReferencesSearch
