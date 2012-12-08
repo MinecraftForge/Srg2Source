@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.JavaRenameRefactoring;
@@ -53,12 +54,13 @@ public class ApplySrgAction extends AnAction {
 
         if (renameClass("agaricus.applysrg.Sample" + "Class", "Sample" + "Class2"))  {
             Messages.showMessageDialog(project, "Renamed first", "Information", Messages.getInformationIcon());
-
         } else {
             if (renameClass("agaricus.applysrg.Sample" + "Class2", "Sample" + "Class")) {
                 if (!renameField("agaricus.applysrg.Sample" + "Class", "field" + "1", "field" + "2")) {
                     renameField("agaricus.applysrg.Sample" + "Class", "field" + "2", "field" + "1");
                 }
+
+                renameMethod("agaricus.applysrg.Sample" + "Class", "a", "()V", "b");
 
                 Messages.showMessageDialog(project, "Renamed second", "Information", Messages.getInformationIcon());
             } else {
@@ -94,6 +96,44 @@ public class ApplySrgAction extends AnAction {
         }
 
         return renameElement(field, newName);
+    }
+
+    public boolean renameMethod(String className, String oldName, String signatureString, String newName) {
+        PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
+
+        if (psiClass == null) {
+            System.out.println("renameMethod(" + className + "/" + oldName + " " + signatureString + " -> " + newName + ") failed, no such class");
+            return false;
+        }
+
+        PsiMethod[] methods = psiClass.findMethodsByName(oldName, false);
+
+        for (PsiMethod method: methods) {
+            if (method.isConstructor())
+                continue; // constructors are renamed as part of the class
+
+            MethodSignature thisSignature = method.getSignature(PsiSubstitutor.EMPTY);
+            System.out.println(" method name: " + thisSignature.getName());
+            PsiType[] argTypes = thisSignature.getParameterTypes();
+            PsiTypeParameter[] typeParameters = thisSignature.getTypeParameters(); // TODO
+
+            for (PsiType argType: argTypes) {
+                System.out.println(" arg type presentable " + argType.getPresentableText() + ", internal " + argType.getInternalCanonicalText() + ", canon " + argType.getCanonicalText());
+            }
+
+            PsiType returnType = method.getReturnType();
+            assert(returnType != null); // only should've been null for constructors
+            System.out.println(" return = " + returnType + ", internal " + returnType.getInternalCanonicalText());
+
+            System.out.println("");
+
+
+            // TODO: check signature
+            // TODO: rename
+        }
+
+
+        return true;
     }
 
     public boolean renameElement(PsiElement psiElement, String newName) {
