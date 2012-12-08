@@ -47,11 +47,11 @@ public class ApplySrgAction extends AnAction {
         Messages.showMessageDialog(project, "Hello, " + txt + "!\n I am glad to see you.", "Information", Messages.getInformationIcon());
         */
 
-        if (renameClass("agaricus.applysrg.SampleClass", "SampleClass"))  {
-            Messages.showMessageDialog(project, "Renamed SampleClass -> SampleClass", "Information", Messages.getInformationIcon());
+        if (renameClass("agaricus.applysrg.Sample" + "Class", "Sample" + "Class2"))  {
+            Messages.showMessageDialog(project, "Renamed first", "Information", Messages.getInformationIcon());
         } else {
-            if (renameClass("agaricus.applysrg.SampleClass", "SampleClass")) {
-                Messages.showMessageDialog(project, "Renamed SampleClass -> SampleClass", "Information", Messages.getInformationIcon());
+            if (renameClass("agaricus.applysrg.Sample" + "Class2", "Sample" + "Class")) {
+                Messages.showMessageDialog(project, "Renamed second", "Information", Messages.getInformationIcon());
             } else {
                 Messages.showMessageDialog(project, "Failed to rename anything!", "Information", Messages.getInformationIcon());
             }

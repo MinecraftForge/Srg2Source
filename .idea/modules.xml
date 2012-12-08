@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ApplySrg2Source4IDEA.iml" filepath="$PROJECT_DIR$/ApplySrg2Source4IDEA.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ApplySrg2Source.iml" filepath="$PROJECT_DIR$/ApplySrg2Source.iml" />
     </modules>
   </component>
 </project>
