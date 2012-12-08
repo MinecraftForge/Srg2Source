@@ -29,10 +29,12 @@ import com.intellij.refactoring.migration.MigrationMap;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.FileContentUtil;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -77,7 +79,34 @@ public class ApplySrgAction extends AnAction {
                 String line = reader.readLine();
                 if (line == null) break;
 
-                System.out.println("line = "+line);
+                String[] tokens = line.split(" ");
+                if (tokens.length < 3) continue;
+
+                String kind = tokens[0];
+                if (kind.equals("CL:")) {
+                    String oldName = tokens[1];
+                    String newName = tokens[2];
+
+                    System.out.println("Class "+oldName+" -> "+newName);
+                } else if (kind.equals("FD:")) {
+                    String fullName = tokens[1];
+                    String[] parts = fullName.split("/");
+                    String className = StringUtils.join(Arrays.copyOfRange(parts, 0, parts.length - 1), "/");
+                    String oldName = parts[parts.length - 1];
+                    String newName = tokens[2];
+                    System.out.println("Field "+className+" "+oldName+" -> "+newName);
+                } else if (kind.equals("MD:")) {
+                    String fullName = tokens[1];
+                    String[] parts = fullName.split("/");
+                    String className = StringUtils.join(Arrays.copyOfRange(parts, 0, parts.length - 1), "/");
+                    String oldName = parts[parts.length - 1];
+
+                    String oldSignature = tokens[2];
+                    String newName = tokens[3];
+                    String newSignature = tokens[4]; // unused, changes types but otherwise ignored
+
+                    System.out.println("Field "+className+" "+oldName+" "+oldSignature+" -> "+newName);
+                }
             } while (true);
         } catch (IOException e) {
             System.out.println("IOException: " + e);
