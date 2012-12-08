@@ -1,7 +1,7 @@
 package agaricus.applysrg;
 
 public class SampleClass {
-    int field1;
+    int field2;
 
     void method1()
     {

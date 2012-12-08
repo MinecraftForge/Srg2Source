@@ -71,6 +71,7 @@ public class ApplySrgAction extends AnAction {
         PsiClass psiClass = facade.findClass(oldName, GlobalSearchScope.allScope(project));
 
         if (psiClass == null) {
+            System.out.println("renameClass(" + oldName + " -> " + newName + ") failed, no such class");
             return false;
         }
 
@@ -79,14 +80,16 @@ public class ApplySrgAction extends AnAction {
 
 
     public boolean renameField(String className, String oldName, String newName) {
-        PsiClass psiClass = facade.findClass(oldName, GlobalSearchScope.allScope(project));
+        PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
 
         if (psiClass == null) {
+            System.out.println("renameField(" + className + "/" + oldName + " -> " + newName + ") failed, no such class");
             return false;
         }
 
         PsiField field = psiClass.findFieldByName(oldName, false);
         if (field == null) {
+            System.out.println("renameField(" + className + "/" + oldName + " -> " + newName + ") failed, no such field");
             return false;
         }
 
@@ -107,6 +110,7 @@ public class ApplySrgAction extends AnAction {
         UsageInfo[] usages = refactoring.findUsages();
         Ref<UsageInfo[]> ref = Ref.create(usages);
         if (!refactoring.preprocessUsages(ref)) {
+            System.out.println("renameElement(" + psiElement + " -> " + newName + ") preprocessing failed - check for collisions. Usages = " + usages);
             Messages.showMessageDialog(project, "Failed to preprocess usages for "+psiElement+" -> "+newName +"- check for collisions", "Information", Messages.getErrorIcon());
             return false;
         }
