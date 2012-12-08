@@ -24,8 +24,8 @@ def getAll():
     return set(classes)
 
 unpatched = getAll() - getPatchedByCB()
-for cls in sorted(list(unpatched)):
-    filename = OUT_STUB_DIR + cls + ".java"
+for fullClassPath in sorted(list(unpatched)):
+    filename = OUT_STUB_DIR + fullClassPath + ".java"
     if os.path.exists(filename):
         #print "File already exists:",filename
         #raise SystemExit
@@ -39,22 +39,27 @@ for cls in sorted(list(unpatched)):
     print filename
     f = file(filename, "w")
 
+    package = ".".join(fullClassPath.split("/")[:-1])
+    className = fullClassPath.split("/")[-1]
+
     header = """// Auto-generated methods stubs for %s
 
-package net.minecraft.server;
+package %s;
 
 import org.apache.commons.lang.NotImplementedException;
-""" % (cls, )
+
+""" % (className, package)
 
     f.write(header)
 
-    lines = subprocess.Popen(["javap", "-classpath", MC_DEV_EXTRACTED_DIR, cls], stdout=subprocess.PIPE).communicate()[0].split("\n")
+    lines = subprocess.Popen(["javap", "-classpath", MC_DEV_EXTRACTED_DIR, fullClassPath], stdout=subprocess.PIPE).communicate()[0].split("\n")
 
     if "Compiled" in lines[0]:
         lines = lines[1:] # skip initial "Compiled from" line, if present
 
+
     for line in lines:
-        line = line.replace("net.minecraft.server.", "")  # already in package
+        line = line.replace(package + ".", "")  # already in package
 
         line = line.replace(" final ", " ") # 
 
@@ -62,8 +67,9 @@ import org.apache.commons.lang.NotImplementedException;
             # Skip static initializer (always empty)
             continue
 
-        # Methods
         if ")" in line:
+            # Methods - add parameter names and body
+
             parts = line.split("(")
             retn = parts[0]
             args = parts[1].replace(");", "").split(", ")
@@ -73,7 +79,33 @@ import org.apache.commons.lang.NotImplementedException;
             for i, arg in enumerate(args):
                 namedArgs.append("%s par%d" % (arg, i + 1))
 
-            line = retn + "(" + ", ".join(namedArgs) + ") { throw new NotImplementedException(); }"
+            if " abstract " in line:
+                # abstract methods can't have a body
+                body = ";"
+            else:
+                body = "{ throw new NotImplementedException(); }"
+
+            line = retn + "(" + ", ".join(namedArgs) + ")" + body
+        elif line.startswith("  public static") or line.startswith("  protecte static"): # not doing private
+            # static fields need initializers
+            tokens = line.strip().replace(";","").split(" ")
+            name = tokens[-1]
+            if "byte" in tokens or "short" in tokens or "int" in tokens:
+                default = "0"
+            elif "long" in tokens:
+                default = "0L"
+            elif "float" in tokens:
+                default = "0.0f"
+            elif "double" in tokens:
+                default = "0.0d"
+            elif "char" in tokens:
+                default = "'\u0000'"
+            elif "boolean" in tokens:
+                default = "false";
+            else:
+                default = "null";
+
+            line = line.replace(";", " = %s;" % (default,))
 
 
         f.write(line + "\n")

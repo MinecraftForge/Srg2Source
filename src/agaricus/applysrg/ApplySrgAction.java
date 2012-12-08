@@ -46,8 +46,9 @@ public class ApplySrgAction extends AnAction {
         super("Apply Srg");
     }
 
+    public static int[] baz = null;
+
     int foo() { throw new NotImplementedException(); }
-    int foo(int, int) { throw new NotImplementedException(); }
 
     public void actionPerformed(AnActionEvent event) {
         project = event.getData(PlatformDataKeys.PROJECT);
