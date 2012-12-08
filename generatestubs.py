@@ -104,7 +104,11 @@ import org.apache.commons.lang.NotImplementedException;
     f.close()
 
 def copyFromMcdev(fullClassPath, outputFilename):
-    os.system("cp -v " + MC_DEV_SOURCE_DIR + "/" + fullClassPath + ".java" + " " + outputFilename) # warning: inj
+    lines = file(MC_DEV_SOURCE_DIR + "/" + fullClassPath + ".java").readlines()
+    f = file(outputFilename, "w")    
+
+    for line in in lines:
+        if line.endswith("{"):
 
 def main():
     unpatched = getAll() - getPatchedByCB()
