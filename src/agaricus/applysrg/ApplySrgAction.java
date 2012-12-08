@@ -46,6 +46,9 @@ public class ApplySrgAction extends AnAction {
         super("Apply Srg");
     }
 
+    int foo() { throw new NotImplementedException(); }
+    int foo(int, int) { throw new NotImplementedException(); }
+
     public void actionPerformed(AnActionEvent event) {
         project = event.getData(PlatformDataKeys.PROJECT);
         facade = JavaPsiFacade.getInstance(project);
