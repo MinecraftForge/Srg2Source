@@ -8,11 +8,12 @@ ALL_CLASS_LIST_SRG = "../jars/cb2mcp.srg"
 MC_DEV_EXTRACTED_DIR = "../jars/mc-dev"
 OUT_STUB_DIR = "../CraftBukkit/src/main/java/"
 
+"""Get classes patched by CraftBukkit"""
 def getPatchedByCB():
     return set([x.strip() for x in file(CB_CLASS_LIST).readlines()])
 
+"""Get all classes (with mc-dev namings)"""
 def getAll():
-    # get all classes, with mcdev namings
     classes = []
     fields = {}
     for line in file("../jars/cb2mcp.srg").readlines():
@@ -23,20 +24,9 @@ def getAll():
 
     return set(classes)
 
-unpatched = getAll() - getPatchedByCB()
-for fullClassPath in sorted(list(unpatched)):
-    filename = OUT_STUB_DIR + fullClassPath + ".java"
-    if os.path.exists(filename):
-        #print "File already exists:",filename
-        #raise SystemExit
-        pass
 
-    if not os.path.exists(os.path.dirname(filename)):
-        # org/ dirs need to be created; CB only has net/
-        #os.mkdir(os.path.dirname(filename)) # need recursive mkdir
-        os.system("mkdir -p " + os.path.dirname(filename)) # warning: injection
-    
-    print filename
+"""An attempt at generating compatible but empty methods stubs from javap."""
+def generateStubFromJavap(fullClassPath, filename):
     f = file(filename, "w")
 
     package = ".".join(fullClassPath.split("/")[:-1])
@@ -111,3 +101,23 @@ import org.apache.commons.lang.NotImplementedException;
         f.write(line + "\n")
     f.close()
 
+def main():
+    unpatched = getAll() - getPatchedByCB()
+    for fullClassPath in sorted(list(unpatched)):
+        filename = OUT_STUB_DIR + fullClassPath + ".java"
+        if os.path.exists(filename):
+            #print "File already exists:",filename
+            #raise SystemExit
+            pass
+
+        if not os.path.exists(os.path.dirname(filename)):
+            # org/ dirs need to be created; CB only has net/
+            #os.mkdir(os.path.dirname(filename)) # need recursive mkdir
+            os.system("mkdir -p " + os.path.dirname(filename)) # warning: injection
+        
+        print filename
+
+        generateStubFromJavap(fullClassPath, filename)
+
+if __name__ == "__main__":
+    main()
