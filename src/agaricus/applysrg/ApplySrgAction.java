@@ -84,31 +84,44 @@ public class ApplySrgAction extends AnAction {
 
         System.out.println("Loaded "+classes.size()+" classes, "+fields.size()+" fields, "+methods.size()+" methods");
 
-        int i = 0;
+        int okFields = 0;
         for (RenamingField field: fields) {
             if (renameField(field.className, field.oldName, field.newName)) {
                 System.out.println("Renamed "+field);
+                okFields += 1;
             } else {
                 System.out.println("FAILED to rename "+field);
             }
         }
 
+        int okMethods = 0;
         for (RenamingMethod method: methods) {
             if (renameMethod(method.className, method.oldName, method.signature, method.newName)) {
                 System.out.println("Renamed "+method);
+                okMethods += 1;
             } else {
                 System.out.println("FAILED to rename "+method);
             }
         }
 
+        int okClasses = 0;
         for (RenamingClass clazz: classes) {
             if (renameClass(clazz.oldName, clazz.newName)) {
                 System.out.println("Renamed "+clazz);
+                okClasses += 1;
             } else {
                 System.out.println("FAILED to rename "+clazz);
             }
         }
 
+        String status = "Renamed "+
+                okFields+"/"+fields.size()+" fields, "+
+                okMethods+"/"+methods.size()+" methods, " +
+                okClasses+"/"+classes.size()+" classes";
+
+        System.out.println(status);
+
+        Messages.showMessageDialog(project, status, "Rename complete", Messages.getInformationIcon());
 
         /* test for renaming self
         if (renameClass("agaricus.applysrg.Sample" + "Class", "Sample" + "Class2"))  {
@@ -337,7 +350,6 @@ public class ApplySrgAction extends AnAction {
         Ref<UsageInfo[]> ref = Ref.create(usages);
         if (!refactoring.preprocessUsages(ref)) {
             System.out.println("renameElement(" + psiElement + " -> " + newName + ") preprocessing failed - usages = " + usages);
-            Messages.showMessageDialog(project, "Failed to preprocess usages for "+psiElement+" -> "+newName +"- check for collisions", "Information", Messages.getErrorIcon());
             return false;
         }
         refactoring.doRefactoring(usages);
