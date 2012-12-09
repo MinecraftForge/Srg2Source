@@ -1,6 +1,5 @@
 package agaricus.applysrg;
 
-import com.intellij.ide.actions.GotoSymbolAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -8,31 +7,19 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.JavaRenameRefactoring;
-import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.RenameRefactoring;
-import com.intellij.refactoring.actions.BasePlatformRefactoringAction;
-import com.intellij.refactoring.migration.MigrationMap;
-import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.FileContentUtil;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -55,7 +42,7 @@ public class ApplySrgAction extends AnAction {
         facade = JavaPsiFacade.getInstance(project);
         refactoringFactory = JavaRefactoringFactory.getInstance(project);
 
-        System.out.println("ApplySrgAction performing");
+        System.out.println("ApplySrg2Source starting");
 
         // Get filename of .srg from user
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
@@ -82,7 +69,7 @@ public class ApplySrgAction extends AnAction {
             return;
         }
 
-        System.out.println("Loaded "+classes.size()+" classes, "+fields.size()+" fields, "+methods.size()+" methods");
+        System.out.println("Loaded "+classes.size()+" classes, "+fields.size()+" fields, "+methods.size()+" methods, from " + file.getName());
 
         int okFields = 0;
         for (RenamingField field: fields) {
@@ -160,18 +147,18 @@ public class ApplySrgAction extends AnAction {
 
             String kind = tokens[0];
             if (kind.equals("CL:")) {
-                String oldName = tokens[1];
-                String newName = tokens[2];
+                String oldName = getPackageComponent(tokens[1]) + "." + getNameComponent(tokens[1]);
+                String newName = getNameComponent(tokens[2]);
 
                 classes.add(new RenamingClass(oldName, newName));
             } else if (kind.equals("FD:")) {
-                String className = getPathComponent(tokens[1]);
+                String className = getPackageComponent(tokens[1]);
                 String oldName = getNameComponent(tokens[1]);
 
                 String newName = getNameComponent(tokens[2]);
                 fields.add(new RenamingField(className, oldName, newName));
             } else if (kind.equals("MD:")) {
-                String className = getPathComponent(tokens[1]);
+                String className = getPackageComponent(tokens[1]);
                 String oldName = getNameComponent(tokens[1]);
 
                 String oldSignature = tokens[2];
@@ -183,7 +170,7 @@ public class ApplySrgAction extends AnAction {
         } while (true);
     }
 
-    /** Get last component of a slash-separated name (symbol name)
+    /** Get last component of a slash-separated name, the symbol name
      *
      * @param fullName
      * @return Name, for example, "a/b/c" will return "c"
@@ -194,12 +181,12 @@ public class ApplySrgAction extends AnAction {
         return parts[parts.length - 1];
     }
 
-    /** Get the path components of a slash-separated name
+    /** Get the package components of a slash-separated name
      *
      * @param fullName
      * @return Path, for example, "a/b/c" will return "a.b"
      */
-    public static String getPathComponent(String fullName) {
+    public static String getPackageComponent(String fullName) {
         String[] parts = fullName.split("/");
 
         return StringUtils.join(Arrays.copyOfRange(parts, 0, parts.length - 1), ".");
@@ -347,11 +334,13 @@ public class ApplySrgAction extends AnAction {
         // does, ourselves - without user intervention.
 
         UsageInfo[] usages = refactoring.findUsages();
+        /* preprocessUsages checks for conflicts, but presents interactive UI :(
         Ref<UsageInfo[]> ref = Ref.create(usages);
         if (!refactoring.preprocessUsages(ref)) {
             System.out.println("renameElement(" + psiElement + " -> " + newName + ") preprocessing failed - usages = " + usages);
             return false;
         }
+        */
         refactoring.doRefactoring(usages);
 
         return true;

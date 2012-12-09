@@ -15,6 +15,6 @@ public class RenamingMethod extends Renaming {
 
 
     public String toString() {
-        return "Field "+className+" "+oldName+" "+signature+" -> "+newName;
+        return "Method "+className+" "+oldName+" "+signature+" -> "+newName;
     }
 }
