@@ -9,7 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import com.intellij.psi.*;
@@ -61,15 +60,16 @@ public class ApplySrgAction extends AnAction {
         List<RenamingClass> classes = new ArrayList<RenamingClass>();
         List<RenamingField> fields = new ArrayList<RenamingField>();
         List<RenamingMethod> methods = new ArrayList<RenamingMethod>();
+        List<RenamingMethodParametersList> parametersLists = new ArrayList<RenamingMethodParametersList>();
 
         try {
-            loadSrg(file, classes, fields, methods);
+            loadSrg(file, classes, fields, methods, parametersLists);
         } catch (IOException e) {
             Messages.showMessageDialog(project, "Failed to load " + file.getName() + ": " + e.getLocalizedMessage(), "Error", Messages.getErrorIcon());
             return;
         }
 
-        System.out.println("Loaded "+classes.size()+" classes, "+fields.size()+" fields, "+methods.size()+" methods, from " + file.getName());
+        System.out.println("Loaded "+fields.size()+" fields, "+methods.size()+" methods, "+parametersLists.size()+" method parameters lists, "+classes.size()+" classes, from " + file.getName());
 
         int okFields = 0;
         for (RenamingField field: fields) {
@@ -91,6 +91,16 @@ public class ApplySrgAction extends AnAction {
             }
         }
 
+        int okParameters = 0;
+        for (RenamingMethodParametersList parameters : parametersLists) {
+            if (renameParametersList(parameters.className, parameters.methodName, parameters.methodSignature, parameters.newParameterNames)) {
+                System.out.println("Renamed "+ parameters);
+                okMethods += 1;
+            } else {
+                System.out.println("FAILED to rename "+ parameters);
+            }
+        }
+
         int okClasses = 0;
         for (RenamingClass clazz: classes) {
             if (renameClass(clazz.oldName, clazz.newName)) {
@@ -104,6 +114,7 @@ public class ApplySrgAction extends AnAction {
         String status = "Renamed "+
                 okFields+"/"+fields.size()+" fields, "+
                 okMethods+"/"+methods.size()+" methods, " +
+                okParameters+"/"+ parametersLists.size()+" parameter lists, " +
                 okClasses+"/"+classes.size()+" classes";
 
         System.out.println(status);
@@ -134,7 +145,8 @@ public class ApplySrgAction extends AnAction {
     void loadSrg(VirtualFile file,
                           List<RenamingClass> classes,
                           List<RenamingField> fields,
-                          List<RenamingMethod> methods) throws IOException {
+                          List<RenamingMethod> methods,
+                          List<RenamingMethodParametersList> parameters) throws IOException {
         InputStreamReader inputStreamReader = new InputStreamReader(file.getInputStream());
         BufferedReader reader = new BufferedReader(inputStreamReader);
 
@@ -166,6 +178,18 @@ public class ApplySrgAction extends AnAction {
                 //String newSignature = tokens[4]; // unused, changes types but otherwise ignored
 
                 methods.add(new RenamingMethod(className, oldName, oldSignature, newName));
+
+            // Method parameter renaming - new to ApplySrg2Source
+            } else if (kind.equals("PA:")) {
+                String className = getPackageComponent(tokens[1]);
+                String methodName = getNameComponent(tokens[1]);
+
+                String methodSignature = tokens[2];
+
+                String[] newParameterNames = Arrays.copyOfRange(tokens, 3, tokens.length);
+
+
+                parameters.add(new RenamingMethodParametersList(className, methodName, methodSignature, newParameterNames));
             }
         } while (true);
     }
@@ -238,6 +262,36 @@ public class ApplySrgAction extends AnAction {
         return renameElement(method, newName);
     }
 
+    public boolean renameParametersList(String className, String methodName, String methodSignature, String[] newParameterNames) {
+        // TODO: can these psi nodes be cached for speed? we look them up on every rename!
+         PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
+
+        if (psiClass == null) {
+            System.out.println("renameParametersList(" + className + "/" + methodName + " " + methodSignature+ " (" +  newParameterNames + ") failed, no such class");
+            return false;
+        }
+
+        PsiMethod method = findMethod(psiClass, methodName, methodSignature);
+        if (method == null) {
+            System.out.println("renameParametersList(" + className + "/" + methodName + " " + methodSignature + " (" + newParameterNames + ") failed, no such method");
+            return false;
+        }
+
+        PsiParameterList psiParameterList = method.getParameterList();
+
+        if (newParameterNames.length != psiParameterList.getParametersCount()) {
+            System.out.println("renameParametersList(" + className + "/" + methodName + " " + methodSignature + " (" + newParameterNames + ") failed, rename had " + newParameterNames.length + " parameters, but source had " + psiParameterList.getParametersCount());
+            return false;
+        }
+
+        PsiParameter[] psiParameters = psiParameterList.getParameters();
+
+        for (PsiParameter psiParameter : psiParameters) {
+            psiParameter.setName(newParameterNames[0]);
+        }
+
+        return true;
+    }
 
     public PsiMethod findMethod(PsiClass psiClass, String name, String signature) {
         PsiMethod[] methods = psiClass.findMethodsByName(name, false);

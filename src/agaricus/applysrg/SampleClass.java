@@ -24,4 +24,8 @@ public class SampleClass {
     {
         return this;
     }
+
+    public int paramtest(int i, int j, int k) {
+        return i + j / k;
+    }
 }
