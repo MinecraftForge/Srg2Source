@@ -250,7 +250,7 @@ public class ApplySrgAction extends AnAction {
             return false;
         }
 
-        PsiMethod method = findMethod(psiClass, oldName, signature);
+        PsiMethod method = findMethod(psiClass, oldName, signature, false);
         if (method == null) {
             System.out.println("renameMethod(" + className + "/" + oldName + " " + signature + " -> " + newName + ") failed, no such method");
             return false;
@@ -268,7 +268,7 @@ public class ApplySrgAction extends AnAction {
             return false;
         }
 
-        PsiMethod method = findMethod(psiClass, methodName, methodSignature);
+        PsiMethod method = findMethod(psiClass, methodName, methodSignature, true); // find method, including constructor methods
         if (method == null) {
             System.out.println("renameParametersList(" + className + "/" + methodName + " " + methodSignature + " (" + newParameterNames + ") failed, no such method");
             return false;
@@ -290,12 +290,12 @@ public class ApplySrgAction extends AnAction {
         return true;
     }
 
-    public PsiMethod findMethod(PsiClass psiClass, String name, String signature) {
+    public PsiMethod findMethod(PsiClass psiClass, String name, String signature, boolean allowConstructor) {
         PsiMethod[] methods = psiClass.findMethodsByName(name, false);
 
         for (PsiMethod method: methods) {
-            if (method.isConstructor())
-                continue; // constructors are renamed as part of the class
+            if (method.isConstructor() && !allowConstructor)
+                continue; // constructor method names are renamed as part of the class
 
             System.out.println(" method name: " + method.getName());
 
@@ -330,7 +330,13 @@ public class ApplySrgAction extends AnAction {
 
         PsiType returnType = method.getReturnType();
 
-        buf.append(getTypeCodeString(returnType));
+        if (returnType == null) {
+            // Constructors have no return type
+            // Using void as a syntactic placeholder here - TODO - something better?
+            buf.append("V");
+        } else {
+            buf.append(getTypeCodeString(returnType));
+        }
 
         return buf.toString();
     }
