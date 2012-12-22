@@ -93,11 +93,11 @@ public class ApplySrgAction extends AnAction {
             }
         }
 
-        int okParameters = 0;
+        int okParametersLists = 0;
         for (RenamingMethodParametersList parameters : parametersLists) {
             if (renameParametersList(parameters.className, parameters.methodName, parameters.methodSignature, parameters.newParameterNames)) {
                 System.out.println("Renamed "+ parameters);
-                okMethods += 1;
+                okParametersLists += 1;
             } else {
                 System.out.println("FAILED to rename "+ parameters);
             }
@@ -116,7 +116,7 @@ public class ApplySrgAction extends AnAction {
         String status = "Renamed "+
                 okFields+"/"+fields.size()+" fields, "+
                 okMethods+"/"+methods.size()+" methods, " +
-                okParameters+"/"+ parametersLists.size()+" parameter lists, " +
+                okParametersLists+"/"+ parametersLists.size()+" parameter lists, " +
                 okClasses+"/"+classes.size()+" classes";
 
         System.out.println(status);
@@ -288,14 +288,9 @@ public class ApplySrgAction extends AnAction {
 
         final PsiParameter[] psiParameters = psiParameterList.getParameters();
 
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-                for (PsiParameter psiParameter : psiParameters) {
-                    psiParameter.setName(newParameterNames[0]);
-                }
-            }
-        });
-
+        for (int i = 0; i < psiParameters.length; i += 1) {
+            renameElement(psiParameters[i], newParameterNames[i]);
+        }
 
         return true;
     }
