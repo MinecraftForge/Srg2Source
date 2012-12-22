@@ -3,6 +3,8 @@ package agaricus.applysrg;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -262,7 +264,7 @@ public class ApplySrgAction extends AnAction {
         return renameElement(method, newName);
     }
 
-    public boolean renameParametersList(String className, String methodName, String methodSignature, String[] newParameterNames) {
+    public boolean renameParametersList(final String className, final String methodName, final String methodSignature, final String[] newParameterNames) {
         // TODO: can these psi nodes be cached for speed? we look them up on every rename!
          PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
 
@@ -284,11 +286,16 @@ public class ApplySrgAction extends AnAction {
             return false;
         }
 
-        PsiParameter[] psiParameters = psiParameterList.getParameters();
+        final PsiParameter[] psiParameters = psiParameterList.getParameters();
 
-        for (PsiParameter psiParameter : psiParameters) {
-            psiParameter.setName(newParameterNames[0]);
-        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+                for (PsiParameter psiParameter : psiParameters) {
+                    psiParameter.setName(newParameterNames[0]);
+                }
+            }
+        });
+
 
         return true;
     }
