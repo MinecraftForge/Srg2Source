@@ -54,11 +54,6 @@ public class ApplySrgAction extends AnAction {
         }
         VirtualFile file = files[0];
 
-        if (!file.getExtension().equalsIgnoreCase("srg")) {
-            Messages.showMessageDialog(project, file.getName() + " is not a .srg file", "Error", Messages.getErrorIcon());
-            return;
-        }
-
         List<RenamingClass> classes = new ArrayList<RenamingClass>();
         List<RenamingField> fields = new ArrayList<RenamingField>();
         List<RenamingMethod> methods = new ArrayList<RenamingMethod>();
