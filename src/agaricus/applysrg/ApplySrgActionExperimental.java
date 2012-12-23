@@ -3,17 +3,11 @@ package agaricus.applysrg;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.JavaRefactoringFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,20 +19,88 @@ public class ApplySrgActionExperimental extends AnAction {
         super("Apply Srg");
     }
 
+    /** Get list of Java files selected by the user
+     *
+     * @param event
+     * @return List of Java files with PSI ready to process
+     */
+    private List<PsiJavaFile> getSelectedJavaFiles(AnActionEvent event) {
+        List<PsiJavaFile> javaFileList = new ArrayList<PsiJavaFile>();
+        PsiManager psiManager = PsiManager.getInstance(project);
+
+        // Get selected files
+        VirtualFile[] selectedFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+        System.out.println("Selected "+ selectedFiles.length+" files");
+        if (selectedFiles.length == 0) {
+            Messages.showMessageDialog(project, "Please select the files you want to transform in the View > Tool Windows > Project view, then try again.", "No selection", Messages.getErrorIcon());
+            return null;
+        }
+        List<VirtualFile> skippedFiles = new ArrayList<VirtualFile>();
+        for(VirtualFile file: selectedFiles) {
+            System.out.println("- " + file);
+            PsiFile psiFile = psiManager.findFile(file);
+            if (psiFile == null) {
+                // no psi structure for this file
+                skippedFiles.add(file);
+                continue;
+            }
+
+            System.out.println("psiFile: " + psiFile);
+
+            if (!(psiFile instanceof PsiJavaFile)) {
+                System.out.println("Skipping non-Java file "+file);
+                skippedFiles.add(file);
+                // TODO: possibly try to load this file as Java for PSI parsing
+                // see http://devnet.jetbrains.net/thread/271253 , once its back up
+                continue;
+            }
+
+            PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
+
+            javaFileList.add(psiJavaFile);
+        }
+
+        if (skippedFiles.size() != 0) {
+
+            StringBuilder sb = new StringBuilder("Non-Java files were selected ("+skippedFiles.size()+" of "+selectedFiles.length+"): \n\n");
+            for (VirtualFile skippedFile: skippedFiles) {
+                sb.append("- " + skippedFile.getPresentableName() + "\n");
+            }
+
+            if (skippedFiles.size() == selectedFiles.length) {
+                sb.append("\nNo valid Java files in your project were selected. Please select the files you want to process in View > Tool Windows > Project and try again.");
+                Messages.showMessageDialog(project, sb.toString(), "No Java files selected", Messages.getErrorIcon());
+                return null;
+            }
+
+            sb.append("\nThe above files will not be processed. Do you want to continue processing the other "+javaFileList.size()+" files?");
+
+            if (Messages.showYesNoDialog(project, sb.toString(), "Skipping non-Java files", Messages.getWarningIcon()) != 0) {
+                return null;
+            }
+        }
+
+        return javaFileList;
+    }
+
     public void actionPerformed(AnActionEvent event) {
+        System.out.println("ApplySrg2Source experimental starting");
+
         project = event.getData(PlatformDataKeys.PROJECT);
         facade = JavaPsiFacade.getInstance(project);
 
-        System.out.println("ApplySrg2Source experimental starting");
+        VirtualFile projectFileDirectory = event.getData(PlatformDataKeys.PROJECT_FILE_DIRECTORY);
+        System.out.println("project file directory = "+projectFileDirectory);
 
-        VirtualFile[] files = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-        System.out.println("files="+files.length);
-        System.out.println("files="+files);
-        for(VirtualFile file: files) {
-            System.out.println(""+file);
+        List<PsiJavaFile> files = getSelectedJavaFiles(event);
+        if (files == null) {
+            return;
         }
+        System.out.println("Processing "+files.size()+" files");
 
-        PsiPackage psiPackage = facade.findPackage("agaricus.applysrg");
+
+        PsiPackage psiPackage = facade.findPackage("agaricus.applysrg.samplepackage");
+
         PsiClass[] psiClasses = psiPackage.getClasses();
         System.out.println("psiClasses="+psiClasses);
 
