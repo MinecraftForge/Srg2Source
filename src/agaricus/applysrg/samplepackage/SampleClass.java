@@ -1,6 +1,8 @@
 package agaricus.applysrg.samplepackage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.lang.String;
 
 public class SampleClass {
     public int field1;

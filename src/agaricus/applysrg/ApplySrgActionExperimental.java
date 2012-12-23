@@ -83,6 +83,23 @@ public class ApplySrgActionExperimental extends AnAction {
         return javaFileList;
     }
 
+    private void processFile(PsiJavaFile psiJavaFile) {
+        System.out.println("processing "+psiJavaFile);
+
+        PsiImportList psiImportList = psiJavaFile.getImportList();
+
+        PsiImportStatementBase[] psiImportStatements = psiImportList.getAllImportStatements();
+        for (PsiImportStatementBase psiImportStatement : psiImportStatements) {
+            PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiImportStatement.getImportReference();
+
+            String qualifiedName = psiJavaCodeReferenceElement.getQualifiedName();
+            int x = psiJavaCodeReferenceElement.getTextOffset(); // TODO: find why this is wrong - starts after package name, even though length is correct
+            int l = psiJavaCodeReferenceElement.getTextLength();
+            System.out.println("@,"+x+","+l+",import,"+qualifiedName);
+            // TODO: replace through map
+        }
+    }
+
     public void actionPerformed(AnActionEvent event) {
         System.out.println("ApplySrg2Source experimental starting");
 
@@ -92,13 +109,19 @@ public class ApplySrgActionExperimental extends AnAction {
         VirtualFile projectFileDirectory = event.getData(PlatformDataKeys.PROJECT_FILE_DIRECTORY);
         System.out.println("project file directory = "+projectFileDirectory);
 
-        List<PsiJavaFile> files = getSelectedJavaFiles(event);
-        if (files == null) {
+        List<PsiJavaFile> psiJavaFiles = getSelectedJavaFiles(event);
+        if (psiJavaFiles == null) {
             return;
         }
-        System.out.println("Processing "+files.size()+" files");
+        System.out.println("Processing "+psiJavaFiles.size()+" files");
 
 
+        for (PsiJavaFile psiJavaFile: psiJavaFiles) {
+            processFile(psiJavaFile);
+        }
+
+
+        /*
         PsiPackage psiPackage = facade.findPackage("agaricus.applysrg.samplepackage");
 
         PsiClass[] psiClasses = psiPackage.getClasses();
@@ -123,7 +146,7 @@ public class ApplySrgActionExperimental extends AnAction {
             for (PsiField psiField: psiFields) {
                 System.out.println("- field: "+psiField);
             }
-        }
+        }*/
 
         List<RenamingClass> classes = new ArrayList<RenamingClass>();
         List<RenamingField> fields = new ArrayList<RenamingField>();
