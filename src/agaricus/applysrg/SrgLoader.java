@@ -1,5 +1,11 @@
 package agaricus.applysrg;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 
@@ -10,7 +16,31 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SrgLoader {
-    static void loadSrg(VirtualFile file,
+    public static boolean promptAndLoadSrg(Project project, List<RenamingClass> classes,
+                                        List<RenamingField> fields,
+                                        List<RenamingMethod> methods,
+                                        List<RenamingMethodParametersList> parametersLists) {
+        // Get filename of .srg from user
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+        FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project, null);
+        VirtualFile[] files = dialog.choose(null, project);
+        if (files.length == 0) {
+            return false;
+        }
+        VirtualFile file = files[0];
+
+        try {
+            SrgLoader.loadSrg(file, classes, fields, methods, parametersLists);
+        } catch (IOException e) {
+            Messages.showMessageDialog(project, "Failed to load " + file.getName() + ": " + e.getLocalizedMessage(), "Error", Messages.getErrorIcon());
+            return false;
+        }
+
+        System.out.println("Loaded "+fields.size()+" fields, "+methods.size()+" methods, "+parametersLists.size()+" method parameters lists, "+classes.size()+" classes, from " + file.getName());
+        return true;
+    }
+
+    private static void loadSrg(VirtualFile file,
                         List<RenamingClass> classes,
                         List<RenamingField> fields,
                         List<RenamingMethod> methods,

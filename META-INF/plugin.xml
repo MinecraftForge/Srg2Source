@@ -33,7 +33,8 @@
     <!-- Add your actions here -->
       <group id="applysrg.SampleMenu" text="_Srg" description="Srg menu">
           <add-to-group group-id="MainMenu" anchor="last"  />
-          <action id="applysrg.applysrg" class="agaricus.applysrg.ApplySrgAction" text="Apply Srg" description="Apply .srg transformation" />
+          <action id="applysrg.applysrg" class="agaricus.applysrg.ApplySrgAction" text="Apply .srg with IntelliJ rename refactoring" description="Apply .srg transformation" />
+          <action id="applysrg.applysrg2" class="agaricus.applysrg.ApplySrgActionExperimental" text="Apply .srg experimental" description="Apply .srg transformation" />
       </group>
   </actions>
 

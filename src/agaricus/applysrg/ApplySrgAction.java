@@ -18,7 +18,6 @@ import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.JavaRenameRefactoring;
 import com.intellij.usageView.UsageInfo;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
 import java.util.*;
@@ -32,10 +31,6 @@ public class ApplySrgAction extends AnAction {
         super("Apply Srg");
     }
 
-    public static int[] baz = null;
-
-    int foo() { throw new NotImplementedException(); }
-
     public void actionPerformed(AnActionEvent event) {
         project = event.getData(PlatformDataKeys.PROJECT);
         facade = JavaPsiFacade.getInstance(project);
@@ -43,28 +38,14 @@ public class ApplySrgAction extends AnAction {
 
         System.out.println("ApplySrg2Source starting");
 
-        // Get filename of .srg from user
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-        FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project, null);
-        VirtualFile[] files = dialog.choose(null, project);
-        if (files.length == 0) {
-            return;
-        }
-        VirtualFile file = files[0];
-
         List<RenamingClass> classes = new ArrayList<RenamingClass>();
         List<RenamingField> fields = new ArrayList<RenamingField>();
         List<RenamingMethod> methods = new ArrayList<RenamingMethod>();
         List<RenamingMethodParametersList> parametersLists = new ArrayList<RenamingMethodParametersList>();
 
-        try {
-            SrgLoader.loadSrg(file, classes, fields, methods, parametersLists);
-        } catch (IOException e) {
-            Messages.showMessageDialog(project, "Failed to load " + file.getName() + ": " + e.getLocalizedMessage(), "Error", Messages.getErrorIcon());
+        if (!SrgLoader.promptAndLoadSrg(project, classes, fields, methods, parametersLists))
             return;
-        }
 
-        System.out.println("Loaded "+fields.size()+" fields, "+methods.size()+" methods, "+parametersLists.size()+" method parameters lists, "+classes.size()+" classes, from " + file.getName());
 
         int okFields = 0;
         for (RenamingField field: fields) {
