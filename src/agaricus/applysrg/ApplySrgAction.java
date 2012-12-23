@@ -3,8 +3,6 @@ package agaricus.applysrg;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -60,7 +58,7 @@ public class ApplySrgAction extends AnAction {
         List<RenamingMethodParametersList> parametersLists = new ArrayList<RenamingMethodParametersList>();
 
         try {
-            loadSrg(file, classes, fields, methods, parametersLists);
+            SrgLoader.loadSrg(file, classes, fields, methods, parametersLists);
         } catch (IOException e) {
             Messages.showMessageDialog(project, "Failed to load " + file.getName() + ": " + e.getLocalizedMessage(), "Error", Messages.getErrorIcon());
             return;
@@ -117,100 +115,6 @@ public class ApplySrgAction extends AnAction {
         System.out.println(status);
 
         Messages.showMessageDialog(project, status, "Rename complete", Messages.getInformationIcon());
-
-        /* test for renaming self
-        if (renameClass("agaricus.applysrg.Sample" + "Class", "Sample" + "Class2"))  {
-            Messages.showMessageDialog(project, "Renamed first", "Information", Messages.getInformationIcon());
-        } else {
-            if (renameClass("agaricus.applysrg.Sample" + "Class2", "Sample" + "Class")) {
-                if (!renameField("agaricus.applysrg.Sample" + "Class", "field" + "1", "field" + "2")) {
-                    renameField("agaricus.applysrg.Sample" + "Class", "field" + "2", "field" + "1");
-                }
-
-                if (!renameMethod("agaricus.applysrg.Sample" + "Class", "a", "()V", "b")) { // note: this changes
-                    renameMethod("agaricus.applysrg.Sample" + "Class", "b", "()V", "a"); // when renaming! supposed to be a<->b
-                }
-
-                Messages.showMessageDialog(project, "Renamed second", "Information", Messages.getInformationIcon());
-            } else {
-                Messages.showMessageDialog(project, "Failed to rename anything!", "Information", Messages.getInformationIcon());
-            }
-        }
-        */
-    }
-
-    void loadSrg(VirtualFile file,
-                          List<RenamingClass> classes,
-                          List<RenamingField> fields,
-                          List<RenamingMethod> methods,
-                          List<RenamingMethodParametersList> parameters) throws IOException {
-        InputStreamReader inputStreamReader = new InputStreamReader(file.getInputStream());
-        BufferedReader reader = new BufferedReader(inputStreamReader);
-
-        do {
-            String line = reader.readLine();
-            if (line == null) break;
-
-            String[] tokens = line.split(" ");
-            if (tokens.length < 3) continue;
-
-            String kind = tokens[0];
-            if (kind.equals("CL:")) {
-                String oldName = getPackageComponent(tokens[1]) + "." + getNameComponent(tokens[1]);
-                String newName = getNameComponent(tokens[2]);
-
-                classes.add(new RenamingClass(oldName, newName));
-            } else if (kind.equals("FD:")) {
-                String className = getPackageComponent(tokens[1]);
-                String oldName = getNameComponent(tokens[1]);
-
-                String newName = getNameComponent(tokens[2]);
-                fields.add(new RenamingField(className, oldName, newName));
-            } else if (kind.equals("MD:")) {
-                String className = getPackageComponent(tokens[1]);
-                String oldName = getNameComponent(tokens[1]);
-
-                String oldSignature = tokens[2];
-                String newName = getNameComponent(tokens[3]);
-                //String newSignature = tokens[4]; // unused, changes types but otherwise ignored
-
-                methods.add(new RenamingMethod(className, oldName, oldSignature, newName));
-
-            // Method parameter renaming - new to ApplySrg2Source
-            } else if (kind.equals("PA:")) {
-                String className = getPackageComponent(tokens[1]);
-                String methodName = getNameComponent(tokens[1]);
-
-                String methodSignature = tokens[2];
-
-                String[] newParameterNames = Arrays.copyOfRange(tokens, 3, tokens.length);
-
-
-                parameters.add(new RenamingMethodParametersList(className, methodName, methodSignature, newParameterNames));
-            }
-        } while (true);
-    }
-
-    /** Get last component of a slash-separated name, the symbol name
-     *
-     * @param fullName
-     * @return Name, for example, "a/b/c" will return "c"
-     */
-    public static String getNameComponent(String fullName) {
-        String[] parts = fullName.split("/");
-
-        return parts[parts.length - 1];
-    }
-
-    /** Get the package components of a slash-separated name
-     *
-     * @param fullName
-     * @return Path, for example, "a/b/c" will return "a.b"
-     */
-    public static String getPackageComponent(String fullName) {
-        String[] parts = fullName.split("/");
-
-        return StringUtils.join(Arrays.copyOfRange(parts, 0, parts.length - 1), ".");
     }
 
     public boolean renameClass(String oldName, String newName) {
@@ -261,7 +165,9 @@ public class ApplySrgAction extends AnAction {
 
     public boolean renameParametersList(final String className, final String methodName, final String methodSignature, final String[] newParameterNames) {
         // TODO: can these psi nodes be cached for speed? we look them up on every rename!
-         PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
+        long start = System.currentTimeMillis();
+        PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
+        System.out.println("time,findClass,"+className+","+(System.currentTimeMillis() - start));
 
         if (psiClass == null) {
             System.out.println("renameParametersList(" + className + "/" + methodName + " " + methodSignature+ " (" +  newParameterNames + ") failed, no such class");
@@ -291,6 +197,7 @@ public class ApplySrgAction extends AnAction {
     }
 
     public PsiMethod findMethod(PsiClass psiClass, String name, String signature, boolean allowConstructor) {
+        long start = System.currentTimeMillis();
         PsiMethod[] methods = psiClass.findMethodsByName(name, false);
 
         for (PsiMethod method: methods) {
@@ -304,10 +211,12 @@ public class ApplySrgAction extends AnAction {
             System.out.println(" signature = " + thisSignature);
 
             if (signature.equals(thisSignature)) {
+                System.out.println("time,findMethod,"+psiClass.getName()+","+name+","+signature+","+(System.currentTimeMillis() - start));
                 return method;
             }
         }
 
+        System.out.println("time,findMethod,"+psiClass.getName()+","+name+","+signature+","+(System.currentTimeMillis() - start));
         return null;
     }
 
@@ -375,6 +284,7 @@ public class ApplySrgAction extends AnAction {
     }
 
     public boolean renameElement(PsiElement psiElement, String newName) {
+        long start = System.currentTimeMillis();
         JavaRenameRefactoring refactoring = refactoringFactory.createRename(psiElement, newName);
 
         // Rename
@@ -399,6 +309,8 @@ public class ApplySrgAction extends AnAction {
         }
         */
         refactoring.doRefactoring(usages);
+
+        System.out.println("time,renameElement,"+psiElement+","+newName+","+(System.currentTimeMillis() - start));
 
         return true;
     }
