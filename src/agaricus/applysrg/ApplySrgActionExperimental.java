@@ -88,7 +88,7 @@ public class ApplySrgActionExperimental extends AnAction {
 
         PsiPackageStatement psiPackageStatement = psiJavaFile.getPackageStatement();
         if (psiPackageStatement != null) {
-            System.out.println("@,"+psiPackageStatement.getTextRange()+",package,"+psiPackageStatement.getPackageName());
+            System.out.println("@,"+psiPackageStatement.getPackageReference().getTextRange()+",package,"+psiPackageStatement.getPackageName());
             //TODO psiJavaFile.setPackageName("");
         }
 
@@ -102,7 +102,57 @@ public class ApplySrgActionExperimental extends AnAction {
             System.out.println("@,"+psiJavaCodeReferenceElement.getTextRange()+",import,"+qualifiedName);
             // TODO: replace through map
         }
+
+
+        PsiClass[] psiClasses = psiJavaFile.getClasses();
+        for (PsiClass psiClass : psiClasses) {
+            processClass(psiClass);
+        }
     }
+
+    private void processClass(PsiClass psiClass) {
+        String className = psiClass.getQualifiedName();
+        System.out.println("@,"+psiClass.getNameIdentifier().getTextRange()+",class,"+className);
+
+        // Methods and fields in this class (not 'all', which includes superclass)
+
+        PsiField[] psiFields = psiClass.getFields();
+
+        for (PsiField psiField : psiFields) {
+            PsiTypeElement psiTypeElement = psiField.getTypeElement();
+            System.out.println("@,"+psiTypeElement.getTextRange()+",type,"+psiTypeElement.getType().getInternalCanonicalText());
+            System.out.println("@,"+psiField.getNameIdentifier().getTextRange()+",field,"+className+","+psiField.getName());
+            //TODO psiField.setName("");
+        }
+
+        PsiMethod[] psiMethods = psiClass.getMethods();
+
+        for (PsiMethod psiMethod: psiMethods) {
+            processMethod(className, psiMethod);
+        }
+    }
+
+    private void processMethod(String className, PsiMethod psiMethod) {
+        System.out.println("@,"+psiMethod.getNameIdentifier().getTextRange()+",method,"+className+","+psiMethod.getName());
+
+        PsiParameterList psiParameterList = psiMethod.getParameterList();
+        PsiParameter[] psiParameters = psiParameterList.getParameters();
+        for (int pindex = 0; pindex < psiParameters.length; ++pindex) {
+            PsiParameter psiParameter = psiParameters[pindex];
+            PsiTypeElement psiTypeElement = psiParameter.getTypeElement();
+
+            System.out.println("@,"+psiTypeElement.getTextRange()+",type,"+className+","+psiMethod.getName()+","+pindex+","+psiTypeElement.getType().getInternalCanonicalText());
+            System.out.println("@,"+psiParameter.getNameIdentifier().getTextRange()+",methodparam,"+className+","+psiMethod.getName()+","+pindex+","+psiParameter.getName());
+        }
+
+        PsiCodeBlock psiCodeBlock = psiMethod.getBody();
+        PsiStatement[] psiStatements = psiCodeBlock.getStatements();
+        for (PsiStatement psiStatement : psiStatements) {
+            System.out.println(" statement"+psiStatement);
+            // TODO: identifiers
+        }
+    }
+
 
     public void actionPerformed(AnActionEvent event) {
         System.out.println("ApplySrg2Source experimental starting");
