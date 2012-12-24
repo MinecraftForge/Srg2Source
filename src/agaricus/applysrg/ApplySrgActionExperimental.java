@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class ApplySrgActionExperimental extends AnAction {
@@ -154,6 +155,8 @@ public class ApplySrgActionExperimental extends AnAction {
         System.out.println("@,"+psiMethod.getNameIdentifier().getTextRange()+",method,"+className+","+psiMethod.getName()+","+signature);
 
         PsiParameterList psiParameterList = psiMethod.getParameterList();
+        HashMap<PsiParameter,Integer> parameterIndices = new HashMap<PsiParameter, Integer>();
+
         if (psiParameterList != null) {
             PsiParameter[] psiParameters = psiParameterList.getParameters();
             for (int parameterIndex = 0; parameterIndex < psiParameters.length; ++parameterIndex) {
@@ -161,16 +164,22 @@ public class ApplySrgActionExperimental extends AnAction {
                 PsiTypeElement psiTypeElement = psiParameter.getTypeElement();
 
                 if (psiTypeElement != null) {
-                    System.out.println("@,"+psiTypeElement.getTextRange()+",type,"+className+","+psiMethod.getName()+","+ parameterIndex +","+psiTypeElement.getType().getInternalCanonicalText());
+                    System.out.println("@,"+psiTypeElement.getTextRange()+",type,"+className+","+psiMethod.getName()+","+psiTypeElement.getType().getInternalCanonicalText()+","+parameterIndex);
                 }
 
                 if (psiParameter != null && psiParameter.getNameIdentifier() != null) {
-                    System.out.println("@,"+psiParameter.getNameIdentifier().getTextRange()+",param,"+className+","+psiMethod.getName()+","+ parameterIndex +","+psiParameter.getName());
+                    System.out.println("@,"+psiParameter.getNameIdentifier().getTextRange()+",param,"+className+","+psiMethod.getName()+","+signature+","+psiParameter.getName()+","+parameterIndex);
+
+                    // Store index for method body references
+                    parameterIndices.put(psiParameter, parameterIndex);
                 }
             }
         }
 
         SymbolReferenceWalker walker = new SymbolReferenceWalker(className, psiMethod.getName(), signature);
+
+        walker.addMethodParameterIndices(parameterIndices);
+
         walker.walk(psiMethod.getBody());
     }
 

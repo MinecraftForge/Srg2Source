@@ -40,7 +40,7 @@ public class SampleClass {
     }
 
     public int paramtest(int i, int j, int k) {
-        return i + j / k;
+        return i + j / k + k + k + k - j - j - i;
     }
 
     private int vartest() {

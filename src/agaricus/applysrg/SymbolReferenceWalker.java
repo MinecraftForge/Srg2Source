@@ -8,11 +8,12 @@ import java.util.HashMap;
  * Recursively descends and processes symbol references
  */
 public class SymbolReferenceWalker {
-    public String className;
-    public String methodName = "(outside-method)";
-    public String methodSignature = "";
-    public HashMap<PsiLocalVariable, Integer> localVariableIndices = new HashMap<PsiLocalVariable, Integer>();
-    public int nextLocalVariableIndex = 0;
+    private String className;
+    private String methodName = "(outside-method)";
+    private String methodSignature = "";
+    private HashMap<PsiLocalVariable, Integer> localVariableIndices = new HashMap<PsiLocalVariable, Integer>();
+    private int nextLocalVariableIndex = 0;
+    private HashMap<PsiParameter, Integer> methodParameterIndices = new HashMap<PsiParameter, Integer>();
 
     public SymbolReferenceWalker(String className) {
         this.className = className;
@@ -24,9 +25,22 @@ public class SymbolReferenceWalker {
         this.methodSignature = methodSignature;
     }
 
+    /**
+     * Recursively walk starting from given element
+     * @param startElement
+     */
     public void walk(PsiElement startElement) {
         walk(startElement, 0);
     }
+
+    /**
+     * Add map used for labeling method parameters by index
+     * @param methodParameterIndices
+     */
+    public void addMethodParameterIndices(HashMap<PsiParameter, Integer> methodParameterIndices) {
+        this.methodParameterIndices.putAll(methodParameterIndices);
+    }
+
 
     private void walk(PsiElement psiElement, int depth) {
         //System.out.println("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
@@ -101,8 +115,15 @@ public class SymbolReferenceWalker {
             } else if (referentElement instanceof PsiParameter) {
                 PsiParameter psiParameter = (PsiParameter)referentElement;
 
-                // TODO: index of parameter as in method parameter list
-                System.out.println("@,"+nameElement.getTextRange()+",param,"+className+","+methodName+","+methodSignature+","+psiParameter.getName());
+                int index;
+                if (!methodParameterIndices.containsKey(psiParameter)) {
+                    index = -1;
+                    System.out.println("couldn't find parameter index for "+psiParameter+" in "+methodParameterIndices);
+                } else {
+                    index = methodParameterIndices.get(psiParameter);
+                }
+
+                System.out.println("@,"+nameElement.getTextRange()+",param,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+index);
             } else {
                 System.out.println("ignoring unknown referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
             }
