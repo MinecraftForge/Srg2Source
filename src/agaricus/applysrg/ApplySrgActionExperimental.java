@@ -93,19 +93,23 @@ public class ApplySrgActionExperimental extends AnAction {
         }
 
         PsiImportList psiImportList = psiJavaFile.getImportList();
+        if (psiImportList != null) {
+            PsiImportStatementBase[] psiImportStatements = psiImportList.getAllImportStatements();
+            if (psiImportStatements != null) {
+                for (PsiImportStatementBase psiImportStatement : psiImportStatements) {
+                    PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiImportStatement.getImportReference();
 
-        PsiImportStatementBase[] psiImportStatements = psiImportList.getAllImportStatements();
-        for (PsiImportStatementBase psiImportStatement : psiImportStatements) {
-            PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiImportStatement.getImportReference();
-
-            String qualifiedName = psiJavaCodeReferenceElement.getQualifiedName();
-            System.out.println("@,"+psiJavaCodeReferenceElement.getTextRange()+",import,"+qualifiedName);
+                    String qualifiedName = psiJavaCodeReferenceElement.getQualifiedName();
+                    System.out.println("@,"+psiJavaCodeReferenceElement.getTextRange()+",import,"+qualifiedName);
+                }
+            }
         }
 
-
         PsiClass[] psiClasses = psiJavaFile.getClasses();
-        for (PsiClass psiClass : psiClasses) {
-            processClass(psiClass);
+        if (psiClasses != null) {
+            for (PsiClass psiClass : psiClasses) {
+                processClass(psiClass);
+            }
         }
     }
 
@@ -150,13 +154,20 @@ public class ApplySrgActionExperimental extends AnAction {
         System.out.println("@,"+psiMethod.getNameIdentifier().getTextRange()+",method,"+className+","+psiMethod.getName()+","+signature);
 
         PsiParameterList psiParameterList = psiMethod.getParameterList();
-        PsiParameter[] psiParameters = psiParameterList.getParameters();
-        for (int pindex = 0; pindex < psiParameters.length; ++pindex) {
-            PsiParameter psiParameter = psiParameters[pindex];
-            PsiTypeElement psiTypeElement = psiParameter.getTypeElement();
+        if (psiParameterList != null) {
+            PsiParameter[] psiParameters = psiParameterList.getParameters();
+            for (int parameterIndex = 0; parameterIndex < psiParameters.length; ++parameterIndex) {
+                PsiParameter psiParameter = psiParameters[parameterIndex];
+                PsiTypeElement psiTypeElement = psiParameter.getTypeElement();
 
-            System.out.println("@,"+psiTypeElement.getTextRange()+",type,"+className+","+psiMethod.getName()+","+pindex+","+psiTypeElement.getType().getInternalCanonicalText());
-            System.out.println("@,"+psiParameter.getNameIdentifier().getTextRange()+",methodparam,"+className+","+psiMethod.getName()+","+pindex+","+psiParameter.getName());
+                if (psiTypeElement != null) {
+                    System.out.println("@,"+psiTypeElement.getTextRange()+",type,"+className+","+psiMethod.getName()+","+ parameterIndex +","+psiTypeElement.getType().getInternalCanonicalText());
+                }
+
+                if (psiParameter != null && psiParameter.getNameIdentifier() != null) {
+                    System.out.println("@,"+psiParameter.getNameIdentifier().getTextRange()+",methodparam,"+className+","+psiMethod.getName()+","+ parameterIndex +","+psiParameter.getName());
+                }
+            }
         }
 
         SymbolReferenceWalker walker = new SymbolReferenceWalker(className, psiMethod.getName(), signature);
