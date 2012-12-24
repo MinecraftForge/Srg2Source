@@ -132,6 +132,13 @@ public class ApplySrgActionExperimental extends AnAction {
         for (PsiMethod psiMethod: psiMethods) {
             processMethod(className, psiMethod);
         }
+
+        if (psiClass.getInitializers() != null) {
+            for (PsiClassInitializer psiClassInitializer : psiClass.getInitializers()) {
+                PsiCodeBlock psiCodeBlock = psiClassInitializer.getBody();
+                walkForReferences(className, "(class-initializer)", "", psiCodeBlock, 0);
+            }
+        }
     }
 
     private void processMethod(String className, PsiMethod psiMethod) {

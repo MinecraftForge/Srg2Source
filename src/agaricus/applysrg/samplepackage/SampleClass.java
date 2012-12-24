@@ -11,6 +11,7 @@ public class SampleClass {
     public ArrayList<String> field4;
     public int field5 = 5;
     public int field6 = field5 + 1;
+    static int sfield7;
 
     public SampleClass()
     {
@@ -40,5 +41,13 @@ public class SampleClass {
 
     public int paramtest(int i, int j, int k) {
         return i + j / k;
+    }
+
+    static {
+        sfield7 = 7;
+    }
+
+    {
+        field1 = 1;
     }
 }
