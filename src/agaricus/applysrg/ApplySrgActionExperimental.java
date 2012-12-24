@@ -147,14 +147,21 @@ public class ApplySrgActionExperimental extends AnAction {
 
         PsiCodeBlock psiCodeBlock = psiMethod.getBody();
 
-        SymbolExtractorElementVisitor visitor = new SymbolExtractorElementVisitor();
-        psiCodeBlock.acceptChildren(visitor);
+        walk(className, psiMethod, psiCodeBlock);
 
         /*
         PsiStatement[] psiStatements = psiCodeBlock.getStatements();
         for (PsiStatement psiStatement : psiStatements) {
         }
         */
+    }
+
+    private void walk(String className, PsiMethod psiMethod, PsiElement psiElement) {
+        System.out.println("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
+
+        for (PsiElement child: psiElement.getChildren()) {
+            walk(className, psiMethod, child);
+        }
     }
 
 
