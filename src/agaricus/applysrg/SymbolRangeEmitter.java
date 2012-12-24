@@ -169,31 +169,35 @@ public class SymbolRangeEmitter {
         internalEmitParameterRange(nameElement.getTextRange(),className,methodName,methodSignature,psiParameter.getName(),index);
     }
 
+    private String commonFields(TextRange textRange) {
+        return "@\t"+sourceFilePath+"\t"+textRange.getStartOffset()+"\t"+textRange.getEndOffset()+"\t";
+    }
+
     // Methods to actually write the output
     // Everything goes through these methods
 
     private void internalEmitPackageRange(TextRange textRange, String packageName) {
-        System.out.println("@,"+sourceFilePath+","+textRange+",package,"+packageName);
+        System.out.println(commonFields(textRange)+"package\t"+packageName);
     }
 
     private void internalEmitClassRange(TextRange textRange, String className) {
-        System.out.println("@,"+sourceFilePath+","+textRange+",class,"+className);
+        System.out.println(commonFields(textRange)+"class\t"+className);
     }
 
     private void internalEmitFieldRange(TextRange textRange, String className, String fieldName) {
-        System.out.println("@,"+sourceFilePath+","+textRange+",field,"+className+","+fieldName);
+        System.out.println(commonFields(textRange)+"field\t"+className+"\t"+fieldName);
     }
 
     private void internalEmitMethodRange(TextRange textRange, String className, String methodName, String methodSignature) {
-        System.out.println("@,"+sourceFilePath+","+textRange+",method,"+className+","+methodName+","+methodSignature);
+        System.out.println(commonFields(textRange)+"method\t"+className+"\t"+methodName+"\t"+methodSignature);
     }
 
 
     private void internalEmitParameterRange(TextRange textRange, String className, String methodName, String methodSignature, String parameterName, int parameterIndex) {
-        System.out.println("@,"+sourceFilePath+","+textRange+",param,"+className+","+methodName+","+methodSignature+","+parameterName+","+parameterIndex);
+        System.out.println(commonFields(textRange)+"param\t"+className+"\t"+methodName+"\t"+methodSignature+"\t"+parameterName+"\t"+parameterIndex);
     }
 
     private void internalEmitLocalVariable(TextRange textRange, String className, String methodName, String methodSignature, String variableName, int variableIndex) {
-        System.out.println("@,"+sourceFilePath+","+textRange+",localvar,"+className+","+methodName+","+methodSignature+","+variableName+","+variableIndex);
+        System.out.println(commonFields(textRange)+"localvar\t"+className+"\t"+methodName+"\t"+methodSignature+"\t"+variableName+"\t"+variableIndex);
     }
 }
