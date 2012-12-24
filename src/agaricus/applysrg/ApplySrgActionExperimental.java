@@ -51,7 +51,7 @@ public class ApplySrgActionExperimental extends AnAction {
                 System.out.println("Skipping non-Java file "+file);
                 skippedFiles.add(file);
                 // TODO: possibly try to load this file as Java for PSI parsing
-                // see http://devnet.jetbrains.net/thread/271253 , once its back up
+                // see http://devnet.jetbrains.net/thread/271253 + https://gist.github.com/4367023
                 continue;
             }
 
@@ -146,11 +146,15 @@ public class ApplySrgActionExperimental extends AnAction {
         }
 
         PsiCodeBlock psiCodeBlock = psiMethod.getBody();
+
+        SymbolExtractorElementVisitor visitor = new SymbolExtractorElementVisitor();
+        psiCodeBlock.acceptChildren(visitor);
+
+        /*
         PsiStatement[] psiStatements = psiCodeBlock.getStatements();
         for (PsiStatement psiStatement : psiStatements) {
-            System.out.println(" statement"+psiStatement);
-            // TODO: identifiers
         }
+        */
     }
 
 
