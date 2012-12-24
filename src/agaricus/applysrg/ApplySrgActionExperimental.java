@@ -123,6 +123,9 @@ public class ApplySrgActionExperimental extends AnAction {
             System.out.println("@,"+psiTypeElement.getTextRange()+",type,"+psiTypeElement.getType().getInternalCanonicalText());
             System.out.println("@,"+psiField.getNameIdentifier().getTextRange()+",field,"+className+","+psiField.getName());
             //TODO psiField.setName("");
+
+            // Initializer can refer to other symbols
+            walk(className, null, psiField.getInitializer(), 0);
         }
 
         PsiMethod[] psiMethods = psiClass.getMethods();
@@ -149,12 +152,6 @@ public class ApplySrgActionExperimental extends AnAction {
         PsiCodeBlock psiCodeBlock = psiMethod.getBody();
 
         walk(className, psiMethod, psiCodeBlock, 0);
-
-        /*
-        PsiStatement[] psiStatements = psiCodeBlock.getStatements();
-        for (PsiStatement psiStatement : psiStatements) {
-        }
-        */
     }
 
     private void walk(String className, PsiMethod psiMethod, PsiElement psiElement, int depth) {

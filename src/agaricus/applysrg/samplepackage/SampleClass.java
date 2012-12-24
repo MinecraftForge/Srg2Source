@@ -9,6 +9,8 @@ public class SampleClass {
     public int field2;
     public int field3;
     public ArrayList<String> field4;
+    public int field5 = 5;
+    public int field6 = field5 + 1;
 
     public SampleClass()
     {
