@@ -97,10 +97,7 @@ public class ApplySrgActionExperimental extends AnAction {
             PsiImportStatementBase[] psiImportStatements = psiImportList.getAllImportStatements();
             if (psiImportStatements != null) {
                 for (PsiImportStatementBase psiImportStatement : psiImportStatements) {
-                    PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiImportStatement.getImportReference();
-
-                    String qualifiedName = psiJavaCodeReferenceElement.getQualifiedName();
-                    System.out.println("@,"+sourceFilePath+","+psiJavaCodeReferenceElement.getTextRange()+",class,"+qualifiedName); // note, may be package.*?
+                    emitter.emitImportRange(psiImportStatement);
                 }
             }
         }
@@ -108,52 +105,45 @@ public class ApplySrgActionExperimental extends AnAction {
         PsiClass[] psiClasses = psiJavaFile.getClasses();
         if (psiClasses != null) {
             for (PsiClass psiClass : psiClasses) {
-                processClass(sourceFilePath, psiClass);
+                processClass(emitter, psiClass);
             }
         }
     }
 
-    private void processClass(String sourceFilePath, PsiClass psiClass) {
-        String className = psiClass.getQualifiedName();
-        System.out.println("@,"+sourceFilePath+","+psiClass.getNameIdentifier().getTextRange()+",class,"+className);
+    private void processClass(SymbolRangeEmitter emitter, PsiClass psiClass) {
+        String className = emitter.emitClassRange(psiClass);
 
         // Methods and fields in this class (not 'all', which includes superclass)
 
         PsiField[] psiFields = psiClass.getFields();
 
         for (PsiField psiField : psiFields) {
-            PsiTypeElement psiTypeElement = psiField.getTypeElement();
-            if (!(psiTypeElement.getType() instanceof PsiPrimitiveType)) { // skip int, etc.
-                System.out.println("@,"+sourceFilePath+","+psiTypeElement.getTextRange()+",class,"+psiTypeElement.getType().getInternalCanonicalText());
-            }
-            System.out.println("@,"+sourceFilePath+","+psiField.getNameIdentifier().getTextRange()+",field,"+className+","+psiField.getName());
-            // Not using psiField.setName("");
+            emitter.emitTypeRange(psiField.getTypeElement());
+            emitter.emitFieldRange(className, psiField);
 
             // Initializer can refer to other symbols, so walk it, too
-            SymbolReferenceWalker walker = new SymbolReferenceWalker(sourceFilePath, className);
+            SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className);
             walker.walk(psiField.getInitializer());
         }
 
         PsiMethod[] psiMethods = psiClass.getMethods();
 
         for (PsiMethod psiMethod: psiMethods) {
-            processMethod(sourceFilePath, className, psiMethod);
+            processMethod(emitter, className, psiMethod);
         }
 
         // Class and instance initializers
         if (psiClass.getInitializers() != null) {
             for (PsiClassInitializer psiClassInitializer : psiClass.getInitializers()) {
                 // We call class initializers "{}"...
-                SymbolReferenceWalker walker = new SymbolReferenceWalker(sourceFilePath, className, "{}", "");
+                SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, "{}", "");
                 walker.walk(psiClassInitializer.getBody());
             }
         }
     }
 
-    private void processMethod(String sourceFilePath, String className, PsiMethod psiMethod) {
-        String signature = MethodSignatureHelper.makeTypeSignatureString(psiMethod);
-
-        System.out.println("@,"+sourceFilePath+","+psiMethod.getNameIdentifier().getTextRange()+",method,"+className+","+psiMethod.getName()+","+signature);
+    private void processMethod(SymbolRangeEmitter emitter, String className, PsiMethod psiMethod) {
+        String methodSignature = emitter.emitMethodRange(className, psiMethod);
 
         PsiParameterList psiParameterList = psiMethod.getParameterList();
         HashMap<PsiParameter,Integer> parameterIndices = new HashMap<PsiParameter, Integer>();
@@ -162,24 +152,18 @@ public class ApplySrgActionExperimental extends AnAction {
             PsiParameter[] psiParameters = psiParameterList.getParameters();
             for (int parameterIndex = 0; parameterIndex < psiParameters.length; ++parameterIndex) {
                 PsiParameter psiParameter = psiParameters[parameterIndex];
-                PsiTypeElement psiTypeElement = psiParameter.getTypeElement();
 
-                if (psiTypeElement != null) {
-                    if (!(psiTypeElement.getType() instanceof PsiPrimitiveType)) {
-                        System.out.println("@,"+sourceFilePath+","+psiTypeElement.getTextRange()+",class,"+className+","+psiMethod.getName()+","+psiTypeElement.getType().getInternalCanonicalText()+","+parameterIndex);
-                    }
-                }
+                emitter.emitTypeRange(psiParameter.getTypeElement());
+                emitter.emitParameterRange(className, psiMethod.getName(), methodSignature, psiParameter, parameterIndex);
 
-                if (psiParameter != null && psiParameter.getNameIdentifier() != null) {
-                    System.out.println("@,"+sourceFilePath+","+psiParameter.getNameIdentifier().getTextRange()+",param,"+className+","+psiMethod.getName()+","+signature+","+psiParameter.getName()+","+parameterIndex);
-
+                if (psiParameter != null) {
                     // Store index for method body references
                     parameterIndices.put(psiParameter, parameterIndex);
                 }
             }
         }
 
-        SymbolReferenceWalker walker = new SymbolReferenceWalker(sourceFilePath, className, psiMethod.getName(), signature);
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, psiMethod.getName(), methodSignature);
 
         walker.addMethodParameterIndices(parameterIndices);
 

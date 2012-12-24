@@ -8,7 +8,7 @@ import java.util.HashMap;
  * Recursively descends and processes symbol references
  */
 public class SymbolReferenceWalker {
-    private String sourceFilePath;
+    private SymbolRangeEmitter emitter;
     private String className;
     private String methodName = "(outside-method)";
     private String methodSignature = "";
@@ -28,13 +28,13 @@ public class SymbolReferenceWalker {
      */
     private HashMap<PsiParameter, Integer> methodParameterIndices = new HashMap<PsiParameter, Integer>();
 
-    public SymbolReferenceWalker(String sourceFilePath,String className) {
-        this.sourceFilePath = sourceFilePath;
+    public SymbolReferenceWalker(SymbolRangeEmitter emitter, String className) {
+        this.emitter = emitter;
         this.className = className;
     }
 
-    public SymbolReferenceWalker(String sourceFilePath, String className, String methodName, String methodSignature) {
-        this(sourceFilePath, className);
+    public SymbolReferenceWalker(SymbolRangeEmitter emitter, String className, String methodName, String methodSignature) {
+        this(emitter, className);
         this.methodName = methodName;
         this.methodSignature = methodSignature;
     }
@@ -72,10 +72,8 @@ public class SymbolReferenceWalker {
                 } else if (declaredElement instanceof PsiLocalVariable) {
                     PsiLocalVariable psiLocalVariable = (PsiLocalVariable)declaredElement;
 
-                    if (!(psiLocalVariable.getType() instanceof PsiPrimitiveType)) {
-                        System.out.println("@,"+sourceFilePath+","+psiLocalVariable.getTypeElement().getTextRange()+",class,"+psiLocalVariable.getType().getInternalCanonicalText());
-                    }
-                    System.out.println("@,"+sourceFilePath+","+psiLocalVariable.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+ nextLocalVariableIndex);
+                    emitter.emitTypeRange(psiLocalVariable.getTypeElement());
+                    emitter.emitLocalVariableRange(className, methodName, methodSignature, psiLocalVariable, nextLocalVariableIndex);
 
                     // Record order of variable declarations for references in body
                     localVariableIndices.put(psiLocalVariable, nextLocalVariableIndex);
@@ -89,9 +87,6 @@ public class SymbolReferenceWalker {
         if (psiElement instanceof PsiReferenceExpression) {
             PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)psiElement;
 
-            //PsiExpression psiQualifierExpression = psiReferenceExpression.getQualifierExpression();
-            //PsiType psiQualifierType = psiQualifierExpression != null ? psiQualifierExpression.getType() : null;
-
             // What this reference expression actually refers to
             PsiElement referentElement = psiReferenceExpression.resolve();
 
@@ -102,19 +97,11 @@ public class SymbolReferenceWalker {
             if (referentElement instanceof PsiPackage) {
 
             } else if (referentElement instanceof PsiClass) {
-                PsiClass psiClass = (PsiClass)referentElement;
-
-                System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",class,"+psiClass.getQualifiedName());
+                emitter.emitReferencedClass(nameElement, (PsiClass)referentElement);
             } else if (referentElement instanceof PsiField) {
-                PsiField psiField = (PsiField)referentElement;
-                PsiClass psiClass = psiField.getContainingClass();
-
-                System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",field,"+psiClass.getQualifiedName()+","+psiField.getName());
+                emitter.emitReferencedField(nameElement, (PsiField)referentElement);
             } else if (referentElement instanceof PsiMethod) {
-                PsiMethod psiMethodCalled = (PsiMethod)referentElement;
-                PsiClass psiClass = psiMethodCalled.getContainingClass();
-
-                System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",method,"+psiClass.getQualifiedName()+","+psiMethodCalled.getName()+","+MethodSignatureHelper.makeTypeSignatureString(psiMethodCalled));
+                emitter.emitReferencedMethod(nameElement, (PsiMethod)referentElement);
             } else if (referentElement instanceof PsiLocalVariable) {
                 PsiLocalVariable psiLocalVariable = (PsiLocalVariable)referentElement;
 
@@ -126,8 +113,8 @@ public class SymbolReferenceWalker {
                 } else {
                     index = localVariableIndices.get(psiLocalVariable);
                 }
-                System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+index);
 
+                emitter.emitReferencedLocalVariable(nameElement, className, methodName, methodSignature, psiLocalVariable, index);
             } else if (referentElement instanceof PsiParameter) {
                 PsiParameter psiParameter = (PsiParameter)referentElement;
 
@@ -147,22 +134,20 @@ public class SymbolReferenceWalker {
                         index = methodParameterIndices.get(psiParameter);
                     }
 
-                    System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",param,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+index);
+                    emitter.emitReferencedMethodParameter(nameElement, className, methodName, methodSignature, psiParameter, index);
                 } else if (declarationScope instanceof PsiForeachStatement || declarationScope instanceof PsiCatchSection) {
                     // New variable declared with for(type var:...) and try{}catch(type var){}
                     // For some reason, PSI calls these "parameters", but they're more like local variable declarations
                     // Treat them as such
 
-                    if (!(psiParameter.getType() instanceof PsiPrimitiveType)) {
-                        System.out.println("@,"+sourceFilePath+","+psiParameter.getTypeElement().getTextRange()+",class,"+psiParameter.getType().getInternalCanonicalText());
-                    }
-                    System.out.println("@,"+sourceFilePath+","+psiParameter.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+ nextLocalVariableIndex);
+                    emitter.emitTypeRange(psiParameter.getTypeElement());
+
+                    emitter.emitReferencedLocalVariable(nameElement, className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
                     localVariableIndices.put(psiParameter, nextLocalVariableIndex);
                     nextLocalVariableIndex++;
                 } else {
                     System.out.println("WARNING: parameter "+psiParameter+" in unknown declaration scope "+declarationScope);
                 }
-
             } else {
                 // If you get this in a bunch of places on in CB on Entity getBukkitEntity() etc. (null referent), its probably
                 // IntelliJ getting confused by the Entity class in the server jar added as a library - but overridden
