@@ -8,6 +8,7 @@ import java.util.HashMap;
  * Recursively descends and processes symbol references
  */
 public class SymbolReferenceWalker {
+    private String sourceFilePath;
     private String className;
     private String methodName = "(outside-method)";
     private String methodSignature = "";
@@ -27,12 +28,13 @@ public class SymbolReferenceWalker {
      */
     private HashMap<PsiParameter, Integer> methodParameterIndices = new HashMap<PsiParameter, Integer>();
 
-    public SymbolReferenceWalker(String className) {
+    public SymbolReferenceWalker(String sourceFilePath,String className) {
+        this.sourceFilePath = sourceFilePath;
         this.className = className;
     }
 
-    public SymbolReferenceWalker(String className, String methodName, String methodSignature) {
-        this.className = className;
+    public SymbolReferenceWalker(String sourceFilePath, String className, String methodName, String methodSignature) {
+        this(sourceFilePath, className);
         this.methodName = methodName;
         this.methodSignature = methodSignature;
     }
@@ -70,14 +72,14 @@ public class SymbolReferenceWalker {
                 } else if (declaredElement instanceof PsiLocalVariable) {
                     PsiLocalVariable psiLocalVariable = (PsiLocalVariable)declaredElement;
 
-                    System.out.println("@,"+psiLocalVariable.getTypeElement().getTextRange()+",type,"+psiLocalVariable.getType().getInternalCanonicalText());
-                    System.out.println("@,"+psiLocalVariable.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+ nextLocalVariableIndex);
+                    System.out.println("@,"+sourceFilePath+","+psiLocalVariable.getTypeElement().getTextRange()+",type,"+psiLocalVariable.getType().getInternalCanonicalText());
+                    System.out.println("@,"+sourceFilePath+","+psiLocalVariable.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+ nextLocalVariableIndex);
 
                     // Record order of variable declarations for references in body
                     localVariableIndices.put(psiLocalVariable, nextLocalVariableIndex);
                     nextLocalVariableIndex++;
                 } else {
-                    System.out.println("Unknown declaration "+psiDeclarationStatement);
+                    System.out.println("WARNING: Unknown declaration "+psiDeclarationStatement);
                 }
             }
         }
@@ -100,17 +102,17 @@ public class SymbolReferenceWalker {
             } else if (referentElement instanceof PsiClass) {
                 PsiClass psiClass = (PsiClass)referentElement;
 
-                System.out.println("@,"+nameElement.getTextRange()+",class,"+psiClass.getQualifiedName());
+                System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",class,"+psiClass.getQualifiedName());
             } else if (referentElement instanceof PsiField) {
                 PsiField psiField = (PsiField)referentElement;
                 PsiClass psiClass = psiField.getContainingClass();
 
-                System.out.println("@,"+nameElement.getTextRange()+",field,"+psiClass.getQualifiedName()+","+psiField.getName());
+                System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",field,"+psiClass.getQualifiedName()+","+psiField.getName());
             } else if (referentElement instanceof PsiMethod) {
                 PsiMethod psiMethodCalled = (PsiMethod)referentElement;
                 PsiClass psiClass = psiMethodCalled.getContainingClass();
 
-                System.out.println("@,"+nameElement.getTextRange()+",method,"+psiClass.getQualifiedName()+","+psiMethodCalled.getName()+","+MethodSignatureHelper.makeTypeSignatureString(psiMethodCalled));
+                System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",method,"+psiClass.getQualifiedName()+","+psiMethodCalled.getName()+","+MethodSignatureHelper.makeTypeSignatureString(psiMethodCalled));
             } else if (referentElement instanceof PsiLocalVariable) {
                 PsiLocalVariable psiLocalVariable = (PsiLocalVariable)referentElement;
 
@@ -122,7 +124,7 @@ public class SymbolReferenceWalker {
                 } else {
                     index = localVariableIndices.get(psiLocalVariable);
                 }
-                System.out.println("@,"+nameElement.getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+index);
+                System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+index);
 
             } else if (referentElement instanceof PsiParameter) {
                 PsiParameter psiParameter = (PsiParameter)referentElement;
@@ -135,27 +137,33 @@ public class SymbolReferenceWalker {
                     int index;
                     if (!methodParameterIndices.containsKey(psiParameter)) {
                         index = -1;
-                        System.out.println("couldn't find method parameter index for "+psiParameter+" in "+methodParameterIndices);
+                        // TODO: properly handle parameters in inner classes.. currently we always look at the outer method,
+                        // but there could be parameters in a method in an inner class. This currently causes four errors in CB,
+                        // CraftTask and CraftScheduler, since it makes heavy use of anonymous inner classes.
+                        System.out.println("WARNING: couldn't find method parameter index for "+psiParameter+" in "+methodParameterIndices);
                     } else {
                         index = methodParameterIndices.get(psiParameter);
                     }
 
-                    System.out.println("@,"+nameElement.getTextRange()+",param,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+index);
+                    System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",param,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+index);
                 } else if (declarationScope instanceof PsiForeachStatement || declarationScope instanceof PsiCatchSection) {
                     // New variable declared with for(type var:...) and try{}catch(type var){}
                     // For some reason, PSI calls these "parameters", but they're more like local variable declarations
                     // Treat them as such
 
-                    System.out.println("@,"+psiParameter.getTypeElement().getTextRange()+",type,"+psiParameter.getType().getInternalCanonicalText());
-                    System.out.println("@,"+psiParameter.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+ nextLocalVariableIndex);
+                    System.out.println("@,"+sourceFilePath+","+psiParameter.getTypeElement().getTextRange()+",type,"+psiParameter.getType().getInternalCanonicalText());
+                    System.out.println("@,"+sourceFilePath+","+psiParameter.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+ nextLocalVariableIndex);
                     localVariableIndices.put(psiParameter, nextLocalVariableIndex);
                     nextLocalVariableIndex++;
                 } else {
-                    System.out.println("parameter "+psiParameter+" in unknown declaration scope "+declarationScope);
+                    System.out.println("WARNING: parameter "+psiParameter+" in unknown declaration scope "+declarationScope);
                 }
 
             } else {
-                System.out.println("ignoring unknown referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
+                // If you get this in a bunch of places on in CB on Entity getBukkitEntity() etc. (null referent), its probably
+                // IntelliJ getting confused by the Entity class in the server jar added as a library - but overridden
+                // in the project. To fix this, replace your jar with the slimmed version at https://github.com/agaricusb/MinecraftRemapping/blob/master/slim-jar.py
+                System.out.println("WARNING: ignoring unknown referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
             }
 
             /*
