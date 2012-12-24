@@ -133,6 +133,7 @@ public class ApplySrgActionExperimental extends AnAction {
     }
 
     private void processMethod(String className, PsiMethod psiMethod) {
+        // TODO: method signature
         System.out.println("@,"+psiMethod.getNameIdentifier().getTextRange()+",method,"+className+","+psiMethod.getName());
 
         PsiParameterList psiParameterList = psiMethod.getParameterList();
@@ -157,7 +158,7 @@ public class ApplySrgActionExperimental extends AnAction {
     }
 
     private void walk(String className, PsiMethod psiMethod, PsiElement psiElement, int depth) {
-        System.out.println("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
+        //System.out.println("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
 
         if (psiElement == null) {
             return;
@@ -166,19 +167,60 @@ public class ApplySrgActionExperimental extends AnAction {
         if (psiElement instanceof PsiReferenceExpression) {
             PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)psiElement;
 
-            PsiElement parent = psiReferenceExpression.getParent();
-            boolean isMethodCall =  parent instanceof PsiMethodCallExpression;
+            //PsiExpression psiQualifierExpression = psiReferenceExpression.getQualifierExpression();
+            //PsiType psiQualifierType = psiQualifierExpression != null ? psiQualifierExpression.getType() : null;
 
-            PsiExpression psiQualifierExpression = psiReferenceExpression.getQualifierExpression();
-            PsiType psiQualifierType = psiQualifierExpression != null ? psiQualifierExpression.getType() : null;
+            // What this reference expression actually refers to
+            PsiElement referentElement = psiReferenceExpression.resolve();
 
+            // Identifier token naming this reference without qualification
+            PsiElement nameElement = psiReferenceExpression.getReferenceNameElement();
+            String name = psiReferenceExpression.getReferenceName();
+
+            if (referentElement instanceof PsiPackage) {
+
+            } else if (referentElement instanceof PsiClass) {
+                PsiClass psiClass = (PsiClass)referentElement;
+
+                System.out.println("@,"+nameElement.getTextRange()+",class,"+psiClass.getQualifiedName());
+            } else if (referentElement instanceof PsiField) {
+                PsiField psiField = (PsiField)referentElement;
+                PsiClass psiClass = psiField.getContainingClass();
+
+                System.out.println("@,"+nameElement.getTextRange()+",field,"+psiClass.getQualifiedName()+","+psiField.getName());
+            } else if (referentElement instanceof PsiMethod) {
+                PsiMethod psiMethodCalled = (PsiMethod)referentElement;
+                PsiClass psiClass = psiMethodCalled.getContainingClass();
+
+                // TODO: method signature
+                System.out.println("@,"+nameElement.getTextRange()+",method,"+psiClass.getQualifiedName()+","+psiMethodCalled.getName());
+            } else if (referentElement instanceof PsiLocalVariable) {
+                PsiLocalVariable psiLocalVariable = (PsiLocalVariable)referentElement;
+
+                // TODO: index of local variable as declared in method
+                // TODO: method signature
+                System.out.println("@,"+nameElement.getTextRange()+",localvar,"+className+","+psiMethod.getName()+","+psiLocalVariable.getName());
+
+            } else if (referentElement instanceof PsiParameter) {
+                PsiParameter psiParameter = (PsiParameter)referentElement;
+
+                // TODO: index of parameter as in method parameter list
+                // TODO: method signature
+                System.out.println("@,"+nameElement.getTextRange()+",param,"+className+","+psiMethod.getName()+","+psiParameter.getName());
+            } else {
+                System.out.println("ignoring unknown referent "+referentElement+" in "+className+" "+psiMethod);
+            }
+
+            /*
             System.out.println("   ref "+psiReferenceExpression+
+                    " nameElement="+nameElement+
+                    " name="+psiReferenceExpression.getReferenceName()+
                     " resolve="+psiReferenceExpression.resolve()+
                     " text="+psiReferenceExpression.getText()+
                     " qualifiedName="+psiReferenceExpression.getQualifiedName()+
-                    " qualifierExpr="+psiReferenceExpression.getQualifierExpression()+
-                    " qualifierType="+(psiQualifierType != null ? psiQualifierType.getInternalCanonicalText() : "null")
+                    " qualifierExpr="+psiReferenceExpression.getQualifierExpression()
                 );
+                */
         }
 
         PsiElement[] children = psiElement.getChildren();
