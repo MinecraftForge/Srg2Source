@@ -83,12 +83,13 @@ public class ApplySrgActionExperimental extends AnAction {
 
     private void processFile(PsiJavaFile psiJavaFile) {
         String sourceFilePath = psiJavaFile.getVirtualFile().getPath().replace(project.getBasePath() + "/", "");
+        SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath);
 
         System.out.println("processing "+psiJavaFile+" = "+sourceFilePath);
 
         PsiPackageStatement psiPackageStatement = psiJavaFile.getPackageStatement();
         if (psiPackageStatement != null) {
-            System.out.println("@,"+sourceFilePath+","+psiPackageStatement.getPackageReference().getTextRange()+",package,"+psiPackageStatement.getPackageName());
+            emitter.emitPackageRange(psiPackageStatement);
         }
 
         PsiImportList psiImportList = psiJavaFile.getImportList();
