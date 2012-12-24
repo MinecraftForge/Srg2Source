@@ -30,11 +30,11 @@ public class ApplySrgActionExperimental extends AnAction {
 
         // Get selected files
         VirtualFile[] selectedFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-        System.out.println("Selected "+ selectedFiles.length+" files");
-        if (selectedFiles.length == 0) {
+        if (selectedFiles == null || selectedFiles.length == 0) {
             Messages.showMessageDialog(project, "Please select the files you want to transform in the View > Tool Windows > Project view, then try again.", "No selection", Messages.getErrorIcon());
             return null;
         }
+        System.out.println("Selected "+ selectedFiles.length+" files");
         List<VirtualFile> skippedFiles = new ArrayList<VirtualFile>();
         for(VirtualFile file: selectedFiles) {
             System.out.println("- " + file);
@@ -68,7 +68,7 @@ public class ApplySrgActionExperimental extends AnAction {
             }
 
             if (skippedFiles.size() == selectedFiles.length) {
-                sb.append("\nNo valid Java files in your project were selected. Please select the files you want to process in View > Tool Windows > Project and try again.");
+                sb.append("\nNo valid Java source files in your project were selected. Please select the files you want to process in View > Tool Windows > Project and try again.");
                 Messages.showMessageDialog(project, sb.toString(), "No Java files selected", Messages.getErrorIcon());
                 return null;
             }
@@ -86,6 +86,12 @@ public class ApplySrgActionExperimental extends AnAction {
     private void processFile(PsiJavaFile psiJavaFile) {
         System.out.println("processing "+psiJavaFile);
 
+        PsiPackageStatement psiPackageStatement = psiJavaFile.getPackageStatement();
+        if (psiPackageStatement != null) {
+            System.out.println("@,"+psiPackageStatement.getTextRange()+",package,"+psiPackageStatement.getPackageName());
+            //TODO psiJavaFile.setPackageName("");
+        }
+
         PsiImportList psiImportList = psiJavaFile.getImportList();
 
         PsiImportStatementBase[] psiImportStatements = psiImportList.getAllImportStatements();
@@ -93,9 +99,7 @@ public class ApplySrgActionExperimental extends AnAction {
             PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiImportStatement.getImportReference();
 
             String qualifiedName = psiJavaCodeReferenceElement.getQualifiedName();
-            int x = psiJavaCodeReferenceElement.getTextOffset(); // TODO: find why this is wrong - starts after package name, even though length is correct
-            int l = psiJavaCodeReferenceElement.getTextLength();
-            System.out.println("@,"+x+","+l+",import,"+qualifiedName);
+            System.out.println("@,"+psiJavaCodeReferenceElement.getTextRange()+",import,"+qualifiedName);
             // TODO: replace through map
         }
     }
