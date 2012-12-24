@@ -72,7 +72,9 @@ public class SymbolReferenceWalker {
                 } else if (declaredElement instanceof PsiLocalVariable) {
                     PsiLocalVariable psiLocalVariable = (PsiLocalVariable)declaredElement;
 
-                    System.out.println("@,"+sourceFilePath+","+psiLocalVariable.getTypeElement().getTextRange()+",type,"+psiLocalVariable.getType().getInternalCanonicalText());
+                    if (!(psiLocalVariable.getType() instanceof PsiPrimitiveType)) {
+                        System.out.println("@,"+sourceFilePath+","+psiLocalVariable.getTypeElement().getTextRange()+",class,"+psiLocalVariable.getType().getInternalCanonicalText());
+                    }
                     System.out.println("@,"+sourceFilePath+","+psiLocalVariable.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+ nextLocalVariableIndex);
 
                     // Record order of variable declarations for references in body
@@ -151,7 +153,9 @@ public class SymbolReferenceWalker {
                     // For some reason, PSI calls these "parameters", but they're more like local variable declarations
                     // Treat them as such
 
-                    System.out.println("@,"+sourceFilePath+","+psiParameter.getTypeElement().getTextRange()+",type,"+psiParameter.getType().getInternalCanonicalText());
+                    if (!(psiParameter.getType() instanceof PsiPrimitiveType)) {
+                        System.out.println("@,"+sourceFilePath+","+psiParameter.getTypeElement().getTextRange()+",class,"+psiParameter.getType().getInternalCanonicalText());
+                    }
                     System.out.println("@,"+sourceFilePath+","+psiParameter.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+ nextLocalVariableIndex);
                     localVariableIndices.put(psiParameter, nextLocalVariableIndex);
                     nextLocalVariableIndex++;

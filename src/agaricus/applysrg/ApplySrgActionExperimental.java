@@ -99,7 +99,7 @@ public class ApplySrgActionExperimental extends AnAction {
                     PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiImportStatement.getImportReference();
 
                     String qualifiedName = psiJavaCodeReferenceElement.getQualifiedName();
-                    System.out.println("@,"+sourceFilePath+","+psiJavaCodeReferenceElement.getTextRange()+",import,"+qualifiedName);
+                    System.out.println("@,"+sourceFilePath+","+psiJavaCodeReferenceElement.getTextRange()+",class,"+qualifiedName); // note, may be package.*?
                 }
             }
         }
@@ -122,7 +122,9 @@ public class ApplySrgActionExperimental extends AnAction {
 
         for (PsiField psiField : psiFields) {
             PsiTypeElement psiTypeElement = psiField.getTypeElement();
-            System.out.println("@,"+sourceFilePath+","+psiTypeElement.getTextRange()+",type,"+psiTypeElement.getType().getInternalCanonicalText());
+            if (!(psiTypeElement.getType() instanceof PsiPrimitiveType)) { // skip int, etc.
+                System.out.println("@,"+sourceFilePath+","+psiTypeElement.getTextRange()+",class,"+psiTypeElement.getType().getInternalCanonicalText());
+            }
             System.out.println("@,"+sourceFilePath+","+psiField.getNameIdentifier().getTextRange()+",field,"+className+","+psiField.getName());
             // Not using psiField.setName("");
 
@@ -162,7 +164,9 @@ public class ApplySrgActionExperimental extends AnAction {
                 PsiTypeElement psiTypeElement = psiParameter.getTypeElement();
 
                 if (psiTypeElement != null) {
-                    System.out.println("@,"+sourceFilePath+","+psiTypeElement.getTextRange()+",type,"+className+","+psiMethod.getName()+","+psiTypeElement.getType().getInternalCanonicalText()+","+parameterIndex);
+                    if (!(psiTypeElement.getType() instanceof PsiPrimitiveType)) {
+                        System.out.println("@,"+sourceFilePath+","+psiTypeElement.getTextRange()+",class,"+className+","+psiMethod.getName()+","+psiTypeElement.getType().getInternalCanonicalText()+","+parameterIndex);
+                    }
                 }
 
                 if (psiParameter != null && psiParameter.getNameIdentifier() != null) {
