@@ -147,7 +147,7 @@ public class ApplySrgActionExperimental extends AnAction {
 
         PsiCodeBlock psiCodeBlock = psiMethod.getBody();
 
-        walk(className, psiMethod, psiCodeBlock);
+        walk(className, psiMethod, psiCodeBlock, 0);
 
         /*
         PsiStatement[] psiStatements = psiCodeBlock.getStatements();
@@ -156,11 +156,36 @@ public class ApplySrgActionExperimental extends AnAction {
         */
     }
 
-    private void walk(String className, PsiMethod psiMethod, PsiElement psiElement) {
+    private void walk(String className, PsiMethod psiMethod, PsiElement psiElement, int depth) {
         System.out.println("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
 
-        for (PsiElement child: psiElement.getChildren()) {
-            walk(className, psiMethod, child);
+        if (psiElement == null) {
+            return;
+        }
+
+        if (psiElement instanceof PsiReferenceExpression) {
+            PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)psiElement;
+
+            PsiElement parent = psiReferenceExpression.getParent();
+            boolean isMethodCall =  parent instanceof PsiMethodCallExpression;
+
+            PsiExpression psiQualifierExpression = psiReferenceExpression.getQualifierExpression();
+            PsiType psiQualifierType = psiQualifierExpression != null ? psiQualifierExpression.getType() : null;
+
+            System.out.println("   ref "+psiReferenceExpression+
+                    " resolve="+psiReferenceExpression.resolve()+
+                    " text="+psiReferenceExpression.getText()+
+                    " qualifiedName="+psiReferenceExpression.getQualifiedName()+
+                    " qualifierExpr="+psiReferenceExpression.getQualifierExpression()+
+                    " qualifierType="+(psiQualifierType != null ? psiQualifierType.getInternalCanonicalText() : "null")
+                );
+        }
+
+        PsiElement[] children = psiElement.getChildren();
+        if (children != null) {
+            for (PsiElement child: children) {
+                walk(className, psiMethod, child, depth + 1);
+            }
         }
     }
 
