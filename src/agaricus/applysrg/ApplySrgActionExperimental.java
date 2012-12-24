@@ -89,7 +89,7 @@ public class ApplySrgActionExperimental extends AnAction {
         PsiPackageStatement psiPackageStatement = psiJavaFile.getPackageStatement();
         if (psiPackageStatement != null) {
             System.out.println("@,"+psiPackageStatement.getPackageReference().getTextRange()+",package,"+psiPackageStatement.getPackageName());
-            //TODO psiJavaFile.setPackageName("");
+            // Not using psiJavaFile.setPackageName("");
         }
 
         PsiImportList psiImportList = psiJavaFile.getImportList();
@@ -100,7 +100,6 @@ public class ApplySrgActionExperimental extends AnAction {
 
             String qualifiedName = psiJavaCodeReferenceElement.getQualifiedName();
             System.out.println("@,"+psiJavaCodeReferenceElement.getTextRange()+",import,"+qualifiedName);
-            // TODO: replace through map
         }
 
 
@@ -122,10 +121,10 @@ public class ApplySrgActionExperimental extends AnAction {
             PsiTypeElement psiTypeElement = psiField.getTypeElement();
             System.out.println("@,"+psiTypeElement.getTextRange()+",type,"+psiTypeElement.getType().getInternalCanonicalText());
             System.out.println("@,"+psiField.getNameIdentifier().getTextRange()+",field,"+className+","+psiField.getName());
-            //TODO psiField.setName("");
+            // Not using psiField.setName("");
 
             // Initializer can refer to other symbols
-            walk(className, null, psiField.getInitializer(), 0);
+            walkForReferences(className, "(variable-initializer)", "", psiField.getInitializer(), 0);
         }
 
         PsiMethod[] psiMethods = psiClass.getMethods();
@@ -136,8 +135,9 @@ public class ApplySrgActionExperimental extends AnAction {
     }
 
     private void processMethod(String className, PsiMethod psiMethod) {
-        // TODO: method signature
-        System.out.println("@,"+psiMethod.getNameIdentifier().getTextRange()+",method,"+className+","+psiMethod.getName());
+        String signature = MethodSignatureHelper.makeTypeSignatureString(psiMethod);
+
+        System.out.println("@,"+psiMethod.getNameIdentifier().getTextRange()+",method,"+className+","+psiMethod.getName()+","+signature);
 
         PsiParameterList psiParameterList = psiMethod.getParameterList();
         PsiParameter[] psiParameters = psiParameterList.getParameters();
@@ -151,10 +151,18 @@ public class ApplySrgActionExperimental extends AnAction {
 
         PsiCodeBlock psiCodeBlock = psiMethod.getBody();
 
-        walk(className, psiMethod, psiCodeBlock, 0);
+        walkForReferences(className, psiMethod.getName(), signature, psiCodeBlock, 0);
     }
 
-    private void walk(String className, PsiMethod psiMethod, PsiElement psiElement, int depth) {
+    /**
+     * Recursively descend an element and process symbol references
+     * @param className
+     * @param methodName
+     * @param methodSignature
+     * @param psiElement
+     * @param depth
+     */
+    private void walkForReferences(String className, String methodName, String methodSignature, PsiElement psiElement, int depth) {
         //System.out.println("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
 
         if (psiElement == null) {
@@ -189,23 +197,20 @@ public class ApplySrgActionExperimental extends AnAction {
                 PsiMethod psiMethodCalled = (PsiMethod)referentElement;
                 PsiClass psiClass = psiMethodCalled.getContainingClass();
 
-                // TODO: method signature
-                System.out.println("@,"+nameElement.getTextRange()+",method,"+psiClass.getQualifiedName()+","+psiMethodCalled.getName());
+                System.out.println("@,"+nameElement.getTextRange()+",method,"+psiClass.getQualifiedName()+","+psiMethodCalled.getName()+","+MethodSignatureHelper.makeTypeSignatureString(psiMethodCalled));
             } else if (referentElement instanceof PsiLocalVariable) {
                 PsiLocalVariable psiLocalVariable = (PsiLocalVariable)referentElement;
 
                 // TODO: index of local variable as declared in method
-                // TODO: method signature
-                System.out.println("@,"+nameElement.getTextRange()+",localvar,"+className+","+psiMethod.getName()+","+psiLocalVariable.getName());
+                System.out.println("@,"+nameElement.getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName());
 
             } else if (referentElement instanceof PsiParameter) {
                 PsiParameter psiParameter = (PsiParameter)referentElement;
 
                 // TODO: index of parameter as in method parameter list
-                // TODO: method signature
-                System.out.println("@,"+nameElement.getTextRange()+",param,"+className+","+psiMethod.getName()+","+psiParameter.getName());
+                System.out.println("@,"+nameElement.getTextRange()+",param,"+className+","+methodName+","+methodSignature+","+psiParameter.getName());
             } else {
-                System.out.println("ignoring unknown referent "+referentElement+" in "+className+" "+psiMethod);
+                System.out.println("ignoring unknown referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
             }
 
             /*
@@ -223,7 +228,7 @@ public class ApplySrgActionExperimental extends AnAction {
         PsiElement[] children = psiElement.getChildren();
         if (children != null) {
             for (PsiElement child: children) {
-                walk(className, psiMethod, child, depth + 1);
+                walkForReferences(className, methodName, methodSignature, child, depth + 1);
             }
         }
     }
