@@ -12,7 +12,6 @@ public class SymbolRangeEmitter {
 
     /**
      * Emit range of package statement, declaring the package the file resides within
-     * @param psiPackageStatement
      */
     public void emitPackageRange(PsiPackageStatement psiPackageStatement) {
         System.out.println("@,"+sourceFilePath+","+psiPackageStatement.getPackageReference().getTextRange()+",package,"+psiPackageStatement.getPackageName());
@@ -20,7 +19,6 @@ public class SymbolRangeEmitter {
 
     /**
      * Emit range of import statement, including name of the imported package/class
-     * @param psiImportStatement
      */
     public void emitImportRange(PsiImportStatementBase psiImportStatement) {
         PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiImportStatement.getImportReference();
@@ -31,7 +29,6 @@ public class SymbolRangeEmitter {
 
     /**
      * Emit class name declaration
-     * @param psiClass
      * @return Qualified class name, for referencing class members
      */
     public String emitClassRange(PsiClass psiClass) {
@@ -46,7 +43,6 @@ public class SymbolRangeEmitter {
      * Emit type reference element range
      * (This is for when types are used, not declared)
      * Only class name references will be emitted
-     * @param psiTypeElement
      */
     public void emitTypeRange(PsiTypeElement psiTypeElement) {
         if (psiTypeElement == null) {
@@ -93,8 +89,6 @@ public class SymbolRangeEmitter {
 
     /**
      * Emit field name range
-     * @param className
-     * @param psiField
      */
     public void emitFieldRange(String className, PsiField psiField) {
         System.out.println("@,"+sourceFilePath+","+psiField.getNameIdentifier().getTextRange()+",field,"+className+","+psiField.getName());
@@ -102,8 +96,6 @@ public class SymbolRangeEmitter {
 
     /**
      * Emit method declaration name range
-     * @param className
-     * @param psiMethod
      * @return Method signature, for referencing method body members
      */
     public String emitMethodRange(String className, PsiMethod psiMethod) {
@@ -116,11 +108,6 @@ public class SymbolRangeEmitter {
 
     /**
      * Emit method parameter name declaration range
-     * @param className
-     * @param methodName
-     * @param methodSignature
-     * @param psiParameter
-     * @param parameterIndex
      */
     public void emitParameterRange(String className, String methodName, String methodSignature, PsiParameter psiParameter, int parameterIndex) {
         if (psiParameter == null || psiParameter.getNameIdentifier() == null) {
@@ -133,11 +120,6 @@ public class SymbolRangeEmitter {
     /**
      * Emit local variable declaration name range
      * Local variables can occur in methods, initializers, ...
-     * @param className
-     * @param methodName
-     * @param methodSignature
-     * @param psiLocalVariable
-     * @param localVariableIndex
      */
     public void emitLocalVariableRange(String className, String methodName, String methodSignature, PsiLocalVariable psiLocalVariable, int localVariableIndex) {
         System.out.println("@,"+sourceFilePath+","+psiLocalVariable.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+localVariableIndex);
@@ -148,8 +130,6 @@ public class SymbolRangeEmitter {
 
     /**
      * Emit referenced class name range
-     * @param nameElement
-     * @param psiClass
      */
     public void emitReferencedClass(PsiElement nameElement, PsiClass psiClass) {
         System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",class,"+psiClass.getQualifiedName());
@@ -157,8 +137,6 @@ public class SymbolRangeEmitter {
 
     /**
      * Emit referenced field name range
-     * @param nameElement
-     * @param psiField
      */
     public void emitReferencedField(PsiElement nameElement, PsiField psiField) {
         PsiClass psiClass = psiField.getContainingClass();
@@ -168,8 +146,6 @@ public class SymbolRangeEmitter {
 
     /**
      * Emit referenced method name range, that is, a method call
-     * @param nameElement
-     * @param psiMethodCalled
      */
     public void emitReferencedMethod(PsiElement nameElement, PsiMethod psiMethodCalled) {
         PsiClass psiClass = psiMethodCalled.getContainingClass();
@@ -180,12 +156,6 @@ public class SymbolRangeEmitter {
     /**
      * Emit referenced local variable name range
      * This includes both "local variables" declared in methods, and in foreach/catch sections ("parameters")
-     * @param nameElement
-     * @param className
-     * @param methodName
-     * @param methodSignature
-     * @param psiVariable
-     * @param localVariableIndex
      */
     public void emitReferencedLocalVariable(PsiElement nameElement, String className, String methodName, String methodSignature, PsiVariable psiVariable, int localVariableIndex) {
         System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiVariable.getName()+","+localVariableIndex);
@@ -194,12 +164,6 @@ public class SymbolRangeEmitter {
     /**
      * Emit referenced method parameter name range
      * Only includes _method_ parameters - for foreach/catch parameters see emitReferencedLocalVariable
-     * @param nameElement
-     * @param className
-     * @param methodName
-     * @param methodSignature
-     * @param psiParameter
-     * @param index
      */
     public void emitReferencedMethodParameter(PsiElement nameElement, String className, String methodName, String methodSignature, PsiParameter psiParameter, int index) {
         System.out.println("@,"+sourceFilePath+","+nameElement.getTextRange()+",param,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+index);
