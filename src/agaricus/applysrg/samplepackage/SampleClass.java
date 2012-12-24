@@ -43,11 +43,24 @@ public class SampleClass {
         return i + j / k;
     }
 
+    private int vartest() {
+        int j, f, k, aaaaaaaaaa;
+        aaaaaaaaaa = 10;
+        k = 1; j = f = k;
+        System.out.println("?"+aaaaaaaaaa+k+f+j);
+        int last = 20121221;
+        return last / j;
+    }
+
     static {
         sfield7 = 7;
+
+        int whereAmI = -1;
+        sfield7 *= whereAmI;
     }
 
     {
         field1 = 1;
+        int overHere = -2;
     }
 }

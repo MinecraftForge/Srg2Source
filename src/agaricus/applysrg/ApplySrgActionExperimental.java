@@ -141,8 +141,8 @@ public class ApplySrgActionExperimental extends AnAction {
         // Class and instance initializers
         if (psiClass.getInitializers() != null) {
             for (PsiClassInitializer psiClassInitializer : psiClass.getInitializers()) {
-                SymbolReferenceWalker walker = new SymbolReferenceWalker(className);
-                // TODO: what about local variables in class initializers?
+                // We call class initializers "{}"...
+                SymbolReferenceWalker walker = new SymbolReferenceWalker(className, "{}", "");
                 walker.walk(psiClassInitializer.getBody());
             }
         }
@@ -165,7 +165,7 @@ public class ApplySrgActionExperimental extends AnAction {
                 }
 
                 if (psiParameter != null && psiParameter.getNameIdentifier() != null) {
-                    System.out.println("@,"+psiParameter.getNameIdentifier().getTextRange()+",methodparam,"+className+","+psiMethod.getName()+","+ parameterIndex +","+psiParameter.getName());
+                    System.out.println("@,"+psiParameter.getNameIdentifier().getTextRange()+",param,"+className+","+psiMethod.getName()+","+ parameterIndex +","+psiParameter.getName());
                 }
             }
         }

@@ -2,6 +2,8 @@ package agaricus.applysrg;
 
 import com.intellij.psi.*;
 
+import java.util.HashMap;
+
 /**
  * Recursively descends and processes symbol references
  */
@@ -9,6 +11,8 @@ public class SymbolReferenceWalker {
     public String className;
     public String methodName = "(outside-method)";
     public String methodSignature = "";
+    public HashMap<PsiLocalVariable, Integer> localVariableIndices = new HashMap<PsiLocalVariable, Integer>();
+    public int nextLocalVariableIndex = 0;
 
     public SymbolReferenceWalker(String className) {
         this.className = className;
@@ -29,6 +33,27 @@ public class SymbolReferenceWalker {
 
         if (psiElement == null) {
             return;
+        }
+
+        if (psiElement instanceof PsiDeclarationStatement) {
+            PsiDeclarationStatement psiDeclarationStatement = (PsiDeclarationStatement)psiElement;
+
+            for (PsiElement declaredElement : psiDeclarationStatement.getDeclaredElements()) {
+                if (declaredElement instanceof PsiClass) {
+                    System.out.println("TODO: inner class "+declaredElement); // TODO: process this?
+                } else if (declaredElement instanceof PsiLocalVariable) {
+                    PsiLocalVariable psiLocalVariable = (PsiLocalVariable)declaredElement;
+
+                    System.out.println("@,"+psiLocalVariable.getTypeElement().getTextRange()+",type,"+psiLocalVariable.getType().getInternalCanonicalText());
+                    System.out.println("@,"+psiLocalVariable.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+ nextLocalVariableIndex);
+
+                    // Record order of variable declarations for references in body
+                    localVariableIndices.put(psiLocalVariable, nextLocalVariableIndex);
+                    nextLocalVariableIndex++;
+                } else {
+                    System.out.println("Unknown declaration "+psiDeclarationStatement);
+                }
+            }
         }
 
         if (psiElement instanceof PsiReferenceExpression) {
@@ -63,8 +88,15 @@ public class SymbolReferenceWalker {
             } else if (referentElement instanceof PsiLocalVariable) {
                 PsiLocalVariable psiLocalVariable = (PsiLocalVariable)referentElement;
 
-                // TODO: index of local variable as declared in method
-                System.out.println("@,"+nameElement.getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName());
+                // Index of local variable as declared in method
+                int index;
+                if (!localVariableIndices.containsKey(psiLocalVariable))  {
+                    index = -1;
+                    System.out.println("couldn't find local variable index for "+psiLocalVariable+" in "+localVariableIndices);
+                } else {
+                    index = localVariableIndices.get(psiLocalVariable);
+                }
+                System.out.println("@,"+nameElement.getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiLocalVariable.getName()+","+index);
 
             } else if (referentElement instanceof PsiParameter) {
                 PsiParameter psiParameter = (PsiParameter)referentElement;
