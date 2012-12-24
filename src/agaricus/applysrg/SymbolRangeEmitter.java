@@ -55,17 +55,36 @@ public class SymbolRangeEmitter {
 
         PsiType psiType = psiTypeElement.getType();
 
+        // Go deeper.. reaching inside arrays
+        // We want to report e.g. java.lang.String, not java.lang.String[]
+        psiType = psiType.getDeepComponentType();
+
         if (psiType instanceof PsiPrimitiveType) { // skip int, etc. - they're never going to be renamed
             return;
         }
 
-        // TODO: getDeepComponentType() - reach inside arrays, but, need to consider text offsets
-
-        System.out.println("@,"+sourceFilePath+","+psiTypeElement.getTextRange()+",class,"+psiType.getInternalCanonicalText());
-
-        // Process type parameters, for example, String in HashMap<String,String>
-        // for other examples see https://gist.github.com/4370462
+        // Get identifier referencing this type
         PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiTypeElement.getInnermostComponentReferenceElement();
+
+        PsiElement referenceNameElement = psiJavaCodeReferenceElement.getReferenceNameElement();
+        if (!(referenceNameElement instanceof PsiIdentifier)) {
+            System.out.println("WARNING: unrecognized reference name element, not identifier: " + referenceNameElement);
+            return;
+        }
+        PsiIdentifier psiIdentifier = (PsiIdentifier)referenceNameElement;
+
+        // Get the "base" parent type name -- without any array brackets, or type parameters
+        String baseTypeName = psiType.getInternalCanonicalText();
+        if (baseTypeName.contains("<")) {
+            // Sorry I couldn't find a better way to do this..
+            // The PsiIdentifier range is correct, but it needs to be fully qualified, so it has to come from
+            // a PsiType. getDeepComponentType() handles descending into arrays, but not parameterized types. TODO: make better
+            baseTypeName = baseTypeName.replaceFirst("<.*", "");
+        }
+        System.out.println("@,"+sourceFilePath+","+psiIdentifier.getTextRange()+",class,"+baseTypeName);
+
+        // Process type parameters, for example, Integer and Boolean in HashMap<Integer,Boolean>
+        // for other examples see https://gist.github.com/4370462
         PsiReferenceParameterList psiReferenceParameterList = psiJavaCodeReferenceElement.getParameterList();
         for (PsiTypeElement innerTypeElement: psiReferenceParameterList.getTypeParameterElements()) {
             emitTypeRange(innerTypeElement);

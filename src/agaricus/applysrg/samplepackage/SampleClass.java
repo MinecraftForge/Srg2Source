@@ -13,6 +13,7 @@ public class SampleClass {
     public int field6 = field5 + 1;
     static int sfield7;
     public String[] arrayField;
+    public Double[][][][] fourArray;
     public HashMap<Integer,Boolean> mapField;
 
     public SampleClass()
