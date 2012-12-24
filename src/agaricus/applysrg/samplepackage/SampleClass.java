@@ -43,6 +43,18 @@ public class SampleClass {
         return i + j / k + k + k + k - j - j - i;
     }
 
+    public void moreparamtest(double d0, double d12) {
+        for (String forVar : field4) {
+            System.out.println(forVar);
+        }
+        try {
+            throw new IllegalArgumentException();
+        } catch (Exception catchVar) {
+            catchVar.printStackTrace();
+        }
+    }
+
+
     private int vartest() {
         int j, f, k, aaaaaaaaaa;
         aaaaaaaaaa = 10;
@@ -63,4 +75,5 @@ public class SampleClass {
         field1 = 1;
         int overHere = -2;
     }
+
 }

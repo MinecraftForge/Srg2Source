@@ -11,8 +11,20 @@ public class SymbolReferenceWalker {
     private String className;
     private String methodName = "(outside-method)";
     private String methodSignature = "";
-    private HashMap<PsiLocalVariable, Integer> localVariableIndices = new HashMap<PsiLocalVariable, Integer>();
+
+    /**
+     * Variables in the code block, mapped to the order they were declared.
+     * This includes PsiLocalVariable from PsiDeclarationStatement, and also
+     * PsiParameter from PsiForeachStatement/PsiCatchSection. Both are PsiVariable.
+     */
+    private HashMap<PsiVariable, Integer> localVariableIndices = new HashMap<PsiVariable, Integer>();
     private int nextLocalVariableIndex = 0;
+
+    /**
+     * Parameters to method, mapped to order in method declaration.
+     * Set by caller
+     * @see #addMethodParameterIndices
+     */
     private HashMap<PsiParameter, Integer> methodParameterIndices = new HashMap<PsiParameter, Integer>();
 
     public SymbolReferenceWalker(String className) {
@@ -115,15 +127,33 @@ public class SymbolReferenceWalker {
             } else if (referentElement instanceof PsiParameter) {
                 PsiParameter psiParameter = (PsiParameter)referentElement;
 
-                int index;
-                if (!methodParameterIndices.containsKey(psiParameter)) {
-                    index = -1;
-                    System.out.println("couldn't find parameter index for "+psiParameter+" in "+methodParameterIndices);
+                PsiElement declarationScope = psiParameter.getDeclarationScope();
+
+                if (declarationScope instanceof PsiMethod) {
+                    // Method parameter
+
+                    int index;
+                    if (!methodParameterIndices.containsKey(psiParameter)) {
+                        index = -1;
+                        System.out.println("couldn't find method parameter index for "+psiParameter+" in "+methodParameterIndices);
+                    } else {
+                        index = methodParameterIndices.get(psiParameter);
+                    }
+
+                    System.out.println("@,"+nameElement.getTextRange()+",param,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+index);
+                } else if (declarationScope instanceof PsiForeachStatement || declarationScope instanceof PsiCatchSection) {
+                    // New variable declared with for(type var:...) and try{}catch(type var){}
+                    // For some reason, PSI calls these "parameters", but they're more like local variable declarations
+                    // Treat them as such
+
+                    System.out.println("@,"+psiParameter.getTypeElement().getTextRange()+",type,"+psiParameter.getType().getInternalCanonicalText());
+                    System.out.println("@,"+psiParameter.getNameIdentifier().getTextRange()+",localvar,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+ nextLocalVariableIndex);
+                    localVariableIndices.put(psiParameter, nextLocalVariableIndex);
+                    nextLocalVariableIndex++;
                 } else {
-                    index = methodParameterIndices.get(psiParameter);
+                    System.out.println("parameter "+psiParameter+" in unknown declaration scope "+declarationScope);
                 }
 
-                System.out.println("@,"+nameElement.getTextRange()+",param,"+className+","+methodName+","+methodSignature+","+psiParameter.getName()+","+index);
             } else {
                 System.out.println("ignoring unknown referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
             }
