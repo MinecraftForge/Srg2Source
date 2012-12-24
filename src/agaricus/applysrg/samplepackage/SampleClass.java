@@ -12,6 +12,8 @@ public class SampleClass {
     public int field5 = 5;
     public int field6 = field5 + 1;
     static int sfield7;
+    public String[] arrayField;
+    public HashMap<Integer,Boolean> mapField;
 
     public SampleClass()
     {
@@ -75,5 +77,5 @@ public class SampleClass {
         field1 = 1;
         int overHere = -2;
     }
-
 }
+

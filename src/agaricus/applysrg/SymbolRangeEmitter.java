@@ -53,14 +53,23 @@ public class SymbolRangeEmitter {
             return;
         }
 
-        if (psiTypeElement.getType() instanceof PsiPrimitiveType) { // skip int, etc.
+        PsiType psiType = psiTypeElement.getType();
+
+        if (psiType instanceof PsiPrimitiveType) { // skip int, etc. - they're never going to be renamed
             return;
         }
 
-        System.out.println("@,"+sourceFilePath+","+psiTypeElement.getTextRange()+",class,"+psiTypeElement.getType().getInternalCanonicalText());
+        // TODO: getDeepComponentType() - reach inside arrays, but, need to consider text offsets
 
-        // TODO: for composite types, emit constituents! array type -> element type, templated types, etc.
-        // see https://gist.github.com/4370462 for usages
+        System.out.println("@,"+sourceFilePath+","+psiTypeElement.getTextRange()+",class,"+psiType.getInternalCanonicalText());
+
+        // Process type parameters, for example, String in HashMap<String,String>
+        // for other examples see https://gist.github.com/4370462
+        PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiTypeElement.getInnermostComponentReferenceElement();
+        PsiReferenceParameterList psiReferenceParameterList = psiJavaCodeReferenceElement.getParameterList();
+        for (PsiTypeElement innerTypeElement: psiReferenceParameterList.getTypeParameterElements()) {
+            emitTypeRange(innerTypeElement);
+        }
     }
 
     /**
