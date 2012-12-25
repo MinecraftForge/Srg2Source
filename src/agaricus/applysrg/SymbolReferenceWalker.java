@@ -84,15 +84,15 @@ public class SymbolReferenceWalker {
             }
         }
 
-        if (psiElement instanceof PsiReferenceExpression) {
-            PsiReferenceExpression psiReferenceExpression = (PsiReferenceExpression)psiElement;
+        if (psiElement instanceof PsiJavaCodeReferenceElement) {
+            PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = (PsiJavaCodeReferenceElement)psiElement;
 
             // What this reference expression actually refers to
-            PsiElement referentElement = psiReferenceExpression.resolve();
+            PsiElement referentElement = psiJavaCodeReferenceElement.resolve();
 
             // Identifier token naming this reference without qualification
-            PsiElement nameElement = psiReferenceExpression.getReferenceNameElement();
-            String name = psiReferenceExpression.getReferenceName();
+            PsiElement nameElement = psiJavaCodeReferenceElement.getReferenceNameElement();
+            String name = psiJavaCodeReferenceElement.getReferenceName();
 
             if (referentElement instanceof PsiPackage) {
 

@@ -143,6 +143,7 @@ public class SymbolRangeEmitter {
      * Emit referenced class name range
      */
     public void emitReferencedClass(PsiElement nameElement, PsiClass psiClass) {
+        // TODO: null check for broken references
         internalEmitClassRange(nameElement.getText(),nameElement.getTextRange(),psiClass.getQualifiedName());
     }
 

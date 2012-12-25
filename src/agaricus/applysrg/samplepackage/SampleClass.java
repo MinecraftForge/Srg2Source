@@ -24,6 +24,13 @@ public class SampleClass implements Comparable {
     }
 
     public String returnType() { return ""; }
+    public String instanceCastTest(Object o) {
+        if (o instanceof String) {
+            return (String)o;
+        } else {
+            return new String("");
+        }
+    }
 
     public void a()
     {
