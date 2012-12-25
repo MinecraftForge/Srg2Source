@@ -14,7 +14,10 @@ public class SymbolRangeEmitter {
      * Emit range of package statement, declaring the package the file resides within
      */
     public void emitPackageRange(PsiPackageStatement psiPackageStatement) {
-        internalEmitPackageRange(psiPackageStatement.getPackageReference().getText(), psiPackageStatement.getPackageReference().getTextRange(), psiPackageStatement.getPackageName());
+        internalEmitPackageRange(psiPackageStatement.getPackageReference().getText(),
+                psiPackageStatement.getPackageReference().getTextRange(),
+                psiPackageStatement.getPackageName(),
+                "(file)"); // package statement remapped based on file it was found in
     }
 
     /**
@@ -64,8 +67,13 @@ public class SymbolRangeEmitter {
             return;
         }
 
+        //System.out.println("TYPE ELEMENT="+psiTypeElement);
+
         // Get identifier referencing this type
         PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiTypeElement.getInnermostComponentReferenceElement();
+
+        //System.out.println("PsiJavaCodeReferenceElement="+psiJavaCodeReferenceElement);
+        //System.out.println("PsiJavaCodeReferenceElement text="+psiJavaCodeReferenceElement.getText());
 
         if (psiJavaCodeReferenceElement == null) {
             // get this on '? extends T'
@@ -80,15 +88,46 @@ public class SymbolRangeEmitter {
         }
         PsiIdentifier psiIdentifier = (PsiIdentifier)referenceNameElement;
 
-        // Get the "base" parent type name -- without any array brackets, or type parameters
-        String baseTypeName = psiType.getInternalCanonicalText();
-        if (baseTypeName.contains("<")) {
+        // Get the "deep" parent type name -- without any array brackets, or type parameters -- but, still fully qualified
+        String deepTypeName = psiType.getInternalCanonicalText();
+        if (deepTypeName.contains("<")) {
             // Sorry I couldn't find a better way to do this..
             // The PsiIdentifier range is correct, but it needs to be fully qualified, so it has to come from
             // a PsiType. getDeepComponentType() handles descending into arrays, but not parameterized types. TODO: make better
-            baseTypeName = baseTypeName.replaceFirst("<.*", "");
+            deepTypeName = deepTypeName.replaceFirst("<.*", "");
         }
-        internalEmitClassRange(psiIdentifier.getText(),psiIdentifier.getTextRange(),baseTypeName);
+
+        if (psiJavaCodeReferenceElement.isQualified()) {
+            // Qualified names are for example:
+            //  agaricus.applysrg.samplepackage.SampleClass fqClass;
+            //  \           qualifier         /  deep type  identifier
+
+            if (!(psiJavaCodeReferenceElement.getQualifier() instanceof PsiJavaCodeReferenceElement)) {
+                System.out.println("WARNING: unrecognized qualifier element type "+psiJavaCodeReferenceElement.getQualifier());
+                return;
+            }
+
+            PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)psiJavaCodeReferenceElement.getQualifier();
+
+            //System.out.println("IS QUALIFIED? "+psiJavaCodeReferenceElement.isQualified());
+            //System.out.println("getQualifier="+qualifier);
+            //System.out.println("qualifiedName="+qualifier.getQualifiedName());
+
+            // For qualified names, we need to emit the package, too
+            // The deep type name is cross-referenced with the package name for remapping
+            internalEmitPackageRange(qualifier.getText(), qualifier.getTextRange(), qualifier.getQualifiedName(), deepTypeName);
+
+            /*System.out.println("qualifier name element=" + qualifier.getReferenceNameElement()); // only the last component
+            if (!(qualifier.getReferenceNameElement() instanceof PsiIdentifier)) {
+                System.out.println("WARNING: unrecognized reference name element on qualified name, not identifier: " + qualifier.getReferenceNameElement());
+                return;
+            }
+            PsiIdentifier qualifiedPsiIdentifier = (PsiIdentifier)qualifier.getReferenceNameElement();
+            internalEmitClassRange(qualifiedPsiIdentifier.getText(),qualifiedPsiIdentifier.getTextRange(), deepTypeName);
+            */
+        }
+
+        internalEmitClassRange(psiIdentifier.getText(),psiIdentifier.getTextRange(), deepTypeName);
 
         // Process type parameters, for example, Integer and Boolean in HashMap<Integer,Boolean>
         // for other examples see https://gist.github.com/4370462
@@ -193,8 +232,8 @@ public class SymbolRangeEmitter {
     // Methods to actually write the output
     // Everything goes through these methods
 
-    private void internalEmitPackageRange(String oldText, TextRange textRange, String packageName) {
-        System.out.println(commonFields(oldText, textRange)+"package"+FS+packageName);
+    private void internalEmitPackageRange(String oldText, TextRange textRange, String packageName, String typeUsedBy) {
+        System.out.println(commonFields(oldText, textRange)+"package"+FS+packageName+FS+typeUsedBy);
     }
 
     private void internalEmitClassRange(String oldText, TextRange textRange, String className) {
