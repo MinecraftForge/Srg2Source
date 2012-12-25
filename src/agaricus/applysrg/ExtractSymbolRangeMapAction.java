@@ -110,7 +110,7 @@ public class ExtractSymbolRangeMapAction extends AnAction {
         }
     }
 
-    // Process class extends/implements list
+    // Process class extends/implements list and method throws list
     private void processClassReferenceList(SymbolRangeEmitter emitter, PsiReferenceList psiReferenceList) {
         PsiJavaCodeReferenceElement[] psiJavaCodeReferenceElements = psiReferenceList.getReferenceElements();
         PsiClassType[] psiClassTypes = psiReferenceList.getReferencedTypes();
@@ -156,7 +156,9 @@ public class ExtractSymbolRangeMapAction extends AnAction {
     private void processMethod(SymbolRangeEmitter emitter, String className, PsiMethod psiMethod) {
         String methodSignature = emitter.emitMethodRange(className, psiMethod);
 
+        // Return type and throws list
         emitter.emitTypeRange(psiMethod.getReturnTypeElement());
+        processClassReferenceList(emitter, psiMethod.getThrowsList());
 
         // Parameters
         PsiParameterList psiParameterList = psiMethod.getParameterList();
