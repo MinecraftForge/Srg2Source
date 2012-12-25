@@ -18,6 +18,8 @@ public class SampleClass implements Comparable {
 
     public SampleClass()
     {
+        super();
+
         field1 = 1;
         field2 = 2;
         field3 = 3;
@@ -63,6 +65,8 @@ public class SampleClass implements Comparable {
             throw new IllegalArgumentException();
         } catch (Exception catchVar) {
             catchVar.printStackTrace();
+        } catch (Throwable catchVarUnused) {
+
         }
     }
 

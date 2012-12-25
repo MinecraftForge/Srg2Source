@@ -142,7 +142,10 @@ public class SymbolReferenceWalker {
 
                     emitter.emitTypeRange(psiParameter.getTypeElement());
 
+                    System.out.println("E1");
                     emitter.emitReferencedLocalVariable(nameElement, className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
+                    emitter.emitReferencedLocalVariable(psiParameter.getNameIdentifier(), className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
+                    System.out.println("E2");
                     localVariableIndices.put(psiParameter, nextLocalVariableIndex);
                     nextLocalVariableIndex++;
                 } else {
