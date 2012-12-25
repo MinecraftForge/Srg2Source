@@ -113,8 +113,16 @@ public class ExtractSymbolRangeMapAction extends AnAction {
     private void processClass(SymbolRangeEmitter emitter, PsiClass psiClass) {
         String className = emitter.emitClassRange(psiClass);
 
-        // Methods and fields in this class (not 'all', which includes superclass)
+        System.out.println("EXTENDS START");
+        PsiReferenceList extendsList = psiClass.getExtendsList();
+        PsiJavaCodeReferenceElement[] extendsElementsList = extendsList.getReferenceElements();
+        PsiClassType[] extendsClassTypes = extendsList.getReferencedTypes();
+        for (int i = 0; i < extendsElementsList.length; ++i) {
+            emitter.emitReferencedClass(extendsElementsList[i].getReferenceNameElement(), extendsClassTypes[i].resolve());
+        }
+        System.out.println("EXTENDS END");
 
+        // Methods and fields in this class (not 'all', which includes superclass)
         PsiField[] psiFields = psiClass.getFields();
 
         for (PsiField psiField : psiFields) {
