@@ -1,8 +1,8 @@
 <idea-plugin version="2">
   <id>agaricus.applysrg</id>
   <name>ApplySrg2Source</name>
-  <version>1.0</version>
-  <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+  <version>2.0</version>
+  <vendor email="agaricusb@yahoo.com" url="https://github.com/agaricusb/ApplySrg2Source">ApplySrg2Source</vendor>
 
   <description><![CDATA[
   Apply .srg class/field/method mappings to the source code of a project.
@@ -33,8 +33,8 @@
     <!-- Add your actions here -->
       <group id="applysrg.SampleMenu" text="_Srg" description="Srg menu">
           <add-to-group group-id="MainMenu" anchor="last"  />
-          <action id="applysrg.applysrg" class="agaricus.applysrg.ApplySrgAction" text="Apply .srg with IntelliJ rename refactoring" description="Apply .srg transformation" />
-          <action id="applysrg.applysrg2" class="agaricus.applysrg.ApplySrgActionExperimental" text="Apply .srg experimental" description="Apply .srg transformation" />
+          <action id="applysrg.applysrg" class="agaricus.applysrg.ApplySrgAction" text="Apply .srg with IntelliJ rename refactoring..." description="Apply .srg transformation" />
+          <action id="applysrg.extract" class="agaricus.applysrg.ExtractSymbolRangeMapAction" text="Extract symbol range map" description="Extract symbol range map" />
       </group>
   </actions>
 

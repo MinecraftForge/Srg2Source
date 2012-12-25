@@ -12,11 +12,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class ApplySrgActionExperimental extends AnAction {
+public class ExtractSymbolRangeMapAction extends AnAction {
     public Project project;
     public JavaPsiFacade facade;
 
-    public ApplySrgActionExperimental() {
+    public ExtractSymbolRangeMapAction() {
         super("Apply Srg");
     }
 
