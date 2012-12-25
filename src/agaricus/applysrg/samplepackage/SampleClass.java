@@ -61,6 +61,8 @@ public class SampleClass implements Comparable {
         for (String forVar : field4) {
             System.out.println(forVar);
         }
+        for (String forVarUnused : field4) {
+        }
         try {
             throw new IllegalArgumentException();
         } catch (Exception catchVar) {

@@ -132,8 +132,8 @@ public class SymbolRangeEmitter {
      * Emit local variable declaration name range
      * Local variables can occur in methods, initializers, ...
      */
-    public void emitLocalVariableRange(String className, String methodName, String methodSignature, PsiLocalVariable psiLocalVariable, int localVariableIndex) {
-        internalEmitLocalVariable(psiLocalVariable.getNameIdentifier().getText(),psiLocalVariable.getNameIdentifier().getTextRange(),className,methodName,methodSignature,psiLocalVariable.getName(),localVariableIndex);
+    public void emitLocalVariableRange(String className, String methodName, String methodSignature, PsiVariable psiVariable, int localVariableIndex) {
+        internalEmitLocalVariable(psiVariable.getNameIdentifier().getText(),psiVariable.getNameIdentifier().getTextRange(),className,methodName,methodSignature,psiVariable.getName(),localVariableIndex);
     }
 
     // Referenced names below (symbol uses, as opposed to declarations)

@@ -63,6 +63,7 @@ public class SymbolReferenceWalker {
             return;
         }
 
+        // New local variable declaration
         if (psiElement instanceof PsiDeclarationStatement) {
             PsiDeclarationStatement psiDeclarationStatement = (PsiDeclarationStatement)psiElement;
 
@@ -84,6 +85,30 @@ public class SymbolReferenceWalker {
             }
         }
 
+        // New local variable declaration within try..catch
+        if (psiElement instanceof PsiCatchSection) {
+            PsiCatchSection psiCatchSection = (PsiCatchSection)psiElement;
+            //System.out.println("CATCH");
+            PsiParameter psiParameter = psiCatchSection.getParameter();
+            emitter.emitLocalVariableRange(className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
+
+            localVariableIndices.put(psiParameter, nextLocalVariableIndex);
+            nextLocalVariableIndex++;
+        }
+
+        // .. and foreach
+        if (psiElement instanceof PsiForeachStatement) {
+            PsiForeachStatement psiForeachStatement = (PsiForeachStatement)psiElement;
+            //System.out.println("FOREACH");
+            PsiParameter psiParameter = psiForeachStatement.getIterationParameter();
+
+            emitter.emitLocalVariableRange(className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
+
+            localVariableIndices.put(psiParameter, nextLocalVariableIndex);
+            nextLocalVariableIndex++;
+        }
+
+        // Variable reference
         if (psiElement instanceof PsiJavaCodeReferenceElement) {
             PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = (PsiJavaCodeReferenceElement)psiElement;
 
@@ -140,14 +165,17 @@ public class SymbolReferenceWalker {
                     // For some reason, PSI calls these "parameters", but they're more like local variable declarations
                     // Treat them as such
 
+                    int index;
+                    if (!localVariableIndices.containsKey(psiParameter)) {
+                        index = -1;
+                        System.out.println("WARNING: couldn't find non-method parameter index for "+psiParameter+" in "+localVariableIndices);
+                    } else {
+                        index = localVariableIndices.get(psiParameter);
+                    }
+                    //System.out.println("E1");
                     emitter.emitTypeRange(psiParameter.getTypeElement());
-
-                    System.out.println("E1");
-                    emitter.emitReferencedLocalVariable(nameElement, className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
-                    emitter.emitReferencedLocalVariable(psiParameter.getNameIdentifier(), className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
-                    System.out.println("E2");
-                    localVariableIndices.put(psiParameter, nextLocalVariableIndex);
-                    nextLocalVariableIndex++;
+                    emitter.emitReferencedLocalVariable(nameElement, className, methodName, methodSignature, psiParameter, index);
+                    //System.out.println("E2");
                 } else {
                     System.out.println("WARNING: parameter "+psiParameter+" in unknown declaration scope "+declarationScope);
                 }
