@@ -14,7 +14,7 @@ public class SymbolRangeEmitter {
      * Emit range of package statement, declaring the package the file resides within
      */
     public void emitPackageRange(PsiPackageStatement psiPackageStatement) {
-        internalEmitPackageRange(psiPackageStatement.getPackageReference().getTextRange(), psiPackageStatement.getPackageName());
+        internalEmitPackageRange(psiPackageStatement.getPackageReference().getText(), psiPackageStatement.getPackageReference().getTextRange(), psiPackageStatement.getPackageName());
     }
 
     /**
@@ -24,7 +24,7 @@ public class SymbolRangeEmitter {
         PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiImportStatement.getImportReference();
 
         String qualifiedName = psiJavaCodeReferenceElement.getQualifiedName(); // note, may be package.*?
-        internalEmitClassRange(psiJavaCodeReferenceElement.getTextRange(), qualifiedName);
+        internalEmitClassRange(psiJavaCodeReferenceElement.getText(), psiJavaCodeReferenceElement.getTextRange(), qualifiedName);
     }
 
     /**
@@ -34,7 +34,7 @@ public class SymbolRangeEmitter {
     public String emitClassRange(PsiClass psiClass) {
         String className = psiClass.getQualifiedName();
 
-        internalEmitClassRange(psiClass.getNameIdentifier().getTextRange(),className);
+        internalEmitClassRange(psiClass.getNameIdentifier().getText(), psiClass.getNameIdentifier().getTextRange(),className);
 
         return className;
     }
@@ -83,7 +83,7 @@ public class SymbolRangeEmitter {
             // a PsiType. getDeepComponentType() handles descending into arrays, but not parameterized types. TODO: make better
             baseTypeName = baseTypeName.replaceFirst("<.*", "");
         }
-        internalEmitClassRange(psiIdentifier.getTextRange(),baseTypeName);
+        internalEmitClassRange(psiIdentifier.getText(),psiIdentifier.getTextRange(),baseTypeName);
 
         // Process type parameters, for example, Integer and Boolean in HashMap<Integer,Boolean>
         // for other examples see https://gist.github.com/4370462
@@ -97,7 +97,7 @@ public class SymbolRangeEmitter {
      * Emit field name range
      */
     public void emitFieldRange(String className, PsiField psiField) {
-        internalEmitFieldRange(psiField.getNameIdentifier().getTextRange(),className,psiField.getName());
+        internalEmitFieldRange(psiField.getNameIdentifier().getText(),psiField.getNameIdentifier().getTextRange(),className,psiField.getName());
     }
 
     /**
@@ -107,7 +107,7 @@ public class SymbolRangeEmitter {
     public String emitMethodRange(String className, PsiMethod psiMethod) {
         String signature = MethodSignatureHelper.makeTypeSignatureString(psiMethod);
 
-        internalEmitMethodRange(psiMethod.getNameIdentifier().getTextRange(),className,psiMethod.getName(),signature);
+        internalEmitMethodRange(psiMethod.getNameIdentifier().getText(),psiMethod.getNameIdentifier().getTextRange(),className,psiMethod.getName(),signature);
 
         return signature;
     }
@@ -120,7 +120,7 @@ public class SymbolRangeEmitter {
             return;
         }
 
-        internalEmitParameterRange(psiParameter.getNameIdentifier().getTextRange(),className,methodName,methodSignature,psiParameter.getName(),parameterIndex);
+        internalEmitParameterRange(psiParameter.getNameIdentifier().getText(),psiParameter.getNameIdentifier().getTextRange(),className,methodName,methodSignature,psiParameter.getName(),parameterIndex);
     }
 
     /**
@@ -128,7 +128,7 @@ public class SymbolRangeEmitter {
      * Local variables can occur in methods, initializers, ...
      */
     public void emitLocalVariableRange(String className, String methodName, String methodSignature, PsiLocalVariable psiLocalVariable, int localVariableIndex) {
-        internalEmitLocalVariable(psiLocalVariable.getNameIdentifier().getTextRange(),className,methodName,methodSignature,psiLocalVariable.getName(),localVariableIndex);
+        internalEmitLocalVariable(psiLocalVariable.getNameIdentifier().getText(),psiLocalVariable.getNameIdentifier().getTextRange(),className,methodName,methodSignature,psiLocalVariable.getName(),localVariableIndex);
     }
 
     // Referenced names below (symbol uses, as opposed to declarations)
@@ -138,7 +138,7 @@ public class SymbolRangeEmitter {
      * Emit referenced class name range
      */
     public void emitReferencedClass(PsiElement nameElement, PsiClass psiClass) {
-        internalEmitClassRange(nameElement.getTextRange(),psiClass.getQualifiedName());
+        internalEmitClassRange(nameElement.getText(),nameElement.getTextRange(),psiClass.getQualifiedName());
     }
 
     /**
@@ -147,7 +147,7 @@ public class SymbolRangeEmitter {
     public void emitReferencedField(PsiElement nameElement, PsiField psiField) {
         PsiClass psiClass = psiField.getContainingClass();
 
-        internalEmitFieldRange(nameElement.getTextRange(),psiClass.getQualifiedName(),psiField.getName());
+        internalEmitFieldRange(nameElement.getText(),nameElement.getTextRange(),psiClass.getQualifiedName(),psiField.getName());
     }
 
     /**
@@ -156,7 +156,7 @@ public class SymbolRangeEmitter {
     public void emitReferencedMethod(PsiElement nameElement, PsiMethod psiMethodCalled) {
         PsiClass psiClass = psiMethodCalled.getContainingClass();
 
-        internalEmitMethodRange(nameElement.getTextRange(),psiClass.getQualifiedName(),psiMethodCalled.getName(),MethodSignatureHelper.makeTypeSignatureString(psiMethodCalled));
+        internalEmitMethodRange(nameElement.getText(),nameElement.getTextRange(),psiClass.getQualifiedName(),psiMethodCalled.getName(),MethodSignatureHelper.makeTypeSignatureString(psiMethodCalled));
     }
 
     /**
@@ -164,7 +164,7 @@ public class SymbolRangeEmitter {
      * This includes both "local variables" declared in methods, and in foreach/catch sections ("parameters")
      */
     public void emitReferencedLocalVariable(PsiElement nameElement, String className, String methodName, String methodSignature, PsiVariable psiVariable, int localVariableIndex) {
-        internalEmitLocalVariable(nameElement.getTextRange(),className,methodName,methodSignature,psiVariable.getName(),localVariableIndex);
+        internalEmitLocalVariable(nameElement.getText(),nameElement.getTextRange(),className,methodName,methodSignature,psiVariable.getName(),localVariableIndex);
     }
 
     /**
@@ -172,42 +172,43 @@ public class SymbolRangeEmitter {
      * Only includes _method_ parameters - for foreach/catch parameters see emitReferencedLocalVariable
      */
     public void emitReferencedMethodParameter(PsiElement nameElement, String className, String methodName, String methodSignature, PsiParameter psiParameter, int index) {
-        internalEmitParameterRange(nameElement.getTextRange(),className,methodName,methodSignature,psiParameter.getName(),index);
+        internalEmitParameterRange(nameElement.getText(),nameElement.getTextRange(),className,methodName,methodSignature,psiParameter.getName(),index);
     }
 
     // Field separator
     private final String FS = "|";
 
-    private String commonFields(TextRange textRange) {
-        return "@"+FS+sourceFilePath+FS+textRange.getStartOffset()+FS+textRange.getEndOffset()+FS;
+    private String commonFields(String oldText, TextRange textRange) {
+        // Include source filename for opening, textual range start/end, and old text for sanity check
+        return "@"+FS+sourceFilePath+FS+textRange.getStartOffset()+FS+textRange.getEndOffset()+FS+oldText+FS;
     }
 
 
     // Methods to actually write the output
     // Everything goes through these methods
 
-    private void internalEmitPackageRange(TextRange textRange, String packageName) {
-        System.out.println(commonFields(textRange)+"package"+FS+packageName);
+    private void internalEmitPackageRange(String oldText, TextRange textRange, String packageName) {
+        System.out.println(commonFields(oldText, textRange)+"package"+FS+packageName);
     }
 
-    private void internalEmitClassRange(TextRange textRange, String className) {
-        System.out.println(commonFields(textRange)+"class"+FS+className);
+    private void internalEmitClassRange(String oldText, TextRange textRange, String className) {
+        System.out.println(commonFields(oldText, textRange)+"class"+FS+className);
     }
 
-    private void internalEmitFieldRange(TextRange textRange, String className, String fieldName) {
-        System.out.println(commonFields(textRange)+"field"+FS+className+FS+fieldName);
+    private void internalEmitFieldRange(String oldText, TextRange textRange, String className, String fieldName) {
+        System.out.println(commonFields(oldText, textRange)+"field"+FS+className+FS+fieldName);
     }
 
-    private void internalEmitMethodRange(TextRange textRange, String className, String methodName, String methodSignature) {
-        System.out.println(commonFields(textRange)+"method"+FS+className+FS+methodName+FS+methodSignature);
+    private void internalEmitMethodRange(String oldText, TextRange textRange, String className, String methodName, String methodSignature) {
+        System.out.println(commonFields(oldText, textRange)+"method"+FS+className+FS+methodName+FS+methodSignature);
     }
 
 
-    private void internalEmitParameterRange(TextRange textRange, String className, String methodName, String methodSignature, String parameterName, int parameterIndex) {
-        System.out.println(commonFields(textRange)+"param"+FS+className+FS+methodName+FS+methodSignature+FS+parameterName+FS+parameterIndex);
+    private void internalEmitParameterRange(String oldText, TextRange textRange, String className, String methodName, String methodSignature, String parameterName, int parameterIndex) {
+        System.out.println(commonFields(oldText, textRange)+"param"+FS+className+FS+methodName+FS+methodSignature+FS+parameterName+FS+parameterIndex);
     }
 
-    private void internalEmitLocalVariable(TextRange textRange, String className, String methodName, String methodSignature, String variableName, int variableIndex) {
-        System.out.println(commonFields(textRange)+"localvar"+FS+className+FS+methodName+FS+methodSignature+FS+variableName+FS+variableIndex);
+    private void internalEmitLocalVariable(String oldText, TextRange textRange, String className, String methodName, String methodSignature, String variableName, int variableIndex) {
+        System.out.println(commonFields(oldText, textRange)+"localvar"+FS+className+FS+methodName+FS+methodSignature+FS+variableName+FS+variableIndex);
     }
 }
