@@ -23,6 +23,8 @@ public class SampleClass implements Comparable {
         field3 = 3;
     }
 
+    public String returnType() { return ""; }
+
     public void a()
     {
         field1 = field2 * field3;

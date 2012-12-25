@@ -156,6 +156,9 @@ public class ExtractSymbolRangeMapAction extends AnAction {
     private void processMethod(SymbolRangeEmitter emitter, String className, PsiMethod psiMethod) {
         String methodSignature = emitter.emitMethodRange(className, psiMethod);
 
+        emitter.emitTypeRange(psiMethod.getReturnTypeElement());
+
+        // Parameters
         PsiParameterList psiParameterList = psiMethod.getParameterList();
         HashMap<PsiParameter,Integer> parameterIndices = new HashMap<PsiParameter, Integer>();
 
@@ -174,6 +177,7 @@ public class ExtractSymbolRangeMapAction extends AnAction {
             }
         }
 
+        // Method body
         SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, psiMethod.getName(), methodSignature);
 
         walker.addMethodParameterIndices(parameterIndices);
