@@ -21,10 +21,15 @@ public class SymbolRangeEmitter {
      * Emit range of import statement, including name of the imported package/class
      */
     public void emitImportRange(PsiImportStatementBase psiImportStatement) {
+        // Disabled for now - class references are handled differently in import statements
+        // (must be fully qualified...)
+
+        /*
         PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiImportStatement.getImportReference();
 
         String qualifiedName = psiJavaCodeReferenceElement.getQualifiedName(); // note, may be package.*?
         internalEmitClassRange(psiJavaCodeReferenceElement.getText(), psiJavaCodeReferenceElement.getTextRange(), qualifiedName);
+        */
     }
 
     /**
