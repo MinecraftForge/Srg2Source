@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.lang.String;
 
-public class SampleClass {
+public class SampleClass implements Comparable {
     public int field1;
     public int field2;
     public int field3;
@@ -65,6 +65,10 @@ public class SampleClass {
         System.out.println("?"+aaaaaaaaaa+k+f+j);
         int last = 20121221;
         return last / j;
+    }
+
+    public int compareTo(Object rhs) {
+        return -1;
     }
 
     static {

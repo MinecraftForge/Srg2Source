@@ -110,17 +110,20 @@ public class ExtractSymbolRangeMapAction extends AnAction {
         }
     }
 
+    // Process class extends/implements list
+    private void processClassReferenceList(SymbolRangeEmitter emitter, PsiReferenceList psiReferenceList) {
+        PsiJavaCodeReferenceElement[] psiJavaCodeReferenceElements = psiReferenceList.getReferenceElements();
+        PsiClassType[] psiClassTypes = psiReferenceList.getReferencedTypes();
+        for (int i = 0; i < psiJavaCodeReferenceElements.length; ++i) {
+            emitter.emitReferencedClass(psiJavaCodeReferenceElements[i].getReferenceNameElement(),  psiClassTypes[i].resolve()); // TODO: resolve needed?
+        }
+    }
+
     private void processClass(SymbolRangeEmitter emitter, PsiClass psiClass) {
         String className = emitter.emitClassRange(psiClass);
 
-        System.out.println("EXTENDS START");
-        PsiReferenceList extendsList = psiClass.getExtendsList();
-        PsiJavaCodeReferenceElement[] extendsElementsList = extendsList.getReferenceElements();
-        PsiClassType[] extendsClassTypes = extendsList.getReferencedTypes();
-        for (int i = 0; i < extendsElementsList.length; ++i) {
-            emitter.emitReferencedClass(extendsElementsList[i].getReferenceNameElement(), extendsClassTypes[i].resolve());
-        }
-        System.out.println("EXTENDS END");
+        processClassReferenceList(emitter, psiClass.getExtendsList());
+        processClassReferenceList(emitter, psiClass.getImplementsList());
 
         // Methods and fields in this class (not 'all', which includes superclass)
         PsiField[] psiFields = psiClass.getFields();
