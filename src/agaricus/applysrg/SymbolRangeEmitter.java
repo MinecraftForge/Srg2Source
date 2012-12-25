@@ -62,6 +62,12 @@ public class SymbolRangeEmitter {
         // Get identifier referencing this type
         PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiTypeElement.getInnermostComponentReferenceElement();
 
+        if (psiJavaCodeReferenceElement == null) {
+            // get this on '? extends T'
+            System.out.println("WARNING: no code reference element for "+psiTypeElement);
+            return;
+        }
+
         PsiElement referenceNameElement = psiJavaCodeReferenceElement.getReferenceNameElement();
         if (!(referenceNameElement instanceof PsiIdentifier)) {
             System.out.println("WARNING: unrecognized reference name element, not identifier: " + referenceNameElement);
