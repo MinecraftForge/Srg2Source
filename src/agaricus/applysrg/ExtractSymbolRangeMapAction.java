@@ -112,11 +112,8 @@ public class ExtractSymbolRangeMapAction extends AnAction {
 
     // Process class extends/implements list and method throws list
     private void processClassReferenceList(SymbolRangeEmitter emitter, PsiReferenceList psiReferenceList) {
-        PsiJavaCodeReferenceElement[] psiJavaCodeReferenceElements = psiReferenceList.getReferenceElements();
-        PsiClassType[] psiClassTypes = psiReferenceList.getReferencedTypes();
-        for (int i = 0; i < psiJavaCodeReferenceElements.length; ++i) {
-            emitter.emitReferencedClass(psiJavaCodeReferenceElements[i].getReferenceNameElement(),  psiClassTypes[i].resolve()); // TODO: resolve needed?
-            // TODO: emitTypeRange, fix including parameterized types in extends/implements..
+        for (PsiJavaCodeReferenceElement psiJavaCodeReferenceElement : psiReferenceList.getReferenceElements()) {
+            emitter.emitTypeRange(psiJavaCodeReferenceElement);
         }
     }
 
