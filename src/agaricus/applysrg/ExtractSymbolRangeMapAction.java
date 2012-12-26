@@ -116,6 +116,7 @@ public class ExtractSymbolRangeMapAction extends AnAction {
         PsiClassType[] psiClassTypes = psiReferenceList.getReferencedTypes();
         for (int i = 0; i < psiJavaCodeReferenceElements.length; ++i) {
             emitter.emitReferencedClass(psiJavaCodeReferenceElements[i].getReferenceNameElement(),  psiClassTypes[i].resolve()); // TODO: resolve needed?
+            // TODO: emitTypeRange, fix including parameterized types in extends/implements..
         }
     }
 

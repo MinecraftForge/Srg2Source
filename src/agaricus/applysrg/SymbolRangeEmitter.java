@@ -67,13 +67,8 @@ public class SymbolRangeEmitter {
             return;
         }
 
-        //System.out.println("TYPE ELEMENT="+psiTypeElement);
-
         // Get identifier referencing this type
         PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = psiTypeElement.getInnermostComponentReferenceElement();
-
-        //System.out.println("PsiJavaCodeReferenceElement="+psiJavaCodeReferenceElement);
-        //System.out.println("PsiJavaCodeReferenceElement text="+psiJavaCodeReferenceElement.getText());
 
         if (psiJavaCodeReferenceElement == null) {
             // get this on '? extends T'
@@ -81,6 +76,13 @@ public class SymbolRangeEmitter {
             return;
         }
 
+        emitTypeRange(psiJavaCodeReferenceElement);
+    }
+
+    /**
+     * Emit type range given a PsiJavaCodeReferenceElement
+     */
+    public void emitTypeRange(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
         PsiElement referenceNameElement = psiJavaCodeReferenceElement.getReferenceNameElement();
         if (!(referenceNameElement instanceof PsiIdentifier)) {
             System.out.println("WARNING: unrecognized reference name element, not identifier: " + referenceNameElement);
@@ -89,13 +91,7 @@ public class SymbolRangeEmitter {
         PsiIdentifier psiIdentifier = (PsiIdentifier)referenceNameElement;
 
         // Get the "deep" parent type name -- without any array brackets, or type parameters -- but, still fully qualified
-        String deepTypeName = psiType.getInternalCanonicalText();
-        if (deepTypeName.contains("<")) {
-            // Sorry I couldn't find a better way to do this..
-            // The PsiIdentifier range is correct, but it needs to be fully qualified, so it has to come from
-            // a PsiType. getDeepComponentType() handles descending into arrays, but not parameterized types. TODO: make better
-            deepTypeName = deepTypeName.replaceFirst("<.*", "");
-        }
+        String deepTypeName = psiJavaCodeReferenceElement.getQualifiedName();
 
         if (psiJavaCodeReferenceElement.isQualified()) {
             // Qualified names are for example:

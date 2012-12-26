@@ -17,5 +17,10 @@ public class SampleClass2 {
 
     private class SampleInnerClass {
         public int innerClassField;
+
+        private class SampleInner2 extends HashMap<java.lang.String, java.lang.Double>
+        {
+            private int innermostField;
+        }
     }
 }
