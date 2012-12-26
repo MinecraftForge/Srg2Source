@@ -151,6 +151,10 @@ public class ExtractSymbolRangeMapAction extends AnAction {
                 walker.walk(psiClassInitializer.getBody());
             }
         }
+
+        for (PsiClass innerClass : psiClass.getInnerClasses()) {
+            processClass(emitter, innerClass);
+        }
     }
 
     private void processMethod(SymbolRangeEmitter emitter, String className, PsiMethod psiMethod) {
