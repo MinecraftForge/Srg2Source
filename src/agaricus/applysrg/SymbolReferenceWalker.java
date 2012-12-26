@@ -88,7 +88,6 @@ public class SymbolReferenceWalker {
         // New local variable declaration within try..catch
         if (psiElement instanceof PsiCatchSection) {
             PsiCatchSection psiCatchSection = (PsiCatchSection)psiElement;
-            //System.out.println("CATCH");
             PsiParameter psiParameter = psiCatchSection.getParameter();
             emitter.emitLocalVariableRange(className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
 
@@ -99,7 +98,6 @@ public class SymbolReferenceWalker {
         // .. and foreach
         if (psiElement instanceof PsiForeachStatement) {
             PsiForeachStatement psiForeachStatement = (PsiForeachStatement)psiElement;
-            //System.out.println("FOREACH");
             PsiParameter psiParameter = psiForeachStatement.getIterationParameter();
 
             emitter.emitLocalVariableRange(className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
@@ -117,10 +115,11 @@ public class SymbolReferenceWalker {
 
             // Identifier token naming this reference without qualification
             PsiElement nameElement = psiJavaCodeReferenceElement.getReferenceNameElement();
-            String name = psiJavaCodeReferenceElement.getReferenceName();
 
             if (referentElement instanceof PsiPackage) {
-
+                // Not logging package since includes net, net.minecraft, net.minecraft.server.. all components
+                // TODO: log reference for rename
+                //System.out.println("PKGREF"+referentElement+" name="+nameElement);
             } else if (referentElement instanceof PsiClass) {
                 emitter.emitReferencedClass(nameElement, (PsiClass)referentElement);
             } else if (referentElement instanceof PsiField) {
@@ -172,10 +171,8 @@ public class SymbolReferenceWalker {
                     } else {
                         index = localVariableIndices.get(psiParameter);
                     }
-                    //System.out.println("E1");
                     emitter.emitTypeRange(psiParameter.getTypeElement());
                     emitter.emitReferencedLocalVariable(nameElement, className, methodName, methodSignature, psiParameter, index);
-                    //System.out.println("E2");
                 } else {
                     System.out.println("WARNING: parameter "+psiParameter+" in unknown declaration scope "+declarationScope);
                 }

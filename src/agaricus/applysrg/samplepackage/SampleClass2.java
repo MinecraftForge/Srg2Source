@@ -21,6 +21,7 @@ public class SampleClass2 {
         private class SampleInner2 extends HashMap<java.lang.String, java.lang.Double>
         {
             private int innermostField;
+            public String initnewtest = new java.lang.String("");
         }
     }
 }
