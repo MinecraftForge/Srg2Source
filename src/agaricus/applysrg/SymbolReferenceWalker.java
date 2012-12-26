@@ -122,10 +122,13 @@ public class SymbolReferenceWalker {
                 //System.out.println("PKGREF"+referentElement+" name="+nameElement);
             } else if (referentElement instanceof PsiClass) {
                 emitter.emitReferencedClass(nameElement, (PsiClass)referentElement);
+                //TODO emitter.emitTypeQualifierRangeIfQualified((psiJavaCodeReferenceElement));
             } else if (referentElement instanceof PsiField) {
                 emitter.emitReferencedField(nameElement, (PsiField)referentElement);
+                //TODO emitter.emitTypeQualifierRangeIfQualified((psiJavaCodeReferenceElement));
             } else if (referentElement instanceof PsiMethod) {
                 emitter.emitReferencedMethod(nameElement, (PsiMethod)referentElement);
+                //TODO emitter.emitTypeQualifierRangeIfQualified((psiJavaCodeReferenceElement));
             } else if (referentElement instanceof PsiLocalVariable) {
                 PsiLocalVariable psiLocalVariable = (PsiLocalVariable)referentElement;
 

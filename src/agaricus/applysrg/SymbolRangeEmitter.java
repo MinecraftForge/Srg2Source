@@ -90,6 +90,23 @@ public class SymbolRangeEmitter {
         }
         PsiIdentifier psiIdentifier = (PsiIdentifier)referenceNameElement;
 
+        // Package name, if fully qualified
+        emitTypeQualifierRangeIfQualified(psiJavaCodeReferenceElement);
+
+        internalEmitClassRange(psiIdentifier.getText(),psiIdentifier.getTextRange(), psiJavaCodeReferenceElement.getQualifiedName());
+
+        // Process type parameters, for example, Integer and Boolean in HashMap<Integer,Boolean>
+        // for other examples see https://gist.github.com/4370462
+        PsiReferenceParameterList psiReferenceParameterList = psiJavaCodeReferenceElement.getParameterList();
+        for (PsiTypeElement innerTypeElement: psiReferenceParameterList.getTypeParameterElements()) {
+            emitTypeRange(innerTypeElement);
+        }
+    }
+
+    /**
+     * Emit type qualifier package name for name, if the element is a fully qualified reference
+     */
+    public void emitTypeQualifierRangeIfQualified(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
         // Get the "deep" parent type name -- without any array brackets, or type parameters -- but, still fully qualified
         String deepTypeName = psiJavaCodeReferenceElement.getQualifiedName();
 
@@ -105,31 +122,9 @@ public class SymbolRangeEmitter {
 
             PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)psiJavaCodeReferenceElement.getQualifier();
 
-            //System.out.println("IS QUALIFIED? "+psiJavaCodeReferenceElement.isQualified());
-            //System.out.println("getQualifier="+qualifier);
-            //System.out.println("qualifiedName="+qualifier.getQualifiedName());
-
             // For qualified names, we need to emit the package, too
             // The deep type name is cross-referenced with the package name for remapping
             internalEmitPackageRange(qualifier.getText(), qualifier.getTextRange(), qualifier.getQualifiedName(), deepTypeName);
-
-            /*System.out.println("qualifier name element=" + qualifier.getReferenceNameElement()); // only the last component
-            if (!(qualifier.getReferenceNameElement() instanceof PsiIdentifier)) {
-                System.out.println("WARNING: unrecognized reference name element on qualified name, not identifier: " + qualifier.getReferenceNameElement());
-                return;
-            }
-            PsiIdentifier qualifiedPsiIdentifier = (PsiIdentifier)qualifier.getReferenceNameElement();
-            internalEmitClassRange(qualifiedPsiIdentifier.getText(),qualifiedPsiIdentifier.getTextRange(), deepTypeName);
-            */
-        }
-
-        internalEmitClassRange(psiIdentifier.getText(),psiIdentifier.getTextRange(), deepTypeName);
-
-        // Process type parameters, for example, Integer and Boolean in HashMap<Integer,Boolean>
-        // for other examples see https://gist.github.com/4370462
-        PsiReferenceParameterList psiReferenceParameterList = psiJavaCodeReferenceElement.getParameterList();
-        for (PsiTypeElement innerTypeElement: psiReferenceParameterList.getTypeParameterElements()) {
-            emitTypeRange(innerTypeElement);
         }
     }
 
