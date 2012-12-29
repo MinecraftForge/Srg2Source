@@ -34,7 +34,7 @@
       <group id="applysrg.SampleMenu" text="_Srg" description="Srg menu">
           <add-to-group group-id="MainMenu" anchor="last"  />
           <action id="applysrg.applysrg" class="agaricus.applysrg.ApplySrgAction" text="Apply .srg with IntelliJ rename refactoring..." description="Apply .srg transformation" />
-          <action id="applysrg.extract" class="agaricus.applysrg.ExtractSymbolRangeMapAction" text="Extract symbol range map" description="Extract symbol range map" />
+          <action id="applysrg.extract" class="agaricus.applysrg.ExtractSelectedSymbolRangeMapAction" text="Extract symbol range map for selected files" description="Extract symbol range map" />
       </group>
   </actions>
 

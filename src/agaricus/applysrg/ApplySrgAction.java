@@ -35,6 +35,7 @@ public class ApplySrgAction extends AnAction {
         super("Apply Srg");
     }
 
+    @Override
     public void actionPerformed(AnActionEvent event) {
         project = event.getData(PlatformDataKeys.PROJECT);
         facade = JavaPsiFacade.getInstance(project);

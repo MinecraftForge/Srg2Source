@@ -16,16 +16,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class ExtractSymbolRangeMapAction extends AnAction {
+public class ExtractSymbolRangeMapAction {
     public Project project;
     public JavaPsiFacade facade;
     public PrintWriter logFile;
     public String logFilename;
-
-
-    public ExtractSymbolRangeMapAction() {
-        super("Apply Srg");
-    }
 
     /** Get list of Java files selected by the user
      *
@@ -201,7 +196,7 @@ public class ExtractSymbolRangeMapAction extends AnAction {
         logFile.println(s);
     }
 
-    public void actionPerformed(AnActionEvent event) {
+    public void performAction(AnActionEvent event, boolean useSelectedFiles, boolean batchMode) {
         project = event.getData(PlatformDataKeys.PROJECT);
         logFilename = project.getBasePath() + "/" + project.getName() + ".rangemap";
 
@@ -209,16 +204,27 @@ public class ExtractSymbolRangeMapAction extends AnAction {
             logFile = new PrintWriter(new BufferedWriter(new FileWriter(logFilename)));
         } catch (IOException ex) {
             ex.printStackTrace();
-            Messages.showMessageDialog(project, "Failed to open "+logFilename+" for writing: "+ex.getLocalizedMessage(), "File error", Messages.getErrorIcon());
+            if (!batchMode) {
+                Messages.showMessageDialog(project, "Failed to open "+logFilename+" for writing: "+ex.getLocalizedMessage(), "File error", Messages.getErrorIcon());
+            }
             return;
         }
 
-        log("ApplySrg2Source experimental starting");
+        log("Symbol range map extraction starting");
 
-        List<PsiJavaFile> psiJavaFiles = getSelectedJavaFiles(event);
-        if (psiJavaFiles == null) {
-            return;
+        List<PsiJavaFile> psiJavaFiles;
+
+        if (useSelectedFiles) {
+            psiJavaFiles = getSelectedJavaFiles(event);
+            if (psiJavaFiles == null) {
+                return;
+            }
+        } else {
+            // TODO: process all java
+            psiJavaFiles = null;
         }
+
+
         log("Processing "+psiJavaFiles.size()+" files");
 
 
@@ -228,6 +234,12 @@ public class ExtractSymbolRangeMapAction extends AnAction {
 
         logFile.close();
 
-        Messages.showMessageDialog(project, "Wrote symbol range map to "+logFilename, "Extraction complete", Messages.getInformationIcon());
+        if (!batchMode) {
+            Messages.showMessageDialog(project, "Wrote symbol range map to "+logFilename, "Extraction complete", Messages.getInformationIcon());
+        }
+
+        if (batchMode) {
+            // TODO: quit
+        }
     }
 }
