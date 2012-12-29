@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -46,7 +47,7 @@ public class ExtractSymbolRangeMapAction {
             chosenFiles = Arrays.asList(selectedFiles);
         } else {
             // Use all files in project
-            chosenFiles = FilenameIndex.getAllFilesByExt(project, "java");
+            chosenFiles = FilenameIndex.getAllFilesByExt(project, "java", GlobalSearchScope.projectScope(project));
         }
 
         log("Chose "+ chosenFiles.size()+" files");
