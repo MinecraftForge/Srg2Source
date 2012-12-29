@@ -10,6 +10,6 @@ public class ExtractSelectedSymbolRangeMapAction extends AnAction {
 
     @Override
     public void actionPerformed(AnActionEvent event) {
-        (new ExtractSymbolRangeMapAction()).performAction(event, true/*useSelectedFiles*/, false/*batchMode*/);
+        (new ExtractSymbolRangeMapAction()).performAction(event.getProject(), event, true/*useSelectedFiles*/, false/*batchMode*/);
     }
 }

@@ -2,6 +2,7 @@ package agaricus.applysrg;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -214,8 +215,9 @@ public class ExtractSymbolRangeMapAction {
         logFile.println(s);
     }
 
-    public void performAction(AnActionEvent event, boolean useSelectedFiles, boolean batchMode) {
-        project = event.getData(PlatformDataKeys.PROJECT);
+    public void performAction(Project project, AnActionEvent event, boolean useSelectedFiles, boolean batchMode) {
+        this.project = project;
+
         logFilename = project.getBasePath() + "/" + project.getName() + ".rangemap";
 
         try {
@@ -251,7 +253,8 @@ public class ExtractSymbolRangeMapAction {
         }
 
         if (batchMode) {
-            // TODO: quit
+            System.out.println("Srg2source batch mode finished - now exiting");
+            ApplicationManager.getApplication().exit();
         }
     }
 }
