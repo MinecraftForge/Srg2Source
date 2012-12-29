@@ -36,7 +36,7 @@ public class ApplySrgAction extends AnAction {
         facade = JavaPsiFacade.getInstance(project);
         refactoringFactory = JavaRefactoringFactory.getInstance(project);
 
-        System.out.println("ApplySrg2Source starting");
+        log("ApplySrg2Source starting");
 
         List<RenamingClass> classes = new ArrayList<RenamingClass>();
         List<RenamingField> fields = new ArrayList<RenamingField>();
@@ -50,40 +50,40 @@ public class ApplySrgAction extends AnAction {
         int okFields = 0;
         for (RenamingField field: fields) {
             if (renameField(field.className, field.oldName, field.newName)) {
-                System.out.println("Renamed "+field);
+                log("Renamed "+field);
                 okFields += 1;
             } else {
-                System.out.println("FAILED to rename "+field);
+                log("FAILED to rename "+field);
             }
         }
 
         int okMethods = 0;
         for (RenamingMethod method: methods) {
             if (renameMethod(method.className, method.oldName, method.signature, method.newName)) {
-                System.out.println("Renamed "+method);
+                log("Renamed "+method);
                 okMethods += 1;
             } else {
-                System.out.println("FAILED to rename "+method);
+                log("FAILED to rename "+method);
             }
         }
 
         int okParametersLists = 0;
         for (RenamingMethodParametersList parameters : parametersLists) {
             if (renameParametersList(parameters.className, parameters.methodName, parameters.methodSignature, parameters.newParameterNames)) {
-                System.out.println("Renamed "+ parameters);
+                log("Renamed "+ parameters);
                 okParametersLists += 1;
             } else {
-                System.out.println("FAILED to rename "+ parameters);
+                log("FAILED to rename "+ parameters);
             }
         }
 
         int okClasses = 0;
         for (RenamingClass clazz: classes) {
             if (renameClass(clazz.oldName, clazz.newName)) {
-                System.out.println("Renamed "+clazz);
+                log("Renamed "+clazz);
                 okClasses += 1;
             } else {
-                System.out.println("FAILED to rename "+clazz);
+                log("FAILED to rename "+clazz);
             }
         }
 
@@ -93,7 +93,7 @@ public class ApplySrgAction extends AnAction {
                 okParametersLists+"/"+ parametersLists.size()+" parameter lists, " +
                 okClasses+"/"+classes.size()+" classes";
 
-        System.out.println(status);
+        log(status);
 
         Messages.showMessageDialog(project, status, "Rename complete", Messages.getInformationIcon());
     }
@@ -102,7 +102,7 @@ public class ApplySrgAction extends AnAction {
         PsiClass psiClass = facade.findClass(oldName, GlobalSearchScope.allScope(project));
 
         if (psiClass == null) {
-            System.out.println("renameClass(" + oldName + " -> " + newName + ") failed, no such class");
+            log("renameClass(" + oldName + " -> " + newName + ") failed, no such class");
             return false;
         }
 
@@ -114,13 +114,13 @@ public class ApplySrgAction extends AnAction {
         PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
 
         if (psiClass == null) {
-            System.out.println("renameField(" + className + " " + oldName + " -> " + newName + ") failed, no such class");
+            log("renameField(" + className + " " + oldName + " -> " + newName + ") failed, no such class");
             return false;
         }
 
         PsiField field = psiClass.findFieldByName(oldName, false);
         if (field == null) {
-            System.out.println("renameField(" + className + " " + oldName + " -> " + newName + ") failed, no such field");
+            log("renameField(" + className + " " + oldName + " -> " + newName + ") failed, no such field");
             return false;
         }
 
@@ -131,13 +131,13 @@ public class ApplySrgAction extends AnAction {
         PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
 
         if (psiClass == null) {
-            System.out.println("renameMethod(" + className + "/" + oldName + " " + signature + " -> " + newName + ") failed, no such class");
+            log("renameMethod(" + className + "/" + oldName + " " + signature + " -> " + newName + ") failed, no such class");
             return false;
         }
 
         PsiMethod method = findMethod(psiClass, oldName, signature, false);
         if (method == null) {
-            System.out.println("renameMethod(" + className + "/" + oldName + " " + signature + " -> " + newName + ") failed, no such method");
+            log("renameMethod(" + className + "/" + oldName + " " + signature + " -> " + newName + ") failed, no such method");
             return false;
         }
 
@@ -148,23 +148,23 @@ public class ApplySrgAction extends AnAction {
         // TODO: can these psi nodes be cached for speed? we look them up on every rename!
         long start = System.currentTimeMillis();
         PsiClass psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
-        System.out.println("time,findClass,"+className+","+(System.currentTimeMillis() - start));
+        log("time,findClass,"+className+","+(System.currentTimeMillis() - start));
 
         if (psiClass == null) {
-            System.out.println("renameParametersList(" + className + "/" + methodName + " " + methodSignature+ " (" +  newParameterNames + ") failed, no such class");
+            log("renameParametersList(" + className + "/" + methodName + " " + methodSignature+ " (" +  newParameterNames + ") failed, no such class");
             return false;
         }
 
         PsiMethod method = findMethod(psiClass, methodName, methodSignature, true); // find method, including constructor methods
         if (method == null) {
-            System.out.println("renameParametersList(" + className + "/" + methodName + " " + methodSignature + " (" + newParameterNames + ") failed, no such method");
+            log("renameParametersList(" + className + "/" + methodName + " " + methodSignature + " (" + newParameterNames + ") failed, no such method");
             return false;
         }
 
         PsiParameterList psiParameterList = method.getParameterList();
 
         if (newParameterNames.length != psiParameterList.getParametersCount()) {
-            System.out.println("renameParametersList(" + className + "/" + methodName + " " + methodSignature + " (" + newParameterNames + ") failed, rename had " + newParameterNames.length + " parameters, but source had " + psiParameterList.getParametersCount());
+            log("renameParametersList(" + className + "/" + methodName + " " + methodSignature + " (" + newParameterNames + ") failed, rename had " + newParameterNames.length + " parameters, but source had " + psiParameterList.getParametersCount());
             return false;
         }
 
@@ -185,19 +185,19 @@ public class ApplySrgAction extends AnAction {
             if (method.isConstructor() && !allowConstructor)
                 continue; // constructor method names are renamed as part of the class
 
-            System.out.println(" method name: " + method.getName());
+            log(" method name: " + method.getName());
 
             String thisSignature = MethodSignatureHelper.makeTypeSignatureString(method);
 
-            System.out.println(" signature = " + thisSignature);
+            log(" signature = " + thisSignature);
 
             if (signature.equals(thisSignature)) {
-                System.out.println("time,findMethod,"+psiClass.getName()+","+name+","+signature+","+(System.currentTimeMillis() - start));
+                log("time,findMethod,"+psiClass.getName()+","+name+","+signature+","+(System.currentTimeMillis() - start));
                 return method;
             }
         }
 
-        System.out.println("time,findMethod,"+psiClass.getName()+","+name+","+signature+","+(System.currentTimeMillis() - start));
+        log("time,findMethod,"+psiClass.getName()+","+name+","+signature+","+(System.currentTimeMillis() - start));
         return null;
     }
 
@@ -224,15 +224,19 @@ public class ApplySrgAction extends AnAction {
         /* preprocessUsages checks for conflicts, but presents interactive UI :(
         Ref<UsageInfo[]> ref = Ref.create(usages);
         if (!refactoring.preprocessUsages(ref)) {
-            System.out.println("renameElement(" + psiElement + " -> " + newName + ") preprocessing failed - usages = " + usages);
+            log("renameElement(" + psiElement + " -> " + newName + ") preprocessing failed - usages = " + usages);
             return false;
         }
         */
         refactoring.doRefactoring(usages);
 
-        System.out.println("time,renameElement,"+psiElement+","+newName+","+(System.currentTimeMillis() - start));
+        log("time,renameElement,"+psiElement+","+newName+","+(System.currentTimeMillis() - start));
 
         return true;
     }
 
+    public void log(String s) {
+        System.out.println(s);
+        // TODO: write to file
+    }
 }
