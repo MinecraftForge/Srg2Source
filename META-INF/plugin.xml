@@ -27,6 +27,9 @@
 
   <project-components>
     <!-- Add your project components here -->
+      <component>
+          <implementation-class>agaricus.applysrg.BatchModeInitialization</implementation-class>
+      </component>
   </project-components>
 
   <actions>
