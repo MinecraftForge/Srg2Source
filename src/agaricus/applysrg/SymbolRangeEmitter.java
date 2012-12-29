@@ -1,13 +1,20 @@
 package agaricus.applysrg;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 
-public class SymbolRangeEmitter {
-    String sourceFilePath;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 
-    public SymbolRangeEmitter(String sourceFilePath) {
+public class SymbolRangeEmitter {
+    private String sourceFilePath;
+    private PrintWriter logFile;
+
+    public SymbolRangeEmitter(String sourceFilePath, PrintWriter logFile) {
         this.sourceFilePath = sourceFilePath;
+        this.logFile = logFile;
     }
 
     /**
@@ -72,7 +79,7 @@ public class SymbolRangeEmitter {
 
         if (psiJavaCodeReferenceElement == null) {
             // get this on '? extends T'
-            System.out.println("WARNING: no code reference element for "+psiTypeElement);
+            log("WARNING: no code reference element for "+psiTypeElement);
             return;
         }
 
@@ -85,7 +92,7 @@ public class SymbolRangeEmitter {
     public void emitTypeRange(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
         PsiElement referenceNameElement = psiJavaCodeReferenceElement.getReferenceNameElement();
         if (!(referenceNameElement instanceof PsiIdentifier)) {
-            System.out.println("WARNING: unrecognized reference name element, not identifier: " + referenceNameElement);
+            log("WARNING: unrecognized reference name element, not identifier: " + referenceNameElement);
             return;
         }
         PsiIdentifier psiIdentifier = (PsiIdentifier)referenceNameElement;
@@ -116,7 +123,7 @@ public class SymbolRangeEmitter {
             //  \           qualifier         /  deep type  identifier
 
             if (!(psiJavaCodeReferenceElement.getQualifier() instanceof PsiJavaCodeReferenceElement)) {
-                System.out.println("WARNING: unrecognized qualifier element type "+psiJavaCodeReferenceElement.getQualifier());
+                log("WARNING: unrecognized qualifier element type "+psiJavaCodeReferenceElement.getQualifier());
                 return;
             }
 
@@ -224,27 +231,36 @@ public class SymbolRangeEmitter {
     // Everything goes through these methods
 
     private void internalEmitPackageRange(String oldText, TextRange textRange, String packageName, String typeUsedBy) {
-        System.out.println(commonFields(oldText, textRange)+"package"+FS+packageName+FS+typeUsedBy);
+        log(commonFields(oldText, textRange)+"package"+FS+packageName+FS+typeUsedBy);
     }
 
     private void internalEmitClassRange(String oldText, TextRange textRange, String className) {
-        System.out.println(commonFields(oldText, textRange)+"class"+FS+className);
+        log(commonFields(oldText, textRange)+"class"+FS+className);
     }
 
     private void internalEmitFieldRange(String oldText, TextRange textRange, String className, String fieldName) {
-        System.out.println(commonFields(oldText, textRange)+"field"+FS+className+FS+fieldName);
+        log(commonFields(oldText, textRange)+"field"+FS+className+FS+fieldName);
     }
 
     private void internalEmitMethodRange(String oldText, TextRange textRange, String className, String methodName, String methodSignature) {
-        System.out.println(commonFields(oldText, textRange)+"method"+FS+className+FS+methodName+FS+methodSignature);
+        log(commonFields(oldText, textRange)+"method"+FS+className+FS+methodName+FS+methodSignature);
     }
 
 
     private void internalEmitParameterRange(String oldText, TextRange textRange, String className, String methodName, String methodSignature, String parameterName, int parameterIndex) {
-        System.out.println(commonFields(oldText, textRange)+"param"+FS+className+FS+methodName+FS+methodSignature+FS+parameterName+FS+parameterIndex);
+        log(commonFields(oldText, textRange)+"param"+FS+className+FS+methodName+FS+methodSignature+FS+parameterName+FS+parameterIndex);
     }
 
     private void internalEmitLocalVariable(String oldText, TextRange textRange, String className, String methodName, String methodSignature, String variableName, int variableIndex) {
-        System.out.println(commonFields(oldText, textRange)+"localvar"+FS+className+FS+methodName+FS+methodSignature+FS+variableName+FS+variableIndex);
+        log(commonFields(oldText, textRange)+"localvar"+FS+className+FS+methodName+FS+methodSignature+FS+variableName+FS+variableIndex);
     }
+
+
+    public void log(String s) {
+        System.out.println(s);
+        if (logFile != null) {
+            logFile.println(s);
+        }
+    }
+
 }

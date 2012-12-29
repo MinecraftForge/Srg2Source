@@ -87,7 +87,7 @@ public class SymbolReferenceWalker {
     }
 
     private void walk(PsiElement psiElement, int depth) {
-        //System.out.println("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
+        //emitter.log("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
 
         if (psiElement == null) {
             return;
@@ -98,7 +98,7 @@ public class SymbolReferenceWalker {
             PsiComment psiComment = (PsiComment)psiElement;
             if (psiComment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) { // "//" style comments
                 String commentText = psiComment.getText();
-                //System.out.println("COMMENT:"+commentText);
+                //emitter.log("COMMENT:"+commentText);
                 String[] words = commentText.split(" ");
 
                 if (words.length >= 3) {
@@ -119,7 +119,7 @@ public class SymbolReferenceWalker {
 
             for (PsiElement declaredElement : psiDeclarationStatement.getDeclaredElements()) {
                 if (declaredElement instanceof PsiClass) {
-                    System.out.println("TODO: inner class "+declaredElement); // TODO: process this?
+                    emitter.log("TODO: inner class "+declaredElement); // TODO: process this?
                 } else if (declaredElement instanceof PsiLocalVariable) {
                     PsiLocalVariable psiLocalVariable = (PsiLocalVariable)declaredElement;
 
@@ -130,7 +130,7 @@ public class SymbolReferenceWalker {
 
                     emitter.emitLocalVariableRange(className, methodName, methodSignature, psiLocalVariable, index);
                 } else {
-                    System.out.println("WARNING: Unknown declaration "+psiDeclarationStatement);
+                    emitter.log("WARNING: Unknown declaration "+psiDeclarationStatement);
                 }
             }
         }
@@ -164,7 +164,7 @@ public class SymbolReferenceWalker {
             if (referentElement instanceof PsiPackage) {
                 // Not logging package since includes net, net.minecraft, net.minecraft.server.. all components
                 // TODO: log reference for rename
-                //System.out.println("PKGREF"+referentElement+" name="+nameElement);
+                //emitter.log("PKGREF"+referentElement+" name="+nameElement);
             } else if (referentElement instanceof PsiClass) {
                 emitter.emitReferencedClass(nameElement, (PsiClass)referentElement);
                 //TODO emitter.emitTypeQualifierRangeIfQualified((psiJavaCodeReferenceElement));
@@ -181,7 +181,7 @@ public class SymbolReferenceWalker {
                 int index;
                 if (!localVariableIndices.containsKey(psiLocalVariable))  {
                     index = -1;
-                    System.out.println("couldn't find local variable index for "+psiLocalVariable+" in "+localVariableIndices);
+                    emitter.log("couldn't find local variable index for "+psiLocalVariable+" in "+localVariableIndices);
                 } else {
                     index = localVariableIndices.get(psiLocalVariable);
                 }
@@ -201,7 +201,7 @@ public class SymbolReferenceWalker {
                         // TODO: properly handle parameters in inner classes.. currently we always look at the outer method,
                         // but there could be parameters in a method in an inner class. This currently causes four errors in CB,
                         // CraftTask and CraftScheduler, since it makes heavy use of anonymous inner classes.
-                        System.out.println("WARNING: couldn't find method parameter index for "+psiParameter+" in "+methodParameterIndices);
+                        emitter.log("WARNING: couldn't find method parameter index for "+psiParameter+" in "+methodParameterIndices);
                     } else {
                         index = methodParameterIndices.get(psiParameter);
                     }
@@ -215,24 +215,24 @@ public class SymbolReferenceWalker {
                     int index;
                     if (!localVariableIndices.containsKey(psiParameter)) {
                         index = -1;
-                        System.out.println("WARNING: couldn't find non-method parameter index for "+psiParameter+" in "+localVariableIndices);
+                        emitter.log("WARNING: couldn't find non-method parameter index for "+psiParameter+" in "+localVariableIndices);
                     } else {
                         index = localVariableIndices.get(psiParameter);
                     }
                     emitter.emitTypeRange(psiParameter.getTypeElement());
                     emitter.emitReferencedLocalVariable(nameElement, className, methodName, methodSignature, psiParameter, index);
                 } else {
-                    System.out.println("WARNING: parameter "+psiParameter+" in unknown declaration scope "+declarationScope);
+                    emitter.log("WARNING: parameter "+psiParameter+" in unknown declaration scope "+declarationScope);
                 }
             } else {
                 // If you get this in a bunch of places on in CB on Entity getBukkitEntity() etc. (null referent), its probably
                 // IntelliJ getting confused by the Entity class in the server jar added as a library - but overridden
                 // in the project. To fix this, replace your jar with the slimmed version at https://github.com/agaricusb/MinecraftRemapping/blob/master/slim-jar.py
-                System.out.println("WARNING: ignoring unknown referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
+                emitter.log("WARNING: ignoring unknown referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
             }
 
             /*
-            System.out.println("   ref "+psiReferenceExpression+
+            emitter.log("   ref "+psiReferenceExpression+
                     " nameElement="+nameElement+
                     " name="+psiReferenceExpression.getReferenceName()+
                     " resolve="+psiReferenceExpression.resolve()+

@@ -8,6 +8,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +19,9 @@ import java.util.List;
 public class ExtractSymbolRangeMapAction extends AnAction {
     public Project project;
     public JavaPsiFacade facade;
+    public PrintWriter logFile;
+    public String logFilename;
+
 
     public ExtractSymbolRangeMapAction() {
         super("Apply Srg");
@@ -35,7 +42,7 @@ public class ExtractSymbolRangeMapAction extends AnAction {
             Messages.showMessageDialog(project, "Please select the files you want to transform in the View > Tool Windows > Project view, then try again.", "No selection", Messages.getErrorIcon());
             return null;
         }
-        System.out.println("Selected "+ selectedFiles.length+" files");
+        log("Selected "+ selectedFiles.length+" files");
         List<VirtualFile> skippedFiles = new ArrayList<VirtualFile>();
         for(VirtualFile file: selectedFiles) {
             PsiFile psiFile = psiManager.findFile(file);
@@ -46,7 +53,7 @@ public class ExtractSymbolRangeMapAction extends AnAction {
             }
 
             if (!(psiFile instanceof PsiJavaFile)) {
-                System.out.println("Skipping non-Java file "+file);
+                log("Skipping non-Java file "+file);
                 skippedFiles.add(file);
                 // TODO: possibly try to load this file as Java for PSI parsing
                 // see http://devnet.jetbrains.net/thread/271253 + https://gist.github.com/4367023
@@ -83,9 +90,9 @@ public class ExtractSymbolRangeMapAction extends AnAction {
 
     private void processFile(PsiJavaFile psiJavaFile) {
         String sourceFilePath = psiJavaFile.getVirtualFile().getPath().replace(project.getBasePath() + "/", "");
-        SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath);
+        SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath, logFile);
 
-        System.out.println("processing "+psiJavaFile+" = "+sourceFilePath);
+        log("processing "+psiJavaFile+" = "+sourceFilePath);
 
         PsiPackageStatement psiPackageStatement = psiJavaFile.getPackageStatement();
         if (psiPackageStatement != null) {
@@ -189,62 +196,38 @@ public class ExtractSymbolRangeMapAction extends AnAction {
         walker.walk(psiMethod.getBody());
     }
 
+    public void log(String s) {
+        System.out.println(s);
+        logFile.println(s);
+    }
 
     public void actionPerformed(AnActionEvent event) {
-        System.out.println("ApplySrg2Source experimental starting");
-
         project = event.getData(PlatformDataKeys.PROJECT);
-        facade = JavaPsiFacade.getInstance(project);
+        logFilename = project.getBasePath() + "/" + project.getName() + ".rangemap";
 
-        VirtualFile projectFileDirectory = event.getData(PlatformDataKeys.PROJECT_FILE_DIRECTORY);
+        try {
+            logFile = new PrintWriter(new BufferedWriter(new FileWriter(logFilename)));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            Messages.showMessageDialog(project, "Failed to open "+logFilename+" for writing: "+ex.getLocalizedMessage(), "File error", Messages.getErrorIcon());
+            return;
+        }
+
+        log("ApplySrg2Source experimental starting");
 
         List<PsiJavaFile> psiJavaFiles = getSelectedJavaFiles(event);
         if (psiJavaFiles == null) {
             return;
         }
-        System.out.println("Processing "+psiJavaFiles.size()+" files");
+        log("Processing "+psiJavaFiles.size()+" files");
 
 
         for (PsiJavaFile psiJavaFile: psiJavaFiles) {
             processFile(psiJavaFile);
         }
 
+        logFile.close();
 
-        /*
-        PsiPackage psiPackage = facade.findPackage("agaricus.applysrg.samplepackage");
-
-        PsiClass[] psiClasses = psiPackage.getClasses();
-        System.out.println("psiClasses="+psiClasses);
-
-        for (PsiClass psiClass: psiClasses) {
-            System.out.println("* "+psiClass.getQualifiedName());
-            PsiMethod[] psiMethods = psiClass.getMethods();
-            for (PsiMethod psiMethod: psiMethods) {
-                System.out.println("- method: "+psiMethod);
-
-                PsiParameterList psiParameterList = psiMethod.getParameterList();
-                PsiParameter[] psiParameters = psiParameterList.getParameters();
-                PsiCodeBlock psiCodeBlock = psiMethod.getBody();
-                PsiElement element = psiCodeBlock.getFirstBodyElement();
-                do {
-                    element = element.getNextSibling();
-                    System.out.println("-- "+element);
-                } while(element != null);
-            }
-            PsiField[] psiFields = psiClass.getFields();
-            for (PsiField psiField: psiFields) {
-                System.out.println("- field: "+psiField);
-            }
-        }*/
-
-        List<RenamingClass> classes = new ArrayList<RenamingClass>();
-        List<RenamingField> fields = new ArrayList<RenamingField>();
-        List<RenamingMethod> methods = new ArrayList<RenamingMethod>();
-        List<RenamingMethodParametersList> parametersLists = new ArrayList<RenamingMethodParametersList>();
-
-        if (!SrgLoader.promptAndLoadSrg(project, classes, fields, methods, parametersLists))
-            return;
-
-
+        Messages.showMessageDialog(project, "Wrote symbol range map to "+logFilename, "Extraction complete", Messages.getInformationIcon());
     }
 }
