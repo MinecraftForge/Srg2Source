@@ -1,20 +1,18 @@
 package agaricus.applysrg;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ExtractSymbolRangeMapAction {
     public Project project;
@@ -22,24 +20,38 @@ public class ExtractSymbolRangeMapAction {
     public PrintWriter logFile;
     public String logFilename;
 
-    /** Get list of Java files selected by the user
+    /** Get list of Java Psi files to process
      *
      * @param event
-     * @return List of Java files with PSI ready to process
+     * @param useSelectedFiles If true, use user's file selection; otherwise, use all Java files in project
+     * @param batchMode If false, do not present any UI
+     * @return
      */
-    private List<PsiJavaFile> getSelectedJavaFiles(AnActionEvent event) {
+    private List<PsiJavaFile> getJavaPsiFiles(AnActionEvent event, boolean useSelectedFiles, boolean batchMode) {
         List<PsiJavaFile> javaFileList = new ArrayList<PsiJavaFile>();
         PsiManager psiManager = PsiManager.getInstance(project);
+        Collection<VirtualFile> chosenFiles;
 
-        // Get selected files
-        VirtualFile[] selectedFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-        if (selectedFiles == null || selectedFiles.length == 0) {
-            Messages.showMessageDialog(project, "Please select the files you want to transform in the View > Tool Windows > Project view, then try again.", "No selection", Messages.getErrorIcon());
-            return null;
+        if (useSelectedFiles) {
+            // Get selected files
+            VirtualFile[] selectedFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+            if (selectedFiles == null || selectedFiles.length == 0) {
+                String help = "Please select the files you want to transform in the View > Tool Windows > Project view, then try again.";
+                log(help);
+                if (!batchMode) {
+                    Messages.showMessageDialog(project, help, "No selection", Messages.getErrorIcon());
+                }
+                return null;
+            }
+            chosenFiles = Arrays.asList(selectedFiles);
+        } else {
+            // Use all files in project
+            chosenFiles = FilenameIndex.getAllFilesByExt(project, "java");
         }
-        log("Selected "+ selectedFiles.length+" files");
+
+        log("Chose "+ chosenFiles.size()+" files");
         List<VirtualFile> skippedFiles = new ArrayList<VirtualFile>();
-        for(VirtualFile file: selectedFiles) {
+        for(VirtualFile file: chosenFiles) {
             PsiFile psiFile = psiManager.findFile(file);
             if (psiFile == null) {
                 // no psi structure for this file
@@ -62,21 +74,26 @@ public class ExtractSymbolRangeMapAction {
 
         if (skippedFiles.size() != 0) {
 
-            StringBuilder sb = new StringBuilder("Non-Java files were selected ("+skippedFiles.size()+" of "+selectedFiles.length+"): \n\n");
+            StringBuilder sb = new StringBuilder("Non-Java files were selected ("+skippedFiles.size()+" of "+chosenFiles.size()+"): \n\n");
             for (VirtualFile skippedFile: skippedFiles) {
                 sb.append("- " + skippedFile.getPresentableName() + "\n");
             }
 
-            if (skippedFiles.size() == selectedFiles.length) {
+            if (skippedFiles.size() == chosenFiles.size()) {
                 sb.append("\nNo valid Java source files in your project were selected. Please select the files you want to process in View > Tool Windows > Project and try again.");
-                Messages.showMessageDialog(project, sb.toString(), "No Java files selected", Messages.getErrorIcon());
+                log(sb.toString());
+                if (!batchMode) {
+                    Messages.showMessageDialog(project, sb.toString(), "No Java files selected", Messages.getErrorIcon());
+                }
                 return null;
             }
 
             sb.append("\nThe above files will not be processed. Do you want to continue processing the other "+javaFileList.size()+" files?");
-
-            if (Messages.showYesNoDialog(project, sb.toString(), "Skipping non-Java files", Messages.getWarningIcon()) != 0) {
-                return null;
+            log(sb.toString());
+            if (!batchMode) {
+                if (Messages.showYesNoDialog(project, sb.toString(), "Skipping non-Java files", Messages.getWarningIcon()) != 0) {
+                    return null;
+                }
             }
         }
 
@@ -214,16 +231,10 @@ public class ExtractSymbolRangeMapAction {
 
         List<PsiJavaFile> psiJavaFiles;
 
-        if (useSelectedFiles) {
-            psiJavaFiles = getSelectedJavaFiles(event);
-            if (psiJavaFiles == null) {
-                return;
-            }
-        } else {
-            // TODO: process all java
-            psiJavaFiles = null;
+        psiJavaFiles = getJavaPsiFiles(event, useSelectedFiles, batchMode);
+        if (psiJavaFiles == null) {
+            return;
         }
-
 
         log("Processing "+psiJavaFiles.size()+" files");
 
