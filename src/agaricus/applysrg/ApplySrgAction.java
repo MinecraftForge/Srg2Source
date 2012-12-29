@@ -1,8 +1,10 @@
 package agaricus.applysrg;
 
+import com.apple.eawt.Application;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -26,6 +28,8 @@ public class ApplySrgAction extends AnAction {
     public Project project;
     public JavaPsiFacade facade;
     public JavaRefactoringFactory refactoringFactory;
+    public PrintWriter logFile;
+    public static final String LOG_FILENAME = "applysrg.log";
 
     public ApplySrgAction() {
         super("Apply Srg");
@@ -35,6 +39,15 @@ public class ApplySrgAction extends AnAction {
         project = event.getData(PlatformDataKeys.PROJECT);
         facade = JavaPsiFacade.getInstance(project);
         refactoringFactory = JavaRefactoringFactory.getInstance(project);
+
+
+        try {
+            logFile = new PrintWriter(new BufferedWriter(new FileWriter(project.getBasePath() + "/" + LOG_FILENAME)));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            log("Unable to open log file - writing to stdout only");
+            logFile = null;
+        }
 
         log("ApplySrg2Source starting");
 
@@ -91,9 +104,13 @@ public class ApplySrgAction extends AnAction {
                 okFields+"/"+fields.size()+" fields, "+
                 okMethods+"/"+methods.size()+" methods, " +
                 okParametersLists+"/"+ parametersLists.size()+" parameter lists, " +
-                okClasses+"/"+classes.size()+" classes";
+                okClasses+"/"+classes.size()+" classes" +
+                (logFile == null ? "" : "\n\nDetailed output written to "+LOG_FILENAME);
 
         log(status);
+        if (logFile != null) {
+            logFile.close();
+        }
 
         Messages.showMessageDialog(project, status, "Rename complete", Messages.getInformationIcon());
     }
@@ -237,6 +254,6 @@ public class ApplySrgAction extends AnAction {
 
     public void log(String s) {
         System.out.println(s);
-        // TODO: write to file
+        logFile.println(s);
     }
 }
