@@ -8,10 +8,16 @@ import java.util.HashMap;
  * Recursively descends and processes symbol references
  */
 public class SymbolReferenceWalker {
+    // Where to write results to
     private SymbolRangeEmitter emitter;
+
+    // Where we're at
     private String className;
     private String methodName = "(outside-method)";
     private String methodSignature = "";
+
+    // If currently within // xxx start // xxx end comments
+    private boolean withinAddedCode = false;
 
     /**
      * Variables in the code block, mapped to the order they were declared.
@@ -20,6 +26,9 @@ public class SymbolReferenceWalker {
      */
     private HashMap<PsiVariable, Integer> localVariableIndices = new HashMap<PsiVariable, Integer>();
     private int nextLocalVariableIndex = 0;
+
+    // Separate index for variable declarations in "added" code
+    private int nextAddedLocalVariableIndex = 100;
 
     /**
      * Parameters to method, mapped to order in method declaration.
@@ -55,12 +64,53 @@ public class SymbolReferenceWalker {
         this.methodParameterIndices.putAll(methodParameterIndices);
     }
 
+    /**
+     * Record the positional index of a local variable declaration
+     *
+     * @param psiVariable The newly-declared variable
+     * @return The new index, unique per method
+     */
+    private int assignLocalVariableIndex(PsiVariable psiVariable) {
+        int index = withinAddedCode ? nextAddedLocalVariableIndex : nextLocalVariableIndex;
+
+        localVariableIndices.put(psiVariable, index);
+
+        // Variables in "added" code are tracked with a separate index, so they don't shift variables
+        // indexes below the added code
+        if (withinAddedCode) {
+            nextAddedLocalVariableIndex++;
+        } else {
+            nextLocalVariableIndex++;
+        }
+
+        return index;
+    }
 
     private void walk(PsiElement psiElement, int depth) {
         //System.out.println("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
 
         if (psiElement == null) {
             return;
+        }
+
+        // Comment possibly telling us this is added code, to track local variables differently
+        if (psiElement instanceof PsiComment) {
+            PsiComment psiComment = (PsiComment)psiElement;
+            if (psiComment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) { // "//" style comments
+                String commentText = psiComment.getText();
+                //System.out.println("COMMENT:"+commentText);
+                String[] words = commentText.split(" ");
+
+                if (words.length >= 3) {
+                    // First word is "//", second is "CraftBukkit", "Spigot", "Forge".., third is "start"/"end"
+                    String command = words[2];
+                    if (command.equalsIgnoreCase("start")) {
+                        withinAddedCode = true;
+                    } else if (command.equalsIgnoreCase("end")) {
+                        withinAddedCode = false;
+                    }
+                }
+            }
         }
 
         // New local variable declaration
@@ -74,11 +124,11 @@ public class SymbolReferenceWalker {
                     PsiLocalVariable psiLocalVariable = (PsiLocalVariable)declaredElement;
 
                     emitter.emitTypeRange(psiLocalVariable.getTypeElement());
-                    emitter.emitLocalVariableRange(className, methodName, methodSignature, psiLocalVariable, nextLocalVariableIndex);
 
                     // Record order of variable declarations for references in body
-                    localVariableIndices.put(psiLocalVariable, nextLocalVariableIndex);
-                    nextLocalVariableIndex++;
+                    int index = assignLocalVariableIndex(psiLocalVariable);
+
+                    emitter.emitLocalVariableRange(className, methodName, methodSignature, psiLocalVariable, index);
                 } else {
                     System.out.println("WARNING: Unknown declaration "+psiDeclarationStatement);
                 }
@@ -89,21 +139,16 @@ public class SymbolReferenceWalker {
         if (psiElement instanceof PsiCatchSection) {
             PsiCatchSection psiCatchSection = (PsiCatchSection)psiElement;
             PsiParameter psiParameter = psiCatchSection.getParameter();
-            emitter.emitLocalVariableRange(className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
-
-            localVariableIndices.put(psiParameter, nextLocalVariableIndex);
-            nextLocalVariableIndex++;
+            int index = assignLocalVariableIndex(psiParameter);
+            emitter.emitLocalVariableRange(className, methodName, methodSignature, psiParameter, index);
         }
 
         // .. and foreach
         if (psiElement instanceof PsiForeachStatement) {
             PsiForeachStatement psiForeachStatement = (PsiForeachStatement)psiElement;
             PsiParameter psiParameter = psiForeachStatement.getIterationParameter();
-
-            emitter.emitLocalVariableRange(className, methodName, methodSignature, psiParameter, nextLocalVariableIndex);
-
-            localVariableIndices.put(psiParameter, nextLocalVariableIndex);
-            nextLocalVariableIndex++;
+            int index = assignLocalVariableIndex(psiParameter);
+            emitter.emitLocalVariableRange(className, methodName, methodSignature, psiParameter, index);
         }
 
         // Variable reference

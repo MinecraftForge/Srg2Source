@@ -16,6 +16,17 @@ public class SampleClass implements Comparable {
     public Double[][][][] fourArray;
     public HashMap<Integer,Boolean> mapField;
 
+    public SampleClass(String constrParam1, int constrParam2)
+    {
+        int localVarInConstructor = 42;
+        int localVar2;
+        // foobar start
+        int addedVariable;
+        int anotherAddedVariable;
+        // foobar end
+        int lastLocalVariable;
+    }
+
     public SampleClass()
     {
         super();
