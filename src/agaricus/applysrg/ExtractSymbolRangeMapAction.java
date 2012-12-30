@@ -254,7 +254,8 @@ public class ExtractSymbolRangeMapAction {
 
         if (batchMode) {
             System.out.println("Srg2source batch mode finished - now exiting");
-            ApplicationManager.getApplication().exit();
+            System.exit(0);
+            //ApplicationManager.getApplication().exit(); // may prompt for confirmation
         }
     }
 }
