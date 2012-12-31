@@ -1,4 +1,4 @@
-package agaricus.applysrg;
+package agaricus.srg2source;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;

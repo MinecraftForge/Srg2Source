@@ -1,25 +1,16 @@
-package agaricus.applysrg;
+package agaricus.srg2source;
 
-import com.apple.eawt.Application;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.JavaRenameRefactoring;
 import com.intellij.usageView.UsageInfo;
-import org.apache.commons.lang.NotImplementedException;
 
 import java.io.*;
 import java.util.*;

@@ -1,11 +1,8 @@
-package agaricus.applysrg;
+package agaricus.srg2source;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.PrintWriter;
 
 public class SymbolRangeEmitter {

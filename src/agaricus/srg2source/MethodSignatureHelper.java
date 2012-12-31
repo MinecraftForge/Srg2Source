@@ -1,4 +1,4 @@
-package agaricus.applysrg;
+package agaricus.srg2source;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;

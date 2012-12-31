@@ -1,4 +1,4 @@
-package agaricus.applysrg.samplepackage;
+package agaricus.srg2source.samplepackage;
 
 import java.util.ArrayList;
 import java.util.HashMap;

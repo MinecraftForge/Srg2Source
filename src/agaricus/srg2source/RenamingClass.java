@@ -1,4 +1,4 @@
-package agaricus.applysrg;
+package agaricus.srg2source;
 
 public class RenamingClass extends Renaming {
     public String oldName;
