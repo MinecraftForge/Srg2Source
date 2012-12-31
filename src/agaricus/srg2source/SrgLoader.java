@@ -77,7 +77,7 @@ public class SrgLoader {
 
                 methods.add(new RenamingMethod(className, oldName, oldSignature, newName));
 
-            // Method parameter renaming - new to ApplySrg2Source
+            // Method parameter renaming - new to 2.0
             } else if (kind.equals("PA:")) {
                 String className = getPackageComponent(tokens[1]);
                 String methodName = getNameComponent(tokens[1]);

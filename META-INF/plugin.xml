@@ -1,8 +1,8 @@
 <idea-plugin version="2">
   <id>agaricus.srg2source</id>
-  <name>ApplySrg2Source</name>
+  <name>Srg2Source</name>
   <version>2.0</version>
-  <vendor email="agaricusb@yahoo.com" url="https://github.com/agaricusb/ApplySrg2Source">ApplySrg2Source</vendor>
+  <vendor email="agaricusb@yahoo.com" url="https://github.com/agaricusb/Srg2Source">Srg2Source</vendor>
 
   <description><![CDATA[
   Apply .srg class/field/method mappings to the source code of a project.

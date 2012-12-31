@@ -41,7 +41,7 @@ public class ApplySrgAction extends AnAction {
             logFile = null;
         }
 
-        log("ApplySrg2Source starting");
+        log("Srg2Source starting");
 
         List<RenamingClass> classes = new ArrayList<RenamingClass>();
         List<RenamingField> fields = new ArrayList<RenamingField>();
