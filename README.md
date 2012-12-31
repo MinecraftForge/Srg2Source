@@ -4,6 +4,8 @@ A tool for renaming symbols (classes, methods, fields, parameters, and variables
 
 For porting, Minecraft, CraftBukkit, mods, plugins, etc.
 
+Latest release: https://bitbucket.org/agaricusb/srg2source/downloads/Srg2Source-2.0.jar
+
 ## Basic Usage
 
 1. Install IntelliJ IDEA from http://www.jetbrains.com/idea/
