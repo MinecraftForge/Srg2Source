@@ -51,9 +51,10 @@ public class SymbolReferenceWalker {
     /**
      * Recursively walk starting from given element
      * @param startElement
+     * @return true if successful, or false if failed due to unresolved symbols
      */
-    public void walk(PsiElement startElement) {
-        walk(startElement, 0);
+    public boolean walk(PsiElement startElement) {
+        return walk(startElement, 0);
     }
 
     /**
@@ -86,11 +87,11 @@ public class SymbolReferenceWalker {
         return index;
     }
 
-    private void walk(PsiElement psiElement, int depth) {
+    private boolean walk(PsiElement psiElement, int depth) {
         //emitter.log("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
 
         if (psiElement == null) {
-            return;
+            return true; // gracefully ignore
         }
 
         // Comment possibly telling us this is added code, to track local variables differently
@@ -155,13 +156,18 @@ public class SymbolReferenceWalker {
         if (psiElement instanceof PsiJavaCodeReferenceElement) {
             PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = (PsiJavaCodeReferenceElement)psiElement;
 
-            // What this reference expression actually refers to
-            PsiElement referentElement = psiJavaCodeReferenceElement.resolve();
-
             // Identifier token naming this reference without qualification
             PsiElement nameElement = psiJavaCodeReferenceElement.getReferenceNameElement();
 
-            if (referentElement instanceof PsiPackage) {
+            // What this reference expression actually refers to
+            PsiElement referentElement = psiJavaCodeReferenceElement.resolve();
+
+            if (referentElement == null) {
+                // Element references something that doesn't exist! This shows in red in the IDE, as unresolved symbols.
+                // Fail hard
+                emitter.log("FAILURE: unresolved symbol: null referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
+                return false;
+            } else if (referentElement instanceof PsiPackage) {
                 // Not logging package since includes net, net.minecraft, net.minecraft.server.. all components
                 // TODO: log reference for rename
                 //emitter.log("PKGREF"+referentElement+" name="+nameElement);
@@ -225,9 +231,6 @@ public class SymbolReferenceWalker {
                     emitter.log("WARNING: parameter "+psiParameter+" in unknown declaration scope "+declarationScope);
                 }
             } else {
-                // If you get this in a bunch of places on in CB on Entity getBukkitEntity() etc. (null referent), its probably
-                // IntelliJ getting confused by the Entity class in the server jar added as a library - but overridden
-                // in the project. To fix this, replace your jar with the slimmed version at https://github.com/agaricusb/MinecraftRemapping/blob/master/slim-jar.py
                 emitter.log("WARNING: ignoring unknown referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
             }
 
@@ -246,8 +249,11 @@ public class SymbolReferenceWalker {
         PsiElement[] children = psiElement.getChildren();
         if (children != null) {
             for (PsiElement child: children) {
-                walk(child, depth + 1);
+                if (!walk(child, depth + 1)) {
+                    return false; // fail
+                }
             }
         }
+        return true;
     }
 }

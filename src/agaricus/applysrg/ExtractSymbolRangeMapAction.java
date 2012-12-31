@@ -21,15 +21,15 @@ public class ExtractSymbolRangeMapAction {
     public JavaPsiFacade facade;
     public PrintWriter logFile;
     public String logFilename;
+    public boolean batchMode;
 
     /** Get list of Java Psi files to process
      *
      * @param event
      * @param useSelectedFiles If true, use user's file selection; otherwise, use all Java files in project
-     * @param batchMode If false, do not present any UI
      * @return
      */
-    private List<PsiJavaFile> getJavaPsiFiles(AnActionEvent event, boolean useSelectedFiles, boolean batchMode) {
+    private List<PsiJavaFile> getJavaPsiFiles(AnActionEvent event, boolean useSelectedFiles) {
         List<PsiJavaFile> javaFileList = new ArrayList<PsiJavaFile>();
         PsiManager psiManager = PsiManager.getInstance(project);
         Collection<VirtualFile> chosenFiles;
@@ -102,7 +102,24 @@ public class ExtractSymbolRangeMapAction {
         return javaFileList;
     }
 
-    private void processFile(PsiJavaFile psiJavaFile) {
+    /**
+     * Process all files
+     * @return false if an error occurs
+     */
+    private boolean processFiles(List<PsiJavaFile> psiJavaFiles) {
+        for (PsiJavaFile psiJavaFile : psiJavaFiles) {
+            if (!processFile(psiJavaFile)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Process a class and any class(es) within
+     * @return false if an error occurs
+     */
+    private boolean processFile(PsiJavaFile psiJavaFile) {
         String sourceFilePath = psiJavaFile.getVirtualFile().getPath().replace(project.getBasePath() + "/", "");
         SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath, logFile);
 
@@ -126,9 +143,12 @@ public class ExtractSymbolRangeMapAction {
         PsiClass[] psiClasses = psiJavaFile.getClasses();
         if (psiClasses != null) {
             for (PsiClass psiClass : psiClasses) {
-                processClass(emitter, psiClass);
+                if (!processClass(emitter, psiClass)) {
+                    return false;
+                }
             }
         }
+        return true;
     }
 
     // Process class extends/implements list and method throws list
@@ -138,7 +158,11 @@ public class ExtractSymbolRangeMapAction {
         }
     }
 
-    private void processClass(SymbolRangeEmitter emitter, PsiClass psiClass) {
+    /**
+     * Process a class, including extends/implements list, fields, methods, initializers, and inner falsses
+     * @return false if an error occurs
+     */
+    private boolean processClass(SymbolRangeEmitter emitter, PsiClass psiClass) {
         String className = emitter.emitClassRange(psiClass);
 
         processClassReferenceList(emitter, psiClass.getExtendsList());
@@ -153,13 +177,17 @@ public class ExtractSymbolRangeMapAction {
 
             // Initializer can refer to other symbols, so walk it, too
             SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className);
-            walker.walk(psiField.getInitializer());
+            if (!walker.walk(psiField.getInitializer())) {
+                return false;
+            }
         }
 
         PsiMethod[] psiMethods = psiClass.getMethods();
 
         for (PsiMethod psiMethod: psiMethods) {
-            processMethod(emitter, className, psiMethod);
+            if (!processMethod(emitter, className, psiMethod)) {
+                return false;
+            }
         }
 
         // Class and instance initializers
@@ -167,16 +195,26 @@ public class ExtractSymbolRangeMapAction {
             for (PsiClassInitializer psiClassInitializer : psiClass.getInitializers()) {
                 // We call class initializers "{}"...
                 SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, "{}", "");
-                walker.walk(psiClassInitializer.getBody());
+                if (!walker.walk(psiClassInitializer.getBody())) {
+                    return false;
+                }
             }
         }
 
         for (PsiClass innerClass : psiClass.getInnerClasses()) {
-            processClass(emitter, innerClass);
+            if (!processClass(emitter, innerClass)) {
+                return false;
+            }
         }
+
+        return true;
     }
 
-    private void processMethod(SymbolRangeEmitter emitter, String className, PsiMethod psiMethod) {
+    /**
+     * Process a method, including its type and throws list, parameters, and body with parameters and local variables
+     * @return false if an error occurs
+     */
+    private boolean processMethod(SymbolRangeEmitter emitter, String className, PsiMethod psiMethod) {
         String methodSignature = emitter.emitMethodRange(className, psiMethod);
 
         // Return type and throws list
@@ -207,7 +245,11 @@ public class ExtractSymbolRangeMapAction {
 
         walker.addMethodParameterIndices(parameterIndices);
 
-        walker.walk(psiMethod.getBody());
+        if (!walker.walk(psiMethod.getBody())) {
+            return false;
+        }
+
+        return true;
     }
 
     public void log(String s) {
@@ -217,6 +259,7 @@ public class ExtractSymbolRangeMapAction {
 
     public void performAction(Project project, AnActionEvent event, boolean useSelectedFiles, boolean batchMode) {
         this.project = project;
+        this.batchMode = batchMode;
 
         logFilename = project.getBasePath() + "/" + project.getName() + ".rangemap";
 
@@ -234,27 +277,45 @@ public class ExtractSymbolRangeMapAction {
 
         List<PsiJavaFile> psiJavaFiles;
 
-        psiJavaFiles = getJavaPsiFiles(event, useSelectedFiles, batchMode);
+        psiJavaFiles = getJavaPsiFiles(event, useSelectedFiles);
         if (psiJavaFiles == null) {
             return;
         }
 
         log("Processing "+psiJavaFiles.size()+" files");
 
-
-        for (PsiJavaFile psiJavaFile: psiJavaFiles) {
-            processFile(psiJavaFile);
-        }
+        boolean success = processFiles(psiJavaFiles);
 
         logFile.close();
 
-        if (!batchMode) {
-            Messages.showMessageDialog(project, "Wrote symbol range map to "+logFilename, "Extraction complete", Messages.getInformationIcon());
-        }
+        if (success) {
+            if (!batchMode) {
+                Messages.showMessageDialog(project, "Wrote symbol range map to "+logFilename, "Extraction complete", Messages.getInformationIcon());
+            }
+            done(0);
 
-        if (batchMode) {
+        } else {
+            // Failed - the only current reason for failure is unresolved failures (TODO: update message if new failure modes)
+            if (!batchMode) {
+                // Note, this occurs in vanilla CB because:
+                // If you get this in a bunch of places on in CB on Entity getBukkitEntity() etc. (null referent), its probably
+                // IntelliJ getting confused by the Entity class in the server jar added as a library - but overridden
+                // in the project. To fix this, replace your jar with the slimmed version at https://github.com/agaricusb/MinecraftRemapping/blob/master/slim-jar.py
+
+
+                Messages.showMessageDialog(project, "There are unresolved symbol references in this project, unable to continue. Details written to "+logFilename+".\n\n" +
+                        "If this occurs with CB, please retry with an updated minecraft-server.jar with the NMS classes CB adds removed.",
+                        "Unresolved symbols",
+                        Messages.getErrorIcon());
+            }
+            done(1);
+        }
+    }
+
+    public void done(int code) {
+         if (batchMode) {
             System.out.println("Srg2source batch mode finished - now exiting");
-            System.exit(0);
+            System.exit(code);
             //ApplicationManager.getApplication().exit(); // may prompt for confirmation
         }
     }
