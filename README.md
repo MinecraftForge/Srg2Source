@@ -8,9 +8,9 @@ Latest release: https://bitbucket.org/agaricusb/srg2source/downloads/Srg2Source-
 
 ## Basic Usage
 
-1. Install IntelliJ IDEA from http://www.jetbrains.com/idea/
+1. Install IntelliJ IDEA from http://www.jetbrains.com/idea/ , and install the plugin: Preferences > Plugins > Install plugin from disk... > Srg2Source.jar
 
-2. Preferences > Plugins > Install plugin from disk... > Srg2Source.jar
+2. Open your project (if you aren't already using IDEA, go to File > Import Project, make sure you can build the project before continuing)
 
 3. Srg > Apply .srg with IntelliJ rename refactoring (new menu item), choose a .srg file, and your project will be transformed
 
@@ -28,7 +28,10 @@ Srg > Extract symbol range map for all files
 
 or: Srg > Extract symbol range map for selected files
 
-Then use the extracted .rangemap file with the "rangeapply" script from https://github.com/agaricusb/MinecraftRemapping .
+Then use the extracted .rangemap file with the "rangeapply" script from https://github.com/agaricusb/MinecraftRemapping:
+
+python rangeapply.py  --srcRoot yourproject/ --srcRangeMap yourproject/yourproject.rangemap --srgFiles pkgmcp2cb.srg
+
 
 ### Batch Mode
 
