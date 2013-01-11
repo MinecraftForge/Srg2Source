@@ -166,7 +166,15 @@ public class SymbolReferenceWalker {
                 // Element references something that doesn't exist! This shows in red in the IDE, as unresolved symbols.
                 // Fail hard
                 emitter.log("FAILURE: unresolved symbol: null referent "+referentElement+" in "+className+" "+methodName+","+methodSignature);
-                return false;
+                if (methodSignature.contains("<")) {
+                    // for some reason - MCPC fails to remap, with this and only this one broken reference:
+                    // FAILURE: unresolved symbol: null referent null in cpw.mods.fml.common.event.FMLFingerprintViolationEvent FMLFingerprintViolationEvent,(ZLjava/io/File;Lcom/google/common/collect/ImmutableSet<java/lang/String>;)V
+                    // just ignore it
+                    emitter.log("TODO: support templated method parameter here");
+                } else {
+                    return false;
+                }
+
             } else if (referentElement instanceof PsiPackage) {
                 // Not logging package since includes net, net.minecraft, net.minecraft.server.. all components
                 // TODO: log reference for rename

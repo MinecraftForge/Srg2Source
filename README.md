@@ -4,7 +4,7 @@ A tool for renaming symbols (classes, methods, fields, parameters, and variables
 
 For porting, Minecraft, CraftBukkit, mods, plugins, etc.
 
-Latest release: https://bitbucket.org/agaricusb/srg2source/downloads/Srg2Source-2.0.jar
+Latest release: https://bitbucket.org/agaricusb/srg2source/downloads/Srg2Source-2.1.jar
 
 ## Basic Usage
 
