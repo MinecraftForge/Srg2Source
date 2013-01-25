@@ -1,13 +1,16 @@
 #!/bin/sh -x
 
+# Root directory of data files (for example from https://github.com/agaricusb/MinecraftRemapping)
+DATA=../../jars
+
 # Minecraft version
 MCVER=1.4.7
 
 # Root of checked out CraftBukkit repository
-CB_ROOT=../CraftBukkit
+CB_ROOT=../../CraftBukkit
 
 # MCP decompiled with FML repackaging, but not joined. See https://gist.github.com/4366333
-MCP_ROOT=../mcp726-pkgd
+MCP_ROOT=../../mcp726-pkgd
 
 # Python 2.7+ installation 
 PYTHON=/usr/bin/python2.7
@@ -25,8 +28,8 @@ DIFF_OUT=/tmp/diff
 MCP_RANGEMAP=$MCP_ROOT/`basename $MCP_ROOT`.rangemap
 
 # CB to MCP mapping
-SRG_CB2MCP=$MCVER/cb2pkgmcp.srg
-SRG_CB2MCP_FIXES=1.4.6/uncollide-cb2pkgmcp.srg
+SRG_CB2MCP=$DATA/$MCVER/cb2pkgmcp.srg
+SRG_CB2MCP_FIXES=$DATA/1.4.6/uncollide-cb2pkgmcp.srg
 
 
 # Abort on any command failure
@@ -34,11 +37,11 @@ set -e
 
 
 # Small fixes to accomodate renaming compatibility
-patch -p1 -d $CB_ROOT < $MCVER/prerenamefixes.patch
+patch -p1 -d $CB_ROOT < $DATA/$MCVER/prerenamefixes.patch
 
 # Change minecraft-server library to a "slimmed" version without the same NMS classes CB patches
 # This avoids Psi symbol resolving errors
-patch -p1 -d $CB_ROOT < pom-slim-minecraft-server.patch
+patch -p1 -d $CB_ROOT < $DATA/pom-slim-minecraft-server.patch
 
 # Preflight IDEA with the updated pom, giving it a time to scan the symbols
 rm -f $CB_ROOT/srg2source-batchmode
@@ -76,8 +79,8 @@ fi
 diff -ur $CB_RANGEMAP.old $CB_RANGEMAP|wc -l
 
 # Change to a new minecraft-server library with MCP names
-patch -p1 -d $CB_ROOT -R < pom-slim-minecraft-server.patch
-patch -p1 -d $CB_ROOT < pom-minecraft-server-pkgmcp.patch
+patch -p1 -d $CB_ROOT -R < $DATA/pom-slim-minecraft-server.patch
+patch -p1 -d $CB_ROOT < $DATA/pom-minecraft-server-pkgmcp.patch
 
 # Apply the renames
 $PYTHON rangeapply.py --srcRoot $CB_ROOT --srcRangeMap $CB_RANGEMAP --lvRangeMap $MCP_RANGEMAP --mcpConfDir $MCP_ROOT/conf --srgFiles $SRG_CB2MCP $SRG_CB2MCP_FIXES
