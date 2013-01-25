@@ -3,3 +3,4 @@ workspace.xml
 *.jar
 out
 *.swp
+*.pyc
