@@ -14,7 +14,8 @@ CB_ROOT="../../CraftBukkit"
 
 # MCP decompiled with FML repackaging, but not joined. See https://gist.github.com/4366333
 # TODO: update for new FML flags
-MCP_ROOT="../../mcp726-pkgd"
+#MCP_ROOT="../../mcp726-pkgd"
+MCP_ROOT="../../FML/fml/mcp"
 
 # Python 2.7+ installation 
 PYTHON="/usr/bin/python2.7"
@@ -55,12 +56,14 @@ if os.path.exists(cookie):
 # IDEA must have Srg2source plugin installed, it will detect batchmode and automatically run
 CB_RANGEMAP=os.path.join(CB_ROOT, "craftbukkit.rangemap")
 
-shutil.move(CB_RANGEMAP, CB_RANGEMAP+".old")
+if os.path.exists(CB_RANGEMAP):
+    shutil.move(CB_RANGEMAP, CB_RANGEMAP+".old")
 
 
 file(cookie, "w")
 
-os.system("/Applications/IntelliJ\ IDEA\ 12.app/Contents/MacOS/idea "+os.path.join(os.getcwd(), CB_ROOT))
+status = os.system(IDEA+" "+os.path.join(os.getcwd(), CB_ROOT))
+assert status == 0
 
 os.unlink(os.path.join(CB_ROOT, "srg2source-batchmode"))
 
