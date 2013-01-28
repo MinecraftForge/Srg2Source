@@ -15,14 +15,14 @@ CB_ROOT="../../CraftBukkit"
 # MCP decompiled with FML repackaging, but not joined. See https://gist.github.com/4366333
 # TODO: update for new FML flags
 #MCP_ROOT="../../mcp726-pkgd"
-MCP_ROOT="../../FML/fml/mcp"
+MCP_ROOT="../../mcp726-pkgd"
 
 # Python 2.7+ installation 
 PYTHON="/usr/bin/python2.7"
 
 # Location for IntelliJ IDEA
-#IDEA="/Applications/IntelliJ\ IDEA\ 12.app/Contents/MacOS/idea"
-IDEA="sh /tmp/ij/bin/idea.sh"
+IDEA="/Applications/IntelliJ\ IDEA\ 12.app/Contents/MacOS/idea"
+#IDEA="sh /tmp/ij/bin/idea.sh"
 
 # Where to store CB/MCP patch output
 DIFF_OUT="/tmp/diff"
@@ -55,9 +55,9 @@ if shouldPrepare:
 
 if shouldExtract:
     # Enable batch mode for Srg2source, so it runs automatically and then exits
-    cookie = os.path.join(CB_ROOT, "srg2source-batchmode")
-    if os.path.exists(cookie):
-        os.unlink(cookie)
+    batchModeTrigger = os.path.join(CB_ROOT, "srg2source-batchmode")
+    if os.path.exists(batchModeTrigger):
+        os.unlink(batchModeTrigger)
 
     # Extract map of symbol ranges in CB source, required for renaming
     # IDEA must have Srg2source plugin installed, it will detect batchmode and automatically run
@@ -67,12 +67,28 @@ if shouldExtract:
         shutil.move(CB_RANGEMAP, CB_RANGEMAP+".old")
 
 
-    file(cookie, "w")
+    while True:
+        file(batchModeTrigger, "w")
 
-    status = os.system(IDEA+" "+os.path.join(os.getcwd(), CB_ROOT))
-    assert status == 0
+        status = os.system(IDEA+" "+os.path.join(os.getcwd(), CB_ROOT))
+        if status != 0:
+            print "IDEA returned nonzero status %s! Continue?" % (status,)
+            raw_input()
 
-    os.unlink(os.path.join(CB_ROOT, "srg2source-batchmode"))
+        failure = "FAILURE" in file(CB_RANGEMAP, "r").read()
+        if not failure: break
+
+        print "Fatal error in Srg2Source! Details in %s" % (CB_RANGEMAP,)
+        print "Loading in interactive mode when you're ready..."
+        # manually try: View > Tool Windows > Maven Projects > Reimport All Maven Projects (sync icon)
+        # TODO: find out how to automate clicking that button
+        os.unlink(batchModeTrigger)
+        raw_input()
+        os.system(IDEA+" "+os.path.join(os.getcwd(), CB_ROOT))
+        print "Continuing..."
+
+
+    os.unlink(batchModeTrigger)
 
     if not os.path.exists(CB_RANGEMAP):
         raise Exception("Failed to extract CB rangemap")
@@ -98,6 +114,7 @@ if shouldFormat:
     #find $CB_ROOT/src/main/java/net/minecraft -name '*.java' -exec astyle --suffix=none {} \;
     os.system("find "+os.path.join(CB_ROOT, "src/main/java/net/minecraft")+" -name '*.java' -exec astyle --suffix=none {} \;")
 
+    # TODO: import the scripts and avoid shell
     os.system(PYTHON+" javadocxfer.py "+CB_ROOT+" "+MCP_ROOT)
 
     os.system(PYTHON+" whitespaceneutralizer.py "+CB_ROOT+" "+MCP_ROOT)
