@@ -65,17 +65,36 @@ if shouldExtract:
 
     if os.path.exists(CB_RANGEMAP):
         shutil.move(CB_RANGEMAP, CB_RANGEMAP+".old")
+        print "Moved old rangemap %s -> %s" % (CB_RANGEMAP, CB_RANGEMAP+".old")
 
+   
+    print "Preflighting IDEA...quiet and press Enter to continue"
+    os.system(IDEA+" "+os.path.join(os.getcwd(), CB_ROOT))
+    while True:
+        print "Continue?"
+        raw_input()
+        # make sure they really did close idea
+        if os.system("killall -0 vim") == 0:
+            print "IDEA is still running!"
+        else:
+            break
+
+    raw_input()
+    
+    print "Continuing"
 
     while True:
         file(batchModeTrigger, "w")
 
         status = os.system(IDEA+" "+os.path.join(os.getcwd(), CB_ROOT))
+        failure = False
         if status != 0:
-            print "IDEA returned nonzero status %s! Continue?" % (status,)
-            raw_input()
+            print "IDEA returned nonzero status %s!" % (status,)
+            failure = True
 
-        failure = "FAILURE" in file(CB_RANGEMAP, "r").read()
+        if "FAILURE" in file(CB_RANGEMAP, "r").read():
+            failure = True
+
         if not failure: break
 
         print "Fatal error in Srg2Source! Details in %s" % (CB_RANGEMAP,)
