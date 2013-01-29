@@ -348,7 +348,13 @@ def getTopLevelClassForFilename(filename):
 # Rename symbols in source code
 def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, shouldAnnotate, options):
     path = os.path.join(options.srcRoot, filename)
-    data = file(path).read()
+    try:
+        data = file(path).read()
+    except Exception as e:
+        print "Failed to read %s: %s" % (path, e)
+        print "Skip?"
+        raw_input()
+        return
 
     if "\r" in data:
         # BlockJukebox is the only file with CRLF line endings in NMS.. and.. IntelliJ IDEA treats offsets 

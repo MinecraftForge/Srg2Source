@@ -68,13 +68,13 @@ if shouldExtract:
         print "Moved old rangemap %s -> %s" % (CB_RANGEMAP, CB_RANGEMAP+".old")
 
    
-    print "Preflighting IDEA...quiet and press Enter to continue"
+    print "Preflighting IDEA...quit and press Enter to continue"
     os.system(IDEA+" "+os.path.join(os.getcwd(), CB_ROOT))
     while True:
         print "Continue?"
         raw_input()
         # make sure they really did close idea
-        if os.system("killall -0 vim") == 0:
+        if os.system("killall -0 idea") == 0:
             print "IDEA is still running!"
         else:
             break
