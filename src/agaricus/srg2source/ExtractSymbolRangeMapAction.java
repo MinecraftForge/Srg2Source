@@ -119,7 +119,8 @@ public class ExtractSymbolRangeMapAction {
      * @return false if an error occurs
      */
     private boolean processFile(PsiJavaFile psiJavaFile) {
-        String sourceFilePath = psiJavaFile.getVirtualFile().getPath().replace(project.getBasePath() + "/", "");
+        String base = project.getBasePath().replace('\\', '/') + "/";
+        String sourceFilePath = psiJavaFile.getVirtualFile().getCanonicalPath().replace('\\', '/').replace(base, "");
         SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath, logFile);
 
         log("processing "+psiJavaFile+" = "+sourceFilePath);

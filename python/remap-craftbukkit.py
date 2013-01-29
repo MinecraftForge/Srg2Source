@@ -108,6 +108,7 @@ class Remapper(object):
             if line:
                 line = line.rstrip()
                 sys.stdout.write('.')
+                #print line
                 if 'Srg2source batch mode finished' in line: #Dirty dirty hax put for some reason it hangs
                     print 'Killing process y u hang?'
                     if self.osname == 'win':
@@ -383,7 +384,7 @@ class Remapper(object):
             os.remove(IWS_FILE)
         shutil.copy('craftbukkit.iws', IWS_FILE)
         
-        self.runidea(self.cb_dir, IPR_FILE, batchmode=False) # Preflight, to refresh from pom
+        #self.runidea(self.cb_dir, IPR_FILE, batchmode=False) # Preflight, to refresh from pom
         self.runidea(self.cb_dir, IPR_FILE)
         
         os.remove(POM_FILE)
@@ -391,6 +392,25 @@ class Remapper(object):
         
         shutil.move(os.path.join(self.cb_dir, os.path.basename(self.cb_dir) + '.rangemap'), rangefile)
 
+    def run_rangeapply(self, cbsrg, mcprange, cbrange):
+        RANGEAPPLY = [sys.executable, 'rangeapply.py',
+            '--srcRoot', self.cb_dir,
+            '--srcRangeMap', cbrange,
+            '--lvRangeMap', mcprange,
+            '--mcpConfDir', os.path.join(self.fml_dir, 'mcp', 'conf'),
+            '--srgFiles',  ''] #"+SRG_CB2MCP+" "+SRG_CB2MCP_FIXES)
+            
+        from chain import chain
+        chained = chain(os.path.join(self.fml_dir, 'mcp', 'conf', 'packaged.srg'), '^' + cbsrg, verbose=False)
+        
+        SRG_CHAIN = 'chained.srg'
+        
+        if os.path.isfile(SRG_CHAIN):
+            os.remove(SRG_CHAIN)
+        
+        with open(SRG_CHAIN, 'wb') as out_file: 
+            out_file.write('\n'.join(chained))
+        
 def main(options, args):
     mapper = Remapper(options)
     mapper.setupfml()
@@ -408,7 +428,9 @@ def main(options, args):
     mapper.setupslimjar()
     
     cb_range = 'cb.rangemap'
-    mapper.generatecbrange(cb_range)
+    #mapper.generatecbrange(cb_range)
+    
+    mapper.run_rangeapply(cb_to_vanilla, van_range, cb_range)
     
 if __name__ == '__main__':
     parser = OptionParser()
