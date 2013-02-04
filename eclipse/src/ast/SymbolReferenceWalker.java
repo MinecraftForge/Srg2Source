@@ -374,1380 +374,171 @@ public class SymbolReferenceWalker extends ASTVisitor
         return true;
     }
     */
-    
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
-    public boolean visit(AnnotationTypeDeclaration node) {
+    public boolean visit(AnnotationTypeDeclaration node)
+    {
+        System.out.println("Annotation: " + node.getName().getIdentifier());
+        return true;
+    }
+    public boolean visit(AnnotationTypeMemberDeclaration node)
+    {
+        System.out.println("AnnotationTypeMember: " + node.getName().getIdentifier());
         return true;
     }
 
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
-    public boolean visit(AnnotationTypeMemberDeclaration node) {
+    public boolean visit(AnonymousClassDeclaration node)
+    {
+        System.out.println("AnonymousClassDeclaration: " + node);
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(AnonymousClassDeclaration node) {
+    public boolean visit(ArrayAccess node)
+    {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(ArrayAccess node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(ArrayCreation node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(ArrayInitializer node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(ArrayType node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(AssertStatement node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(Assignment node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(Block node) {
         return true;
     }
 
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     * <p>Note: {@link LineComment} and {@link BlockComment} nodes are
-     * not considered part of main structure of the AST. This method will
-     * only be called if a client goes out of their way to visit this
-     * kind of node explicitly.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.0
-     */
     public boolean visit(BlockComment node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(BooleanLiteral node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(BreakStatement node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(CastExpression node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
+    
     public boolean visit(CatchClause node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(CharacterLiteral node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(ClassInstanceCreation node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(CompilationUnit node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(ConditionalExpression node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(ConstructorInvocation node) {
         return true;
     }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(ContinueStatement node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(DoStatement node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(EmptyStatement node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
-    public boolean visit(EnhancedForStatement node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
     public boolean visit(EnumConstantDeclaration node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
     public boolean visit(EnumDeclaration node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(ExpressionStatement node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(FieldAccess node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(FieldDeclaration node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(ForStatement node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(IfStatement node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(ImportDeclaration node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(InfixExpression node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(InstanceofExpression node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(Initializer node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(LabeledStatement node) {
         return true;
     }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     * <p>Note: {@link LineComment} and {@link BlockComment} nodes are
-     * not considered part of main structure of the AST. This method will
-     * only be called if a client goes out of their way to visit this
-     * kind of node explicitly.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.0
-     */
-    public boolean visit(LineComment node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
-    public boolean visit(MarkerAnnotation node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.0
-     */
-    public boolean visit(MemberRef node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
-    public boolean visit(MemberValuePair node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.0
-     */
-    public boolean visit(MethodRef node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.0
-     */
-    public boolean visit(MethodRefParameter node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(MethodDeclaration node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(MethodInvocation node) {
         return true;
     }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
-    public boolean visit(Modifier node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
-    public boolean visit(NormalAnnotation node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(NullLiteral node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(NumberLiteral node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(PackageDeclaration node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
     public boolean visit(ParameterizedType node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(ParenthesizedExpression node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(PostfixExpression node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(PrefixExpression node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(PrimitiveType node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(QualifiedName node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
     public boolean visit(QualifiedType node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(ReturnStatement node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(SimpleName node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(SimpleType node) {
         return true;
     }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
-    public boolean visit(SingleMemberAnnotation node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(SingleVariableDeclaration node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(StringLiteral node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(SuperConstructorInvocation node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(SuperFieldAccess node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(SuperMethodInvocation node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(SwitchCase node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(SwitchStatement node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(SynchronizedStatement node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.0
-     */
-    public boolean visit(TagElement node) {
-        return true;
-    }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.0
-     */
     public boolean visit(TextElement node) {
         return true;
     }
-
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(ThisExpression node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(ThrowStatement node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(TryStatement node) {
-        return true;
-    }
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(TypeDeclaration node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(TypeDeclarationStatement node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(TypeLiteral node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
     public boolean visit(TypeParameter node) {
         return true;
     }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.7.1
-     */
-    public boolean visit(UnionType node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(VariableDeclarationExpression node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(VariableDeclarationStatement node) {
-        return true;
-    }
-
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
     public boolean visit(VariableDeclarationFragment node) {
         return true;
     }
+    
+    
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     */
-    public boolean visit(WhileStatement node) {
-        return true;
-    }
 
-    /**
-     * Visits the given type-specific AST node.
-     * <p>
-     * The default implementation does nothing and return true.
-     * Subclasses may reimplement.
-     * </p>
-     *
-     * @param node the node to visit
-     * @return <code>true</code> if the children of this node should be
-     * visited, and <code>false</code> if the children of this node should
-     * be skipped
-     * @since 3.1
-     */
-    public boolean visit(WildcardType node) {
+
+    //Need to specifically parse comments ourself using CompilationUnit.getComments or some shit
+    public boolean visit(LineComment node) {
         return true;
     }
 }
