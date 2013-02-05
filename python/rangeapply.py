@@ -3,6 +3,7 @@
 # Process symbol range maps produced by ApplySrg2Source
 
 import os
+import pprint
 import srglib
 import argparse  # note: requires Python 2.7+
 import subprocess # for git
@@ -462,6 +463,7 @@ def main():
     parser.add_argument("--rewriteFiles", help="Whether to rewrite files with new symbol mappings", type=bool, choices=(True, False), default=True)
     parser.add_argument("--renameFiles", help="Whether to rename files with new filenames", type=bool, choices=(True, False), default=True)
     parser.add_argument("--dumpRenameMap", help="Whether to dump symbol rename map before renaming", type=bool, choices=(True, False), default=True)
+    parser.add_argument("--dumpRangeMap", help="Dump the ordered range map and quit", type=bool, choices=(True, False), default=False)
     options = parser.parse_args()
 
     print "Reading rename maps..."
@@ -470,6 +472,12 @@ def main():
     qualifiedRenameMap = qualifyClassRenameMaps(renameMap, importMap)
     print "Reading range map..."
     rangeMapByFile = readRangeMap(options.srcRangeMap, options.srcRoot)
+    if options.dumpRangeMap:
+        for filename in sorted(rangeMapByFile.keys()):
+            for start, end, expectedOldText, key in rangeMapByFile[filename]:
+                print filename,start,end,expectedOldText,key
+
+        raise SystemExit
     print "Processing files..."
 
     for filename in sorted(rangeMapByFile.keys()):
