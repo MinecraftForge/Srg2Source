@@ -16,8 +16,8 @@ import org.eclipse.jdt.core.dom.*;
 @SuppressWarnings("unchecked")
 public class RangeExtractor
 {
-    private static final String BASE = "C:/Users/Lex/Desktop/mc_dev_rev/1.4.6-R0.3/";
-    private static final String LIB = BASE + "libs";
+    private static final String BASE = "D:/CraftBukkitWork/Srg2Source/python/craftbukkit/";
+    private static final String LIB = "C:/Users/Lex/Desktop/mc_dev_rev/1.4.6-R0.3/libs";
     private static final String SRC = BASE + "src";
     private static PrintWriter logFile = null;
     private static String[] libs = null;
@@ -40,7 +40,7 @@ public class RangeExtractor
 
         log("Symbol range map extraction starting");
 
-        String[] files = gatherFiles(SRC, ".java");
+        String[] files = gatherFiles(SRC, "TileEntityChest.java");
         log("Processing " + files.length +" files");
 
         if (files.length == 0)
@@ -99,7 +99,7 @@ public class RangeExtractor
     }
     
     @SuppressWarnings("unchecked")
-    private static CompilationUnit createUnit(String name, File file) throws Exception
+    private static CompilationUnit createUnit(String name, String data) throws Exception
     {
         ASTParser parser = ASTParser.newParser(AST.JLS4);        
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
@@ -111,19 +111,22 @@ public class RangeExtractor
         parser.setUnitName(name);
         parser.setEnvironment(libs, new String[]{SRC}, null, true);
         
-        parser.setSource(FileUtils.readFileToString(file).toCharArray());
+        parser.setSource(data.toCharArray());
         return (CompilationUnit)parser.createAST(null);
     }
     
     private static boolean processFile(String path) throws Exception
     {
-        String sourceFilePath = path.replace('\\', '/').substring(BASE.length() + 1);
+        String sourceFilePath = path.replace('\\', '/').substring(BASE.length());
         SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath, logFile);
+        String data = FileUtils.readFileToString(new File(path));
         
-        CompilationUnit cu = createUnit(path.replace('\\', '/').substring(SRC.length() + 1), new File(path));
+        CompilationUnit cu = createUnit(path.replace('\\', '/').substring(SRC.length() + 1), data);
 
         log("processing " + sourceFilePath);
 
+        int[] newCode = getNewCodeRanges(cu, data);
+        
         PackageDeclaration pkg = cu.getPackage();
         if (pkg != null)
         {
@@ -139,7 +142,7 @@ public class RangeExtractor
         List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>)cu.types();
         for (AbstractTypeDeclaration type : types)
         {
-            if (!processAbstractClass(emitter, type))
+            if (!processAbstractClass(emitter, type, newCode))
             {
                 return false;
             }
@@ -147,7 +150,7 @@ public class RangeExtractor
         return true;
     }
     
-    private static boolean processAbstractClass(SymbolRangeEmitter emitter, AbstractTypeDeclaration type)
+    private static boolean processAbstractClass(SymbolRangeEmitter emitter, AbstractTypeDeclaration type, int[] newCode)
     {
         if (type instanceof AnnotationTypeDeclaration)
         {
@@ -159,7 +162,7 @@ public class RangeExtractor
         }
         else if (type instanceof TypeDeclaration)
         {
-            if (!processClass(emitter, (TypeDeclaration)type))
+            if (!processClass(emitter, (TypeDeclaration)type, newCode))
             {
                 return false;
             }
@@ -167,7 +170,7 @@ public class RangeExtractor
         return true;
     }
 
-    private static boolean processClass(SymbolRangeEmitter emitter, TypeDeclaration clazz)
+    private static boolean processClass(SymbolRangeEmitter emitter, TypeDeclaration clazz, int[] newCode)
     {
         String className = emitter.emitClassRange(clazz);
         
@@ -191,7 +194,7 @@ public class RangeExtractor
             {
                 emitter.emitFieldRange(frag);
                 // Initializer can refer to other symbols, so walk it, too
-                SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className);
+                SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, newCode);
                 if (!walker.walk(frag.getInitializer()))
                 {
                     return false;
@@ -201,7 +204,7 @@ public class RangeExtractor
 
         for (MethodDeclaration method : clazz.getMethods())
         {
-            if (!processMethod(emitter, className, method))
+            if (!processMethod(emitter, className, method, newCode))
             {
                 return false;
             }
@@ -213,7 +216,7 @@ public class RangeExtractor
             if (body instanceof Initializer)
             {
                 Initializer init = (Initializer)body;
-                SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, "{}", "");
+                SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, newCode, "{}", "");
                 if (!walker.walk(init.getBody()))
                 {
                     return false;
@@ -227,7 +230,7 @@ public class RangeExtractor
         {
             if (body instanceof AbstractTypeDeclaration)
             {
-                if (!processAbstractClass(emitter, (AbstractTypeDeclaration)body))
+                if (!processAbstractClass(emitter, (AbstractTypeDeclaration)body, newCode))
                 {
                     return false;
                 }
@@ -237,7 +240,7 @@ public class RangeExtractor
         return true;
     }
     
-    private static boolean processMethod(SymbolRangeEmitter emitter, String className, MethodDeclaration method)
+    private static boolean processMethod(SymbolRangeEmitter emitter, String className, MethodDeclaration method, int[] newCode)
     {
         String methodSignature = emitter.emitMethodRange(method);
 
@@ -249,22 +252,61 @@ public class RangeExtractor
         }
         
         List<SingleVariableDeclaration> params = (List<SingleVariableDeclaration>)method.parameters();
-        HashMap<SingleVariableDeclaration, Integer> paramIds = new HashMap<SingleVariableDeclaration, Integer>();
+        HashMap<String, Integer> paramIds = new HashMap<String, Integer>();
         
         for (int x = 0; x < params.size(); x++)
         {
             SingleVariableDeclaration param = params.get(x);
             emitter.emitTypeRange(param.getType());
             emitter.emitParameterRange(method, methodSignature, param, x);
-            paramIds.put(param, x);
+            paramIds.put(param.getName().getIdentifier(), x);
         }
 
         // Method body
-        SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, method.getName().getIdentifier(), methodSignature);
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, newCode, method.getName().getIdentifier(), methodSignature);
 
-        walker.addMethodParameterIndices(paramIds);
+        walker.setParams(paramIds);
 
         return walker.walk(method.getBody());
     }
-
+    
+    private static int[] getNewCodeRanges(CompilationUnit cu, String data)
+    {
+        boolean inside = false;
+        ArrayList<Integer> ret = new ArrayList<Integer>();
+        for (Comment cmt : (List<Comment>)cu.getCommentList())
+        {
+            String comment = data.substring(cmt.getStartPosition(), cmt.getStartPosition() + cmt.getLength());
+            if (cmt.isLineComment())
+            {
+                String[] words = comment.split(" ");
+                if (words.length >= 3)
+                {
+                    // First word is "//", 
+                    // Second is "CraftBukkit", "Spigot", "Forge".., 
+                    // Third is "start"/"end"
+                    String command = words[2];
+                    if (command.equalsIgnoreCase("start"))
+                    {
+                        ret.add(cmt.getStartPosition());
+                        if (inside) System.out.println("Unmatched newcode start: " + cmt.getStartPosition() + ": " + comment);
+                        inside = true;
+                    }
+                    else if (command.equalsIgnoreCase("end"))
+                    {
+                        ret.add(cmt.getStartPosition());
+                        if (!inside) System.out.println("Unmatched newcode end: " + cmt.getStartPosition() + ": " + comment);
+                        inside = false;
+                    }
+                }
+            }
+        }
+        
+        int[] r = new int[ret.size()];
+        for (int x = 0; x < ret.size(); x++)
+        {
+            r[x] = ret.get(x);
+        }
+        return r;
+    }
 }

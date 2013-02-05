@@ -17,15 +17,11 @@ public class SymbolRangeEmitter
         this.logFile = logFile;
     }
 
-    /**
-     * Emit range of package statement, declaring the package the file resides
-     * within
-     */
     public void emitPackageRange(PackageDeclaration pkg)
     {
         String name = pkg.getName().getFullyQualifiedName();
-        internalEmitPackageRange(name, pkg, name, "(file)"); 
-        // package statement remapped based on file it was found in
+        //jline|package|jline|(file)
+        log(commonFields(name, pkg.getName()) + "package" + FS + name + FS + "(file)");
     }
 
     /**
@@ -57,10 +53,12 @@ public class SymbolRangeEmitter
      */
     public String emitClassRange(TypeDeclaration clazz)
     {
-        String className = clazz.getName().getIdentifier();
-        String qualified = clazz.getName().resolveBinding().getName();
-        internalEmitClassRange(className, clazz.getName(), qualified);
-        return className;
+        SimpleName name = clazz.getName();
+        String className = name.getIdentifier();
+        String qualified = ((ITypeBinding)name.resolveBinding()).getQualifiedName();
+        //AnsiWindowsTerminal|class|jline.AnsiWindowsTerminal
+        log(commonFields(className, clazz.getName()) + "class" + FS + qualified);
+        return qualified;
     }
 
     /**
@@ -98,18 +96,114 @@ public class SymbolRangeEmitter
         
         if (type.isSimpleType())
         {
-            ITypeBinding bind = ((SimpleType)type).getName().resolveTypeBinding().getErasure();
-            System.out.println("  type" + getLocation(type) + '|' + bind.getQualifiedName());
+            
+            SimpleType stype = (SimpleType)type;
+            ITypeBinding bind = stype.getName().resolveTypeBinding().getErasure();
+            log(commonFields(stype.getName().toString(), stype.getName()) + "class" + FS + bind.getQualifiedName());
         }
         else
         {
-            System.out.println("ERROR Unknown Type: " + type + getLocation(type));
+            System.out.println("ERROR Unknown Type: " + type + type.getStartPosition() + FS + type.getStartPosition() + type.getLength());
         }
     }
 
+    public void emitFieldRange(VariableDeclarationFragment field)
+    {
+        IVariableBinding var = field.resolveBinding();
+        String name = var.getName();
+        String cls = var.getDeclaringClass().getQualifiedName(); 
+
+        //server|field|net.minecraft.server.WorldManager|server
+        log(commonFields(name, field.getName()) + "field" + FS + cls + FS + name);
+    }
+    
+    public String emitMethodRange(MethodDeclaration method)
+    {
+        IMethodBinding bind = method.resolveBinding();
+        String signature = MethodSignatureHelper.getSignature(bind);
+        String name = bind.getName();
+        String owner = bind.getDeclaringClass().getQualifiedName();
+        //WorldManager|method|net.minecraft.server.WorldManager|WorldManager|(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/server/WorldServer;)V
+        log(commonFields(name, method.getName()) + "method" + FS + owner + FS + name + FS + signature);
+
+        return signature;
+    }
+    
+    public void emitParameterRange(MethodDeclaration method, String signature, SingleVariableDeclaration param, int index)
+    {
+        if (param == null || param.getName() == null)
+        {
+            return;
+        }
+
+        String name = param.getName().getIdentifier();
+        IMethodBinding bind = method.resolveBinding();
+        String owner = bind.getDeclaringClass().getQualifiedName();
+        String mName = bind.getName();
+
+        //entity|param|net.minecraft.server.WorldManager|a|(Lnet/minecraft/server/Entity;)V|entity|0
+        log(commonFields(name, param.getName()) + "param" + FS + owner + FS + mName + FS + signature + FS + name + FS + index);
+    }
+    
+
+    public void emitReferencedClass(Name name, ITypeBinding clazz)
+    {
+        //String|class|java.lang.String
+        log(commonFields(name.toString(), name) + "class" + FS + clazz.getQualifiedName());
+    }
+    
+
+    public void emitReferencedMethod(Name name, IMethodBinding method)
+    {
+        //systemInstall|method|org.fusesource.jansi.AnsiConsole|systemInstall|()V
+        log(commonFields(name.toString(), name) + "method" + 
+            FS + method.getDeclaringClass().getQualifiedName() + 
+            FS + method.getName() + 
+            FS + MethodSignatureHelper.getSignature(method));
+    }
+
+    public void emitReferencedMethodParameter(Name name, IVariableBinding var, int index)
+    {
+        IMethodBinding method = var.getDeclaringMethod();
+        //out|param|jline.AnsiWindowsTerminal|wrapOutIfNeeded|(Ljava/io/OutputStream;)Ljava/io/OutputStream;|out|0
+        log(commonFields(name.toString(), name) + "param" + 
+            FS + method.getDeclaringClass().getQualifiedName() + 
+            FS + method.getName() + 
+            FS + MethodSignatureHelper.getSignature(method) + 
+            FS + name + 
+            FS + index);
+    }
+
+    public void emitLocalVariableRange(Name name, String className, String methodName, String methodSignature, int index)
+    {
+        //os|localvar|jline.AnsiWindowsTerminal|wrapOutputStream|(Ljava/io/OutputStream;)Ljava/io/OutputStream;|os|0
+        log(commonFields(name.toString(), name) + "localvar" + 
+            FS + className + 
+            FS + methodName + 
+            FS + methodSignature + 
+            FS + name + 
+            FS + index);
+    }
+    
+
+    public void emitReferencedField(Name name, IVariableBinding field)
+    {
+        ITypeBinding type = field.getDeclaringClass();
+        if (type == null && name.toString().equals("length"))
+        {
+            log("Field: Array Length, skipping");
+            return;
+        }
+        //ansiSupported|field|jline.AnsiWindowsTerminal|ansiSupported
+        log(commonFields(name.toString(), name) + "field" + 
+            FS + field.getDeclaringClass().getQualifiedName() + 
+            FS + field.getName());
+    }
+    
+/*
     /**
      * Emit type range given a PsiJavaCodeReferenceElement
-     */
+     * /
     public void emitTypeRange(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement)
     {
         PsiElement referenceNameElement = psiJavaCodeReferenceElement
@@ -144,7 +238,7 @@ public class SymbolRangeEmitter
     /**
      * Emit type qualifier package name for name, if the element is a fully
      * qualified reference
-     */
+     * /
     public void emitTypeQualifierRangeIfQualified(
             PsiJavaCodeReferenceElement psiJavaCodeReferenceElement)
     {
@@ -176,132 +270,7 @@ public class SymbolRangeEmitter
                     deepTypeName);
         }
     }
-
-    public void emitFieldRange(VariableDeclarationFragment field)
-    {
-        IVariableBinding var = field.resolveBinding();
-        String name = var.getName();
-        String cls = var.getDeclaringClass().getQualifiedName(); 
-
-        //server|field|net.minecraft.server.WorldManager|server
-        log(commonFields(name, field) + "field" + FS + cls + FS + name);
-    }
-
-    /**
-     * Emit method declaration name range
-     * 
-     * @return Method signature, for referencing method body members
-     */
-    public String emitMethodRange(MethodDeclaration method)
-    {
-        //WorldManager|method|net.minecraft.server.WorldManager|WorldManager|(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/server/WorldServer;)V
-        IMethodBinding bind = method.resolveBinding();
-        String signature = MethodSignatureHelper.getSignature(bind);
-        String name = bind.getName();
-        String owner = bind.getDeclaringClass().getQualifiedName();
-
-        log(commonFields(name, method) + "method" + FS + owner + FS + name + FS + signature);
-
-        return signature;
-    }
-
-    /**
-     * Emit method parameter name declaration range
-     */
-    public void emitParameterRange(MethodDeclaration method, String signature, SingleVariableDeclaration param, int index)
-    {
-        //entity|param|net.minecraft.server.WorldManager|a|(Lnet/minecraft/server/Entity;)V|entity|0
-        if (param == null || param.getName() == null)
-        {
-            return;
-        }
-
-        String name = param.getName().getIdentifier();
-        IMethodBinding bind = method.resolveBinding();
-        String owner = bind.getDeclaringClass().getQualifiedName();
-        String mName = bind.getName();
-
-        log(commonFields(name, param.getName()) + "param" + FS + owner + FS + mName + FS + signature + FS + name + FS + index);
-    }
-
-    /**
-     * Emit local variable declaration name range Local variables can occur in
-     * methods, initializers, ...
-     */
-    public void emitLocalVariableRange(String className, String methodName,
-            String methodSignature, PsiVariable psiVariable,
-            int localVariableIndex)
-    {
-        internalEmitLocalVariable(psiVariable.getNameIdentifier().getText(),
-                psiVariable.getNameIdentifier().getTextRange(), className,
-                methodName, methodSignature, psiVariable.getName(),
-                localVariableIndex);
-    }
-
-    // Referenced names below (symbol uses, as opposed to declarations)
-
-    /**
-     * Emit referenced class name range
-     */
-    public void emitReferencedClass(PsiElement nameElement, PsiClass psiClass)
-    {
-        // TODO: null check for broken references
-        internalEmitClassRange(nameElement.getText(),
-                nameElement.getTextRange(), psiClass.getQualifiedName());
-    }
-
-    /**
-     * Emit referenced field name range
-     */
-    public void emitReferencedField(PsiElement nameElement, PsiField psiField)
-    {
-        PsiClass psiClass = psiField.getContainingClass();
-
-        internalEmitFieldRange(nameElement.getText(),
-                nameElement.getTextRange(), psiClass.getQualifiedName(),
-                psiField.getName());
-    }
-
-    /**
-     * Emit referenced method name range, that is, a method call
-     */
-    public void emitReferencedMethod(PsiElement nameElement,
-            PsiMethod psiMethodCalled)
-    {
-        PsiClass psiClass = psiMethodCalled.getContainingClass();
-
-        internalEmitMethodRange(nameElement.getText(),
-                nameElement.getTextRange(), psiClass.getQualifiedName(),
-                psiMethodCalled.getName(),
-                MethodSignatureHelper.makeTypeSignatureString(psiMethodCalled));
-    }
-
-    /**
-     * Emit referenced local variable name range This includes both
-     * "local variables" declared in methods, and in foreach/catch sections
-     * ("parameters")
-     */
-    public void emitReferencedLocalVariable(PsiElement nameElement,
-            String className, String methodName, String methodSignature,
-            PsiVariable psiVariable, int localVariableIndex)
-    {
-        internalEmitLocalVariable(nameElement.getText(),
-                nameElement.getTextRange(), className, methodName,
-                methodSignature, psiVariable.getName(), localVariableIndex);
-    }
-
-    /**
-     * Emit referenced method parameter name range Only includes _method_
-     * parameters - for foreach/catch parameters see emitReferencedLocalVariable
-     */
-    public void emitReferencedMethodParameter(PsiElement nameElement,
-            String className, String methodName, String methodSignature,
-            PsiParameter psiParameter, int index)
-    {
-        internalEmitParameterRange(nameElement.getText(),
-                nameElement.getTextRange(), className, methodName,
-                methodSignature, psiParameter.getName(), index);
-    }
+*/
 
     // Field separator
     private final String FS = "|";
@@ -312,10 +281,9 @@ public class SymbolRangeEmitter
         // text for sanity check
         return "@" + FS + sourceFilePath 
                    + FS + textRange.getStartPosition() 
-                   + FS + textRange.getStartPosition() + textRange.getLength()
+                   + FS + (textRange.getStartPosition() + textRange.getLength())
                    + FS + oldText + FS;
     }
-
     // Methods to actually write the output
     // Everything goes through these methods
 

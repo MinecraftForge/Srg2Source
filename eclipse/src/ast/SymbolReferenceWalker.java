@@ -17,8 +17,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     private String methodName = "(outside-method)";
     private String methodSignature = "";
 
-    // If currently within // xxx start // xxx end comments
-    private boolean withinAddedCode = false;
+    private int[] newCodeRanges = new int[0];
 
     /**
      * Variables in the code block, mapped to the order they were declared. This
@@ -26,30 +25,21 @@ public class SymbolReferenceWalker extends ASTVisitor
      * PsiParameter from PsiForeachStatement/PsiCatchSection. Both are
      * PsiVariable.
      */
-    private HashMap<PsiVariable, Integer> localVariableIndices = new HashMap<PsiVariable, Integer>();
-    private int nextLocalVariableIndex = 0;
+    private HashMap<IVariableBinding, Integer> localVars = new HashMap<IVariableBinding, Integer>();
+    private int nextIndex = 0;
+    private int nextIndexNew = 100;    // Separate index for variable declarations in "added" code
 
-    // Separate index for variable declarations in "added" code
-    private int nextAddedLocalVariableIndex = 100;
+    private HashMap<String, Integer> paramIndices = new HashMap<String, Integer>();
 
-    /**
-     * Parameters to method, mapped to order in method declaration. Set by
-     * caller
-     * 
-     * @see #addMethodParameterIndices
-     */
-    private HashMap<SingleVariableDeclaration, Integer> paramIndices = new HashMap<SingleVariableDeclaration, Integer>();
-
-    public SymbolReferenceWalker(SymbolRangeEmitter emitter, String className)
+    public SymbolReferenceWalker(SymbolRangeEmitter emitter, String className, int[] newCode)
     {
         this.emitter = emitter;
         this.className = className;
     }
 
-    public SymbolReferenceWalker(SymbolRangeEmitter emitter, String className,
-            String methodName, String methodSignature)
+    public SymbolReferenceWalker(SymbolRangeEmitter emitter, String className, int[] newCode, String methodName, String methodSignature)
     {
-        this(emitter, className);
+        this(emitter, className, newCode);
         this.methodName = methodName;
         this.methodSignature = methodSignature;
     }
@@ -62,129 +52,69 @@ public class SymbolReferenceWalker extends ASTVisitor
      */
     public boolean walk(ASTNode startElement)
     {
-        startElement.accept(this);
+        if (startElement == null)
+        {
+            return true;
+        }
+        
+        try
+        {
+            startElement.accept(this);
+            return true;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return false;
+        }
     }
-
-    /**
-     * Add map used for labeling method parameters by index
-     * 
-     * @param indices
-     */
-    public void addMethodParameterIndices(HashMap<SingleVariableDeclaration, Integer> indices)
+    
+    public void setParams(HashMap<String, Integer> indices)
     {
         this.paramIndices.putAll(indices);
+    }
+    
+    private boolean withinNewCode(int index)
+    {
+        for (int x = 0; x < newCodeRanges.length; x += 2)
+        {
+            int start = newCodeRanges[x];
+            int end = newCodeRanges[x+1];
+            if (index >= start && index <= end)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * Record the positional index of a local variable declaration
      * 
-     * @param psiVariable
+     * @param binding
      *            The newly-declared variable
      * @return The new index, unique per method
      */
-    private int assignLocalVariableIndex(PsiVariable psiVariable)
+    private int assignLocalVariableIndex(SimpleName name, IVariableBinding binding)
     {
-        int index = withinAddedCode ? nextAddedLocalVariableIndex
-                : nextLocalVariableIndex;
+        boolean added = withinNewCode(name.getStartPosition());
+        int index = added ? nextIndexNew : nextIndex;
 
-        localVariableIndices.put(psiVariable, index);
+        localVars.put(binding, index);
 
         // Variables in "added" code are tracked with a separate index, so they
         // don't shift variables
         // indexes below the added code
-        if (withinAddedCode)
-        {
-            nextAddedLocalVariableIndex++;
-        }
+        if (added)
+            nextIndexNew++;
         else
-        {
-            nextLocalVariableIndex++;
-        }
+            nextIndex++;
 
         return index;
     }
 /*
     private boolean walk(Expression expression, int depth)
     {
-        // emitter.log("walking "+className+" "+psiMethod.getName()+" -- "+psiElement);
-
-        if (expression == null)
-        { 
-            return true; // gracefully ignore
-        }
-
-        // Comment possibly telling us this is added code, to track local variables differently
-        if (expression instanceof PsiComment)
-        {
-            PsiComment psiComment = (PsiComment) expression;
-            if (psiComment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT)
-            { // "//" style comments
-                String commentText = psiComment.getText();
-                // emitter.log("COMMENT:"+commentText);
-                String[] words = commentText.split(" ");
-
-                if (words.length >= 3)
-                {
-                    // First word is "//", second is "CraftBukkit", "Spigot",
-                    // "Forge".., third is "start"/"end"
-                    String command = words[2];
-                    if (command.equalsIgnoreCase("start"))
-                    {
-                        withinAddedCode = true;
-                    }
-                    else if (command.equalsIgnoreCase("end"))
-                    {
-                        withinAddedCode = false;
-                    }
-                }
-            }
-        }
-
-        // New local variable declaration
-        if (expression instanceof PsiDeclarationStatement)
-        {
-            PsiDeclarationStatement psiDeclarationStatement = (PsiDeclarationStatement) expression;
-
-            for (PsiElement declaredElement : psiDeclarationStatement
-                    .getDeclaredElements())
-            {
-                if (declaredElement instanceof PsiClass)
-                {
-                    emitter.log("TODO: inner class " + declaredElement); // TODO:
-                                                                         // process
-                                                                         // this?
-                }
-                else if (declaredElement instanceof PsiLocalVariable)
-                {
-                    PsiLocalVariable psiLocalVariable = (PsiLocalVariable) declaredElement;
-
-                    emitter.emitTypeRange(psiLocalVariable.getTypeElement());
-
-                    // Record order of variable declarations for references in
-                    // body
-                    int index = assignLocalVariableIndex(psiLocalVariable);
-
-                    emitter.emitLocalVariableRange(className, methodName,
-                            methodSignature, psiLocalVariable, index);
-                }
-                else
-                {
-                    emitter.log("WARNING: Unknown declaration "
-                            + psiDeclarationStatement);
-                }
-            }
-        }
-
-        // New local variable declaration within try..catch
-        if (expression instanceof PsiCatchSection)
-        {
-            PsiCatchSection psiCatchSection = (PsiCatchSection) expression;
-            PsiParameter psiParameter = psiCatchSection.getParameter();
-            int index = assignLocalVariableIndex(psiParameter);
-            emitter.emitLocalVariableRange(className, methodName,
-                    methodSignature, psiParameter, index);
-        }
-
         // .. and foreach
         if (expression instanceof PsiForeachStatement)
         {
@@ -376,103 +306,103 @@ public class SymbolReferenceWalker extends ASTVisitor
     */
     public boolean visit(AnnotationTypeDeclaration node)
     {
-        System.out.println("Annotation: " + node.getName().getIdentifier());
+        //emitter.log("Annotation: " + node.getName().getIdentifier());
         return true;
     }
     public boolean visit(AnnotationTypeMemberDeclaration node)
     {
-        System.out.println("AnnotationTypeMember: " + node.getName().getIdentifier());
+        //emitter.log("AnnotationTypeMember: " + node.getName().getIdentifier());
         return true;
     }
 
     public boolean visit(AnonymousClassDeclaration node)
     {
-        System.out.println("AnonymousClassDeclaration: " + node);
+        //emitter.log("AnonymousClassDeclaration: " + node);
         return true;
     }
 
     public boolean visit(ArrayAccess node)
     {
+        //emitter.log("ArrayAccess: " + node);
         return true;
     }
 
-    public boolean visit(ArrayCreation node) {
+    public boolean visit(ArrayCreation node)
+    {
+        //emitter.log("ArrayCreation: " + node);
         return true;
     }
 
-    public boolean visit(ArrayInitializer node) {
+    public boolean visit(ArrayInitializer node)
+    {
+        //emitter.log("ArrayIntializer: " + node);
         return true;
     }
 
-    public boolean visit(ArrayType node) {
+    public boolean visit(ArrayType node)
+    {
+        //emitter.log("ArrayType: " + node);
         return true;
     }
 
-    public boolean visit(AssertStatement node) {
+    public boolean visit(AssertStatement node)
+    {
+        //emitter.log("AssertStatement: " + node);
         return true;
     }
 
-    public boolean visit(Assignment node) {
+    public boolean visit(Assignment node)
+    {
+        //emitter.log("Assignment: " + node);
         return true;
     }
-
-    public boolean visit(Block node) {
-        return true;
-    }
-
-    public boolean visit(BlockComment node) {
-        return true;
-    }
-
-    public boolean visit(BooleanLiteral node) {
-        return true;
-    }
-
-    public boolean visit(BreakStatement node) {
-        return true;
-    }
-
-    public boolean visit(CastExpression node) {
+    public boolean visit(CastExpression node)
+    {
+        //emitter.log("CastExpression: " + node);
         return true;
     }
     
-    public boolean visit(CatchClause node) {
+    public boolean visit(CatchClause node)
+    {
+        //emitter.log("CatchClause: " + node);
         return true;
     }
 
-    public boolean visit(CharacterLiteral node) {
+    public boolean visit(ClassInstanceCreation node)
+    {
+        //emitter.log("ClassInstanceCreation: " + node);
         return true;
     }
 
-    public boolean visit(ClassInstanceCreation node) {
+    public boolean visit(CompilationUnit node)
+    {
+        //emitter.log("CompilationUnit: " + node);
         return true;
     }
 
-    public boolean visit(CompilationUnit node) {
+    public boolean visit(ConstructorInvocation node)
+    {
+        //emitter.log("ConstructorInvocation: " + node);
         return true;
     }
-
-    public boolean visit(ConditionalExpression node) {
+    public boolean visit(EnumConstantDeclaration node)
+    {
+        //emitter.log("EnumConstantDeclaration: " + node);
         return true;
     }
-
-    public boolean visit(ConstructorInvocation node) {
+    public boolean visit(EnumDeclaration node)
+    {
+        //emitter.log("EnumDeclaration: " + node);
         return true;
     }
-
-    public boolean visit(ContinueStatement node) {
+    public boolean visit(ExpressionStatement node)
+    {
+        //emitter.log("ExpressionStatement: " + node);
         return true;
     }
-    public boolean visit(EnumConstantDeclaration node) {
-        return true;
-    }
-    public boolean visit(EnumDeclaration node) {
-        return true;
-    }
-    public boolean visit(ExpressionStatement node) {
-        return true;
-    }
-    public boolean visit(FieldAccess node) {
+    public boolean visit(FieldAccess node)
+    {
+        //emitter.log("FieldAccess: " + node);
         return true;
     }
     public boolean visit(FieldDeclaration node) {
@@ -496,29 +426,73 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(ParameterizedType node) {
         return true;
     }
-    public boolean visit(QualifiedName node) {
+    public boolean visit(QualifiedName node)
+    {
+        emitter.log("QualifiedName: " + node);
         return true;
     }
-    public boolean visit(QualifiedType node) {
+    public boolean visit(QualifiedType node)
+    {
+        emitter.log("QualifiedType: " + node);
         return true;
     }
-    public boolean visit(SimpleName node) {
+    public boolean visit(SimpleName node)
+    {
+        IBinding bind = node.resolveBinding();
+        if (bind instanceof IMethodBinding)
+        {
+            emitter.emitReferencedMethod(node, (IMethodBinding)bind);
+        }
+        else if (bind instanceof ITypeBinding)
+        {
+            emitter.emitReferencedClass(node, (ITypeBinding)bind);
+        }
+        else if (bind instanceof IVariableBinding)
+        {
+            IVariableBinding var = (IVariableBinding)bind;
+            if (var.isParameter())
+            {
+                emitter.emitReferencedMethodParameter(node, var, paramIndices.get(node.getIdentifier()));
+            }
+            else if (var.isField())
+            {
+                emitter.emitReferencedField(node, var.getVariableDeclaration());
+            }
+            else
+            {
+                emitter.emitLocalVariableRange(node, className, methodName, methodSignature, localVars.get(var.getVariableDeclaration()));
+            }
+        }
+        else
+        {
+            emitter.log("ERROR SimpleName: " + node + " " + node.resolveBinding());
+        }
         return true;
     }
-    public boolean visit(SimpleType node) {
-        return true;
+    public boolean visit(SimpleType node)
+    {
+        IBinding bind = node.resolveBinding();
+        if (bind instanceof ITypeBinding)
+        {
+            emitter.emitReferencedClass(node.getName(), (ITypeBinding)bind);
+        }
+        else
+        {
+            emitter.log("ERROR SimpleType: " + node + " " + node.resolveBinding().getClass());
+        }
+        return false;
     }
-    public boolean visit(SingleVariableDeclaration node) {
-        return true;
-    }
-    public boolean visit(SuperFieldAccess node) {
-        return true;
-    }
-    public boolean visit(SuperMethodInvocation node) {
-        return true;
-    }
-    public boolean visit(TextElement node) {
-        return true;
+    public boolean visit(SingleVariableDeclaration node)
+    {
+        int index = this.assignLocalVariableIndex(node.getName(), node.resolveBinding());
+        emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
+        
+        node.getType().accept(this);
+        if (node.getInitializer() != null)
+        {
+            node.getInitializer().accept(this);
+        }
+        return false;
     }
     public boolean visit(TypeDeclaration node) {
         return true;
@@ -529,16 +503,15 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(TypeParameter node) {
         return true;
     }
-    public boolean visit(VariableDeclarationFragment node) {
-        return true;
-    }
-    
-    
-
-
-
-    //Need to specifically parse comments ourself using CompilationUnit.getComments or some shit
-    public boolean visit(LineComment node) {
-        return true;
+    public boolean visit(VariableDeclarationFragment node)
+    {
+        int index = assignLocalVariableIndex(node.getName(), node.resolveBinding());
+        emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
+        
+        if (node.getInitializer() != null)
+        {
+            node.getInitializer().accept(this);
+        }
+        return false;
     }
 }
