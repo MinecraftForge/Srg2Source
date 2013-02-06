@@ -18,7 +18,7 @@ public class RangeExtractor
 {
     private static final String BASE = "D:/CraftBukkitWork/Srg2Source/python/craftbukkit/";
     private static final String LIB = "C:/Users/Lex/Desktop/mc_dev_rev/1.4.6-R0.3/libs";
-    private static final String SRC = BASE + "src";
+    private static final String SRC = BASE + "src/main/java";
     private static PrintWriter logFile = null;
     private static String[] libs = null;
     
@@ -40,7 +40,7 @@ public class RangeExtractor
 
         log("Symbol range map extraction starting");
 
-        String[] files = gatherFiles(SRC, "TileEntityChest.java");
+        String[] files = gatherFiles(SRC, ".java");
         log("Processing " + files.length +" files");
 
         if (files.length == 0)
@@ -98,7 +98,6 @@ public class RangeExtractor
         return true;
     }
     
-    @SuppressWarnings("unchecked")
     private static CompilationUnit createUnit(String name, String data) throws Exception
     {
         ASTParser parser = ASTParser.newParser(AST.JLS4);        

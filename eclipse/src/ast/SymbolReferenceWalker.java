@@ -317,8 +317,8 @@ public class SymbolReferenceWalker extends ASTVisitor
 
     public boolean visit(AnonymousClassDeclaration node)
     {
-        //emitter.log("AnonymousClassDeclaration: " + node);
-        return true;
+        emitter.log("AnonymousClassDeclaration: " + node.getStartPosition() + '|' + (node.getStartPosition() + node.getLength()));
+        return false;
     }
 
     public boolean visit(ArrayAccess node)
@@ -428,12 +428,12 @@ public class SymbolReferenceWalker extends ASTVisitor
     }
     public boolean visit(QualifiedName node)
     {
-        emitter.log("QualifiedName: " + node);
+        //emitter.log("QualifiedName: " + node);
         return true;
     }
     public boolean visit(QualifiedType node)
     {
-        emitter.log("QualifiedType: " + node);
+        //emitter.log("QualifiedType: " + node);
         return true;
     }
     public boolean visit(SimpleName node)
@@ -462,6 +462,10 @@ public class SymbolReferenceWalker extends ASTVisitor
             {
                 emitter.emitLocalVariableRange(node, className, methodName, methodSignature, localVars.get(var.getVariableDeclaration()));
             }
+        }
+        else if (bind instanceof IPackageBinding)
+        {
+            //Dont care, grab those else ware
         }
         else
         {

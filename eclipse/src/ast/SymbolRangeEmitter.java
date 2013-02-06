@@ -149,7 +149,7 @@ public class SymbolRangeEmitter
     public void emitReferencedClass(Name name, ITypeBinding clazz)
     {
         //String|class|java.lang.String
-        log(commonFields(name.toString(), name) + "class" + FS + clazz.getQualifiedName());
+        log(commonFields(name.toString(), name) + "class" + FS + clazz.getErasure().getQualifiedName());
     }
     
 
@@ -157,7 +157,7 @@ public class SymbolRangeEmitter
     {
         //systemInstall|method|org.fusesource.jansi.AnsiConsole|systemInstall|()V
         log(commonFields(name.toString(), name) + "method" + 
-            FS + method.getDeclaringClass().getQualifiedName() + 
+            FS + method.getDeclaringClass().getErasure().getQualifiedName() + 
             FS + method.getName() + 
             FS + MethodSignatureHelper.getSignature(method));
     }
@@ -331,7 +331,7 @@ public class SymbolRangeEmitter
 
     public void log(String s)
     {
-        System.out.println(s);
+        //System.out.println(s);
         if (logFile != null)
         {
             logFile.println(s);
