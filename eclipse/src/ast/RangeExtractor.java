@@ -1,6 +1,7 @@
 package ast;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,15 +17,24 @@ import org.eclipse.jdt.core.dom.*;
 @SuppressWarnings("unchecked")
 public class RangeExtractor
 {
-    private static final String BASE = "D:/CraftBukkitWork/Srg2Source/python/craftbukkit/";
-    private static final String LIB = "C:/Users/Lex/Desktop/mc_dev_rev/1.4.6-R0.3/libs";
-    private static final String SRC = BASE + "src/main/java";
+    private static String BASE = "D:/CraftBukkitWork/Srg2Source/python/craftbukkit/";
+    private static String LIB = "C:/Users/Lex/Desktop/mc_dev_rev/1.4.6-R0.3/libs";
+    private static String SRC = BASE + "src/main/java";
     private static PrintWriter logFile = null;
     private static String[] libs = null;
     
     public static void main(String[] args)
     {
-        String logFilename = "extracted" + ".rangemap";
+        if (args.length != 3)
+        {
+            System.out.println("Usage: RangeExtract [SourceDir] [LibDir] [OutFile]");
+            System.exit(1);
+        }
+        
+        SRC = new File(args[0]).getAbsolutePath();
+        LIB = new File(args[1]).getAbsolutePath();
+        
+        String logFilename = args[2];
 
         try
         {
@@ -116,9 +126,9 @@ public class RangeExtractor
     
     private static boolean processFile(String path) throws Exception
     {
-        String sourceFilePath = path.replace('\\', '/').substring(BASE.length());
+        String sourceFilePath = path.replace('\\', '/').substring(SRC.length() + 1);
         SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath, logFile);
-        String data = FileUtils.readFileToString(new File(path));
+        String data = FileUtils.readFileToString(new File(path), Charset.forName("UTF-8")).replaceAll("\r", "");
         
         CompilationUnit cu = createUnit(path.replace('\\', '/').substring(SRC.length() + 1), data);
 
@@ -284,7 +294,9 @@ public class RangeExtractor
                     // First word is "//", 
                     // Second is "CraftBukkit", "Spigot", "Forge".., 
                     // Third is "start"/"end"
-                    String command = words[2];
+                    //Sometimes they miss spaces, so check if the beginning is smoshed
+                    int idx = ((words[0].startsWith("//") && words[0].length() != 2) ? 1 : 2);
+                    String command = words[idx];
                     if (command.equalsIgnoreCase("start"))
                     {
                         ret.add(cmt.getStartPosition());
@@ -299,6 +311,34 @@ public class RangeExtractor
                     }
                 }
             }
+            else if (cmt.isBlockComment())
+            {
+                String[] lines = comment.split("\r?\n");
+                for (String line : lines)
+                {
+                    String[] words = line.trim().split(" ");
+                    if (words.length >= 3)
+                    {
+                        // First word is "/*", 
+                        // Second is "CraftBukkit", "Spigot", "Forge".., 
+                        // Third is "start"/"end"
+                        String command = words[2];
+                        if (command.equalsIgnoreCase("start"))
+                        {
+                            ret.add(cmt.getStartPosition());
+                            if (inside) System.out.println("Unmatched newcode start: " + cmt.getStartPosition() + ": " + comment);
+                            inside = true;
+                        }
+                        else if (command.equalsIgnoreCase("end"))
+                        {
+                            ret.add(cmt.getStartPosition());
+                            if (!inside) System.out.println("Unmatched newcode end: " + cmt.getStartPosition() + ": " + comment);
+                            inside = false;
+                        }
+                    }   
+                }
+            }
+                
         }
         
         int[] r = new int[ret.size()];

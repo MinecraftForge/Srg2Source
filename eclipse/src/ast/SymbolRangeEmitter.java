@@ -94,6 +94,12 @@ public class SymbolRangeEmitter
             type = p.getType();
         }
         
+        if (type.isWildcardType())
+        {
+            emitTypeRange(((WildcardType)type).getBound());
+            return;
+        }
+        
         if (type.isSimpleType())
         {
             
@@ -103,7 +109,7 @@ public class SymbolRangeEmitter
         }
         else
         {
-            System.out.println("ERROR Unknown Type: " + type + type.getStartPosition() + FS + type.getStartPosition() + type.getLength());
+            System.out.println("ERROR Unknown Type: " + type + type.getClass() + " " + type.getStartPosition() + FS + type.getStartPosition() + type.getLength());
         }
     }
 

@@ -22,7 +22,7 @@ public class MethodSignatureHelper
     
     private static String getTypeSignature(ITypeBinding type)
     {
-        String ret = type.getBinaryName().replace('.', '/');
+        String ret = type.getErasure().getBinaryName().replace('.', '/');
         if (ret.indexOf('/') != -1 && !ret.endsWith(";"))
         {
             return "L" + ret + ";";
