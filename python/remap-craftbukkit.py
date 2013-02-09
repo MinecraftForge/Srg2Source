@@ -6,11 +6,6 @@ from pprint import pformat
 from zipfile import ZipFile
 from optparse import OptionParser
 from ConfigParser import ConfigParser
-
-    # Measure differences to get a sense of progress
-#    os.system("diff -ur "+os.path.join(MCP_ROOT,"src/minecraft_server/net/minecraft/")+" "+os.path.join(CB_ROOT, "src/main/java/net/minecraft/")+" > "+DIFF_OUT)
-
-#    print len(file(DIFF_OUT).readlines())
     
 class Remapper(object):
     def __init__(self, options):
@@ -301,6 +296,11 @@ class Remapper(object):
         from cleanup_src import src_cleanup
         print 'Running MCP src cleanup:'
         src_cleanup(SRC_CB, fix_imports=True, fix_unicode=True, fix_charval=True, fix_pi=True, fix_round=False)
+        
+        sys.path.append(os.path.join(self.fml_dir))
+        from fml import cleanup_source
+        print 'Running MCP src cleanup:'
+        cleanup_source(SRC_CB)
     
         from cleanup_var_names import cleanup_var_names
         print 'Cleaning local variable names:'
@@ -329,6 +329,11 @@ def main(options, args):
     mapper.run_rangeapply(cb_to_vanilla, van_range, cb_range)
     
     mapper.cleanup_source(cb_to_vanilla)
+    
+    
+#    os.system("diff -ur "+os.path.join(MCP_ROOT,"src/minecraft_server/net/minecraft/")+" "+os.path.join(CB_ROOT, "src/main/java/net/minecraft/")+" > "+DIFF_OUT)
+
+#    print len(file(DIFF_OUT).readlines())
     
 if __name__ == '__main__':
     parser = OptionParser()

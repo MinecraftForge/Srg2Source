@@ -109,6 +109,8 @@ def readExc(filename):
     exc = []
     for line in file(filename).readlines():
         match = re.match(EXC_RE, line)
+        if match is None:
+            continue
         className, methodNumber, methodSig, exceptionsString, paramNumbersString = match.groups()
 
         # List of classes thrown as exceptions

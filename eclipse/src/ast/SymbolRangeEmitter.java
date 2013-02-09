@@ -135,7 +135,7 @@ public class SymbolRangeEmitter
     
     private IMethodBinding resolveOverrides(IMethodBinding bind, ITypeBinding type)
     {
-        if (type == null)
+        if (type == null || bind.isConstructor())
         {
             return bind;
         }
