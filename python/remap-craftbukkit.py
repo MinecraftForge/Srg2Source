@@ -251,12 +251,12 @@ class Remapper(object):
         RANGE = ['java', '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
             os.path.join(self.cb_dir, 'src', 'main', 'java'),
             os.path.abspath(os.path.join(self.data, self.version, 'libs')),
-            'CB.rangemap']
+            'output.rangemap']
             
         self.logger.info('Generating CB rangemap')
         self.run_command(RANGE)
             
-        self.clean_rangemap('CB.rangemap', rangefile)
+        self.clean_rangemap('output.rangemap', rangefile)
 
     def run_rangeapply(self, cbsrg, mcprange, cbrange):
         SRG_CHAIN = 'chained.srg'
@@ -264,10 +264,21 @@ class Remapper(object):
             '--srcRoot', os.path.join(self.cb_dir, 'src', 'main', 'java'),
             '--srcRangeMap', cbrange,
             '--lvRangeMap', mcprange,
-            '--mcpConfDir', os.path.join(self.fml_dir, 'mcp', 'conf'),
-            #'--rewriteFiles',
-            #'--renameFiles',
-            '--srgFiles',  SRG_CHAIN] #"+SRG_CB2MCP+" "+SRG_CB2MCP_FIXES)
+            '--mcpConfDir', os.path.join(self.fml_dir, 'mcp', 'conf')]
+            
+        data = os.path.join(self.data, self.version)
+        
+        excs = [f for f in os.listdir(data) if f.endswith('.exc')]
+        if len(excs) > 0:
+            RANGEAPPLY += ['--excFiles']
+            for file in excs:
+                RANGEAPPLY += [os.path.join(data, file)]
+                
+        srgs = [f for f in os.listdir(os.path.join(self.data, self.version)) if f.endswith('.srg') and not f == 'cb_to_vanilla.srg']
+        RANGEAPPLY += ['--srgFiles', SRG_CHAIN]
+        if len(srgs) > 0:
+            for file in srgs:
+                RANGEAPPLY += [os.path.join(data, file)]
             
         from chain import chain
         chained = chain(os.path.join(self.fml_dir, 'mcp', 'conf', 'packaged.srg'), '^' + cbsrg, verbose=False)
@@ -277,8 +288,9 @@ class Remapper(object):
         
         with open(SRG_CHAIN, 'wb') as out_file: 
             out_file.write('\n'.join(chained))
-            
-        self.run_command(RANGEAPPLY)
+        
+        if not self.run_command(RANGEAPPLY):
+            sys.exit(1)
         
     def cleanup_source(self, cb_srg):
         SRG_MCP = os.path.join(self.fml_dir, 'mcp', 'conf', 'packaged.srg')

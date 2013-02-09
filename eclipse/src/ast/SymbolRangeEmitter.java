@@ -154,7 +154,7 @@ public class SymbolRangeEmitter
         IMethodBinding bind = resolveOverrides(method.resolveBinding());
         
         String signature = MethodSignatureHelper.getSignature(bind);
-        String name = bind.getName();
+        String name = method.getName().toString();
         String owner = bind.getDeclaringClass().getQualifiedName();
         //WorldManager|method|net.minecraft.server.WorldManager|WorldManager|(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/server/WorldServer;)V
         log(commonFields(name, method.getName()) + "method" + FS + owner + FS + name + FS + signature);
@@ -171,6 +171,15 @@ public class SymbolRangeEmitter
 
         String name = param.getName().getIdentifier();
         IMethodBinding bind = method.resolveBinding();
+
+        //special case this shit cuz it annoys me
+        IMethodBinding top = resolveOverrides(bind);
+        if (top.getDeclaringClass().getQualifiedName().equals("net.minecraft.server.BlockSapling.TreeGenerator") 
+            && top.getName().toString().equals("generate"))
+        {
+            bind = top;
+        }
+        
         String owner = bind.getDeclaringClass().getQualifiedName();
         String mName = bind.getName();
 
@@ -198,6 +207,15 @@ public class SymbolRangeEmitter
     public void emitReferencedMethodParameter(Name name, IVariableBinding var, int index)
     {
         IMethodBinding method = var.getDeclaringMethod();
+
+        //special case this shit cuz it annoys me
+        IMethodBinding top = resolveOverrides(method);
+        if (top.getDeclaringClass().getQualifiedName().equals("net.minecraft.server.BlockSapling.TreeGenerator") 
+            && top.getName().toString().equals("generate"))
+        {
+            method = top;
+        }
+        
         //out|param|jline.AnsiWindowsTerminal|wrapOutIfNeeded|(Ljava/io/OutputStream;)Ljava/io/OutputStream;|out|0
         log(commonFields(name.toString(), name) + "param" + 
             FS + method.getDeclaringClass().getQualifiedName() + 

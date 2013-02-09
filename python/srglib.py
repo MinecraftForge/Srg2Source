@@ -4,13 +4,14 @@
 
 # Not all of the tools use this library yet
 
-import re, os, csv, sys
+import re, os, csv, sys, pprint
 
 EXC_RE = re.compile(r"^([^.]+)\.([^(]+)(\([^=]+)=([^|]*)\|(.*)")
 
 # Get map from full descriptive method name + signature -> list of descriptive parameter names
-def readParameterMap(mcpConfDir):
-    excFilename = os.path.join(mcpConfDir, "packaged.exc")  # TODO: what about joined.exc?
+def readParameterMap(mcpConfDir, excFilename = None, apply_map = True):
+    if excFilename is None:
+        excFilename = os.path.join(mcpConfDir, "packaged.exc")  # TODO: what about joined.exc?
     methodNum2Name = readDescriptiveMethodNames(mcpConfDir)
     paramNum2Name = readDescriptiveParameterNames(mcpConfDir)
 
@@ -24,9 +25,9 @@ def readParameterMap(mcpConfDir):
             # constructor
             #methodName = className.split("/")[-1]
             methodName = "<init>"
-        #elif methodNum2Name.has_key(methodNumber):
+        elif apply_map and methodNum2Name.has_key(methodNumber):
             # descriptive name
-        #    methodName = methodNum2Name[methodNumber]
+            methodName = methodNum2Name[methodNumber]
         else:
             # no one named this method
             methodName = methodNumber
@@ -34,15 +35,18 @@ def readParameterMap(mcpConfDir):
         fullMethodName = className + "/" + methodName
 
         # Parameters by number, p_XXXXX_X.. to par1. descriptions
-        paramNames = [paramNum2Name[x] for x in paramNumbers]
+        paramNames = [paramNum2Name[x] if paramNum2Name.has_key(x) else x for x in paramNumbers ]
+        
+        if not apply_map:
+            paramNames = paramNumbers
 
-        paramMap[fullMethodName + " " + methodSig] = paramNumbers #paramNames
+        paramMap[fullMethodName + " " + methodSig] = paramNames
 
     return paramMap
 
 # Remap a parameter map's method signatures (keeping the parameter names intact)
 # Returns new map, and list of methods not found in mapping and were removed
-def remapParameterMap(paramMap, methodMap, methodSigMap, classMap):
+def remapParameterMap(paramMap, methodMap, methodSigMap, classMap, keep_missing=False):
     newParamMap = {}
     removed = []
     for methodInfo, paramNames in paramMap.iteritems():
@@ -50,18 +54,27 @@ def remapParameterMap(paramMap, methodMap, methodSigMap, classMap):
             # constructor - remap to new name through class map, not method map
             fullMethodName, methodSig = methodInfo.split(" ")
             className = splitPackageName(fullMethodName)
+            newClassName = className
             if not classMap.has_key(className):
                 # not in class map - probably client-only class
                 removed.append(methodInfo)
-                continue
-            newClassName = classMap[className]
+                if not keep_missing:
+                    continue
+            else:
+                newClassName = classMap[className]
             constructorName = splitBaseName(newClassName)
             newFullMethodName = newClassName + "/" + splitBaseName(newClassName)
             newMethodSig = remapSig(methodSig, classMap)
         elif not methodMap.has_key(methodInfo):
             # not in method map - probably client-only method
             removed.append(methodInfo)
-            continue
+            if not keep_missing:
+                continue
+            
+            fullMethodName, methodSig = methodInfo.split(" ")
+            className = splitPackageName(fullMethodName)
+            newFullMethodName = className + "/" + splitBaseName(fullMethodName)
+            newMethodSig = remapSig(methodSig, classMap)
         else:
             newFullMethodName = methodMap[methodInfo]
             newMethodSig = methodSigMap[methodInfo]
