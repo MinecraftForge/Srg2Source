@@ -123,9 +123,36 @@ public class SymbolRangeEmitter
         log(commonFields(name, field.getName()) + "field" + FS + cls + FS + name);
     }
     
+    private IMethodBinding resolveOverrides(IMethodBinding bind)
+    {
+        bind = resolveOverrides(bind, bind.getDeclaringClass().getSuperclass());
+        for (ITypeBinding intf : bind.getDeclaringClass().getInterfaces())
+        {
+            bind = resolveOverrides(bind, intf);
+        }
+        return bind;
+    }
+    
+    private IMethodBinding resolveOverrides(IMethodBinding bind, ITypeBinding type)
+    {
+        if (type == null)
+        {
+            return bind;
+        }
+        for (IMethodBinding sup : type.getDeclaredMethods())
+        {
+            if (bind.overrides(sup))
+            {
+                return resolveOverrides(sup);
+            }
+        }
+        return bind;
+    }
+    
     public String emitMethodRange(MethodDeclaration method)
     {
-        IMethodBinding bind = method.resolveBinding();
+        IMethodBinding bind = resolveOverrides(method.resolveBinding());
+        
         String signature = MethodSignatureHelper.getSignature(bind);
         String name = bind.getName();
         String owner = bind.getDeclaringClass().getQualifiedName();
