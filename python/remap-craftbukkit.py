@@ -280,15 +280,28 @@ class Remapper(object):
             
         self.run_command(RANGEAPPLY)
         
-    def kill_whitespace(self):
+    def cleanup_source(self, cb_srg):
+        SRG_MCP = os.path.join(self.fml_dir, 'mcp', 'conf', 'packaged.srg')
+        SRC_MCP = os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server', 'net', 'minecraft')
+        SRC_CB  = os.path.join(self.cb_dir, 'src', 'main', 'java', 'net', 'minecraft')
+        
+        sys.path.append(os.path.join(self.fml_dir, 'mcp', 'runtime', 'pylibs'))
+        from cleanup_src import src_cleanup
+        print 'Running MCP src cleanup:'
+        src_cleanup(SRC_CB, fix_imports=True, fix_unicode=True, fix_charval=True, fix_pi=True, fix_round=False)
+    
+        from cleanup_var_names import cleanup_var_names
+        print 'Cleaning local variable names:'
+        cleanup_var_names(SRG_MCP, cb_srg, SRC_CB)
+        
         from whitespaceneutralizer import nutralize_whitespace
-        nutralize_whitespace(os.path.join(self.cb_dir, 'src', 'main', 'java', 'net', 'minecraft'),
-            os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server', 'net', 'minecraft'))
+        nutralize_whitespace(SRC_CB, SRC_MCP)
         
 def main(options, args):
     mapper = Remapper(options)
     mapper.setupfml()
-    
+    if True:
+        return
     cb_to_vanilla = os.path.join(mapper.data, mapper.version, 'cb_to_vanilla.srg')
     if not os.path.isfile(cb_to_vanilla):
         mapper.generatecbsrg(cb_to_vanilla)
@@ -304,7 +317,7 @@ def main(options, args):
     
     mapper.run_rangeapply(cb_to_vanilla, van_range, cb_range)
     
-    mapper.kill_whitespace()
+    mapper.cleanup_source(cb_to_vanilla)
     
 if __name__ == '__main__':
     parser = OptionParser()
