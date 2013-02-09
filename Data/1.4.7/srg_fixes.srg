@@ -1,0 +1,5 @@
+# New inner class added by CB, implemented by world generators
+CL: net/minecraft/server/BlockSapling/TreeGenerator net/minecraft/block/BlockSapling/TreeGenerator
+MD: net/minecraft/server/BlockSapling/TreeGenerator/a (Lnet/minecraft/server/World;Ljava/util/Random;III)Z net/minecraft/block/BlockSapling/TreeGenerator/func_76484_a ((Lnet/minecraft/world/World;Ljava/util/Random;III)Z
+
+MD: net/minecraft/server/WorldGenTrees/b (Lorg/bukkit/BlockChangeDelegate;IIII)V net/minecraft/world/gen/feature/WorldGenTrees/func_76529_b (Lorg/bukkit/BlockChangeDelegate;IIII)V
