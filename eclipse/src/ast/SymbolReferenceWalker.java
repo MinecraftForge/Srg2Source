@@ -460,7 +460,7 @@ public class SymbolReferenceWalker extends ASTVisitor
             }
             else
             {
-                emitter.emitLocalVariableRange(node, className, methodName, methodSignature, localVars.get(var.getVariableDeclaration()));
+                //emitter.emitLocalVariableRange(node, className, methodName, methodSignature, localVars.get(var.getVariableDeclaration()));
             }
         }
         else if (bind instanceof IPackageBinding)
@@ -489,7 +489,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(SingleVariableDeclaration node)
     {
         int index = this.assignLocalVariableIndex(node.getName(), node.resolveBinding());
-        emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
+        //emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
         
         node.getType().accept(this);
         if (node.getInitializer() != null)
@@ -510,7 +510,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(VariableDeclarationFragment node)
     {
         int index = assignLocalVariableIndex(node.getName(), node.resolveBinding());
-        emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
+        //emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
         
         if (node.getInitializer() != null)
         {

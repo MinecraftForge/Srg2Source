@@ -300,8 +300,7 @@ class Remapper(object):
 def main(options, args):
     mapper = Remapper(options)
     mapper.setupfml()
-    if True:
-        return
+    
     cb_to_vanilla = os.path.join(mapper.data, mapper.version, 'cb_to_vanilla.srg')
     if not os.path.isfile(cb_to_vanilla):
         mapper.generatecbsrg(cb_to_vanilla)
