@@ -24,9 +24,9 @@ def readParameterMap(mcpConfDir):
             # constructor
             #methodName = className.split("/")[-1]
             methodName = "<init>"
-        elif methodNum2Name.has_key(methodNumber):
+        #elif methodNum2Name.has_key(methodNumber):
             # descriptive name
-            methodName = methodNum2Name[methodNumber]
+        #    methodName = methodNum2Name[methodNumber]
         else:
             # no one named this method
             methodName = methodNumber
@@ -36,7 +36,7 @@ def readParameterMap(mcpConfDir):
         # Parameters by number, p_XXXXX_X.. to par1. descriptions
         paramNames = [paramNum2Name[x] for x in paramNumbers]
 
-        paramMap[fullMethodName + " " + methodSig] = paramNames
+        paramMap[fullMethodName + " " + methodSig] = paramNumbers #paramNames
 
     return paramMap
 

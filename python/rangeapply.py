@@ -2,10 +2,13 @@
 
 # Process symbol range maps produced by ApplySrg2Source
 
-import os
+import os, sys
 import srglib
 import argparse  # note: requires Python 2.7+
 import subprocess # for git
+
+from pprint import pprint
+from pprint import pformat
 
 SEP = "/"   # path-separator from srg2source - always '/' even on Windows! not os.path.sep
 
@@ -339,16 +342,16 @@ def getTopLevelClassForFilename(filename):
     withoutExt, ext = os.path.splitext(filename)
     parts = withoutExt.split(SEP)
     # expect project-relative pathname, standard Maven structure
-    assert parts[0] == "src", "unexpected filename '%s', not in src" % (filename,)
-    assert parts[1] in ("main", "test"), "unexpected filename '%s', not in src/{test,main}" % (filename,)
-    assert parts[2] == "java", "unexpected filename '%s', not in src/{test,main}/java" % (filename,)
+    #assert parts[0] == "src", "unexpected filename '%s', not in src" % (filename,)
+    #assert parts[1] in ("main", "test"), "unexpected filename '%s', not in src/{test,main}" % (filename,)
+    #assert parts[2] == "java", "unexpected filename '%s', not in src/{test,main}/java" % (filename,)
 
-    return "/".join(parts[3:])  # "internal" fully-qualified class name, separated by /
+    return "/".join(parts[0:])  # "internal" fully-qualified class name, separated by /
 
 # Rename symbols in source code
 def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, shouldAnnotate, options):
     path = os.path.join(options.srcRoot, filename)
-    data = file(path).read()
+    data = file(path).read().decode('utf8')
 
     if "\r" in data:
         # BlockJukebox is the only file with CRLF line endings in NMS.. and.. IntelliJ IDEA treats offsets 
@@ -415,8 +418,8 @@ def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, sh
 
     if options.renameFiles:
         if newTopLevelClassPackage is not None: # rename if package changed
-            newFilename = os.path.join("src/main/java/", newTopLevelClassPackage, newTopLevelClassName + ".java")
-            newPath = os.path.join(options.srcRoot, newFilename)
+            newFilename = os.path.join(newTopLevelClassPackage, newTopLevelClassName + ".java").replace('\\', '/')
+            newPath = os.path.join(options.srcRoot, newFilename).replace('\\', '/')
 
             print "Rename file",filename,"->",newFilename
 
@@ -430,13 +433,25 @@ def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, sh
 
                 #os.rename(path, newPath)
 
-                wd = os.getcwd()
-                os.chdir(options.srcRoot)
-                cmd = "%s mv '%s' '%s'" % (options.git, filename, newFilename)  # warning: if filename contains quotes..
-                status = os.system(cmd)
-                assert status == 0, "Failed to execute rename command: %s" % (cmd,)
-                os.chdir(wd)
+                cmd = [options.git, 'mv', filename, newFilename]
+                if not run_command(cmd, cwd=options.srcRoot):
+                    sys.exit(1)
 
+def run_command(command, cwd='.', verbose=True):
+    print 'Running command: '
+    print pformat(command)
+        
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, cwd=cwd)
+    while process.poll() is None:
+        line = process.stdout.readline()
+        if line:
+            line = line.rstrip()
+            if verbose:
+                print line
+    if process.returncode:
+        print "failed: %d", process.returncode
+        return False
+    return True
 
 # Get filename relative to project at srcRoot, instead of an absolute path
 def getProjectRelativePath(absFilename, srcRoot):
@@ -467,9 +482,9 @@ def main():
     print "Processing files..."
 
     for filename in sorted(rangeMapByFile.keys()):
-        if filename.startswith("src/main/java/jline"):
+        if filename.startswith("jline"):
             continue
-        elif filename.startswith("src/main/java/net/minecraft"):
+        elif filename.startswith("net/minecraft"):
             processJavaSourceFile(options.srcRoot, filename, rangeMapByFile[filename], renameMap, importMap, shouldAnnotate=False, options=options)
         else:
             processJavaSourceFile(options.srcRoot, filename, rangeMapByFile[filename], qualifiedRenameMap, {}, shouldAnnotate=True, options=options)

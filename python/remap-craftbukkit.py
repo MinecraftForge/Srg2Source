@@ -7,34 +7,6 @@ from zipfile import ZipFile
 from optparse import OptionParser
 from ConfigParser import ConfigParser
 
-#if shouldExtract:
-    # Extract map of symbol ranges in CB source, required for renaming
-    # IDEA must have Srg2source plugin installed, it will detect batchmode and automatically run
-#    status = os.system(IDEA+" "+os.path.join(os.getcwd(), CB_ROOT))
-
-#if shouldRename:
-    # Change to a new minecraft-server library with MCP names
-#    status = os.system("patch -p1 -d "+CB_ROOT+" -R < "+os.path.join(DATA, "pom-slim-minecraft-server.patch"))
-#    assert status ==  0
-
-#    status = os.system("patch -p1 -d "+CB_ROOT+" < "+os.path.join(DATA, "pom-minecraft-server-pkgmcp.patch"))
-#    assert status == 0
-
-    # Apply the renames
-#    status = os.system(PYTHON+" rangeapply.py --srcRoot "+CB_ROOT+" --srcRangeMap "+CB_RANGEMAP+" --lvRangeMap "+MCP_RANGEMAP+" --mcpConfDir "+os.path.join(MCP_ROOT, "conf")+" --srgFiles "+SRG_CB2MCP+" "+SRG_CB2MCP_FIXES)
-#    assert status == 0
-
-#if shouldFormat:
-    # Reformat source style in NMS (only; not OBC) to more closely resemble MCP
-    # This assumes you have astyle installed and ~/.astylerc copied from conf/astyle.cfg
-    #ARTISTIC_STYLE_OPTIONS=../mcp726-pkgd/conf/astyle.cfg astyle --suffix=none -R $CB_ROOT/src/main/java/net/minecraft # TODO
-    #find $CB_ROOT/src/main/java/net/minecraft -name '*.java' -exec astyle --suffix=none {} \;
-#    os.system("find "+os.path.join(CB_ROOT, "src/main/java/net/minecraft")+" -name '*.java' -exec astyle --suffix=none {} \;")
-
-#    os.system(PYTHON+" javadocxfer.py "+CB_ROOT+" "+MCP_ROOT)
-
-#    os.system(PYTHON+" whitespaceneutralizer.py "+CB_ROOT+" "+MCP_ROOT)
-
     # Measure differences to get a sense of progress
 #    os.system("diff -ur "+os.path.join(MCP_ROOT,"src/minecraft_server/net/minecraft/")+" "+os.path.join(CB_ROOT, "src/main/java/net/minecraft/")+" > "+DIFF_OUT)
 
@@ -136,7 +108,7 @@ class Remapper(object):
             orig_dir = os.path.abspath('.')
             
             self.logger.info('Setting up FML')
-            if not self.run_command([sys.executable, 'install.py', '--no-client', '--server'], self.fml_dir):
+            if not self.run_command([sys.executable, 'install.py', '--no-client', '--server', '--no-rename'], self.fml_dir):
                 self.logger.error('Could not setup FML')
                 sys.exit(1)
             
@@ -248,64 +220,17 @@ class Remapper(object):
                 self.loger.error('Could not reset head')
                 sys.exit(1)
                 
-    def setupslimjar(self):
-        CB_JAR = 'cb_minecraft_server.jar'
-        if not os.path.isfile(CB_JAR):
-            if not self.download_file(self.dev_url, CB_JAR):
-                sys.exit(1)
-            
-        def grab_files(path, main_path=None):
-            ret = []
-            if main_path is None:
-                main_path = os.path.abspath(path) + os.sep
-            
-            for dirname, subs, files in os.walk(path):
-                if '.git' in subs:
-                    subs.remove('.git')
-                    
-                for sub in subs:
-                    ret += grab_files(os.path.join(dirname, sub), main_path)
-                    
-                for file in files:
-                    ret.append(os.path.abspath(os.path.join(dirname, file)).replace(main_path, '').replace(os.sep, '/'))
-                    
-            return ret
-            
-        repo_files = grab_files(os.path.join(self.cb_dir, 'src', 'main', 'java'))
-        
-        SLIM_JAR = 'slim_minecraft_server_%s.jar' % self.version
-        if os.path.isfile(SLIM_JAR):
-            os.remove(SLIM_JAR)
-            
-        self.logger.info('Stripping repo files from minecraft_server.jar')
+        ASTYLE = ['astyle', 
+            '--suffix=none', 
+            '--options=' + os.path.join(self.fml_dir, 'mcp', 'conf', 'astyle.cfg'), 
+            os.path.join(self.cb_dir, 'src', 'main', 'java', 'net', 'minecraft', 'server', '*')]
     
-        zip_in = ZipFile(CB_JAR, mode='a')
-        zip_out = ZipFile(SLIM_JAR, 'w', zipfile.ZIP_DEFLATED)
-        for i in zip_in.filelist:
-            name = i.filename.replace(os.sep, '/')
-            if name.endswith('.class') and name.replace('.class', '.java') in repo_files:
-                self.logger.info('Skipping: %s' % i.filename)
-            else:
-                c = zip_in.read(i.filename)
-                zip_out.writestr(i.filename, c)
+        if sys.platform.startswith('win'):
+            ASTYLE[0] = os.path.join(self.fml_dir, 'mcp', 'runtime', 'bin', 'astyle.exe')
+            
+        self.logger.info('Running astyle of net/minecraft/server')
+        self.run_command(ASTYLE)
                 
-        zip_out.close()
-        zip_in.close()
-        
-        MVN_INSTALL = ['mvn', 'install:install-file', 
-            '-Dfile=%s' % os.path.abspath(SLIM_JAR), '-DgroupId=org.bukkit', '-DartifactId=slim-minecraft-server',
-            '-Dversion=%s' % self.version, '-Dpackaging=jar']
-           
-        if self.osname == 'win':
-            MVN_INSTALL = ['cmd', '/C'] + MVN_INSTALL #DIRT HAX windows doesnt seem to see mvn...
-            
-        if not self.run_command(MVN_INSTALL, cwd=self.cb_dir):
-            self.logger.error('Could not install slim jar')
-            sys.exit(1)
-            
-        os.remove(SLIM_JAR)
-        os.remove(CB_JAR)
-
     def apply_patch(self, target_dir, patch):
         PATCH = ['patch', '-p2', '-i', os.path.abspath(patch)]
         
@@ -326,23 +251,31 @@ class Remapper(object):
         self.clean_rangemap('CB.rangemap', rangefile)
 
     def run_rangeapply(self, cbsrg, mcprange, cbrange):
+        SRG_CHAIN = 'chained.srg'
         RANGEAPPLY = [sys.executable, 'rangeapply.py',
-            '--srcRoot', self.cb_dir,
+            '--srcRoot', os.path.join(self.cb_dir, 'src', 'main', 'java'),
             '--srcRangeMap', cbrange,
             '--lvRangeMap', mcprange,
             '--mcpConfDir', os.path.join(self.fml_dir, 'mcp', 'conf'),
-            '--srgFiles',  ''] #"+SRG_CB2MCP+" "+SRG_CB2MCP_FIXES)
+            #'--rewriteFiles',
+            #'--renameFiles',
+            '--srgFiles',  SRG_CHAIN] #"+SRG_CB2MCP+" "+SRG_CB2MCP_FIXES)
             
         from chain import chain
         chained = chain(os.path.join(self.fml_dir, 'mcp', 'conf', 'packaged.srg'), '^' + cbsrg, verbose=False)
-        
-        SRG_CHAIN = 'chained.srg'
         
         if os.path.isfile(SRG_CHAIN):
             os.remove(SRG_CHAIN)
         
         with open(SRG_CHAIN, 'wb') as out_file: 
             out_file.write('\n'.join(chained))
+            
+        self.run_command(RANGEAPPLY)
+        
+    def kill_whitespace(self):
+        from whitespaceneutralizer import nutralize_whitespace
+        nutralize_whitespace(os.path.join(self.cb_dir, 'src', 'main', 'java', 'net', 'minecraft'),
+            os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server', 'net', 'minecraft'))
         
 def main(options, args):
     mapper = Remapper(options)
@@ -358,12 +291,12 @@ def main(options, args):
         
     mapper.setupcb()
     
-    #mapper.setupslimjar()
-    
     cb_range = 'cb.rangemap'
     mapper.generatecbrange(cb_range)
     
-    #mapper.run_rangeapply(cb_to_vanilla, van_range, cb_range)
+    mapper.run_rangeapply(cb_to_vanilla, van_range, cb_range)
+    
+    mapper.kill_whitespace()
     
 if __name__ == '__main__':
     parser = OptionParser()
