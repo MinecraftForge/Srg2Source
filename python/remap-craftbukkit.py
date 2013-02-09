@@ -111,6 +111,14 @@ class Remapper(object):
             if not self.run_command([sys.executable, 'install.py', '--no-client', '--server', '--no-rename'], self.fml_dir):
                 self.logger.error('Could not setup FML')
                 sys.exit(1)
+                
+            # Here until FML offocially rolls out renaming local vars in 1.5
+            from rename_vars import rename_file
+            
+            for path, _, filelist in os.walk(os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server'), followlinks=True):
+                for cur_file in fnmatch.filter(filelist, '*.java'):
+                    file = os.path.normpath(os.path.join(path, cur_file))
+                    rename_file(file, MCP=True)
             
     def run_command(self, command, cwd='.', verbose=True):
         self.logger.info('Running command: ')
