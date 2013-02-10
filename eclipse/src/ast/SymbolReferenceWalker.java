@@ -318,7 +318,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(AnonymousClassDeclaration node)
     {
         emitter.log("AnonymousClassDeclaration: " + node.getStartPosition() + '|' + (node.getStartPosition() + node.getLength()));
-        return false;
+        return true;
     }
 
     public boolean visit(ArrayAccess node)
@@ -452,7 +452,9 @@ public class SymbolReferenceWalker extends ASTVisitor
             IVariableBinding var = (IVariableBinding)bind;
             if (var.isParameter())
             {
-                emitter.emitReferencedMethodParameter(node, var, paramIndices.get(node.getIdentifier()));
+                String id = node.getIdentifier();
+                Integer i = (paramIndices.containsKey(id) ? paramIndices.get(id) : -1);
+                emitter.emitReferencedMethodParameter(node, var, i);
             }
             else if (var.isField())
             {

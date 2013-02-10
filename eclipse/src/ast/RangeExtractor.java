@@ -32,7 +32,22 @@ public class RangeExtractor
         }
         
         SRC = new File(args[0]).getAbsolutePath();
-        LIB = new File(args[1]).getAbsolutePath();
+        if  (!args[1].equalsIgnoreCase("none") && args[1].length() != 0)
+        {
+            if (args[1].contains(File.pathSeparator))
+            {
+                libs = args[1].split(File.pathSeparator);
+            }
+            else
+            {
+                LIB = new File(args[1]).getAbsolutePath();
+                libs = gatherFiles(LIB, ".jar");
+            }
+        }
+        else
+        {
+            libs = new String[0];
+        }
         
         String logFilename = args[2];
 
@@ -45,8 +60,6 @@ public class RangeExtractor
             ex.printStackTrace();
             return;
         }
-        
-        libs = gatherFiles(LIB, ".jar");
 
         log("Symbol range map extraction starting");
 
@@ -179,7 +192,7 @@ public class RangeExtractor
         return true;
     }
 
-    private static boolean processClass(SymbolRangeEmitter emitter, TypeDeclaration clazz, int[] newCode)
+    public static boolean processClass(SymbolRangeEmitter emitter, TypeDeclaration clazz, int[] newCode)
     {
         String className = emitter.emitClassRange(clazz);
         
@@ -249,7 +262,7 @@ public class RangeExtractor
         return true;
     }
     
-    private static boolean processMethod(SymbolRangeEmitter emitter, String className, MethodDeclaration method, int[] newCode)
+    public static boolean processMethod(SymbolRangeEmitter emitter, String className, MethodDeclaration method, int[] newCode)
     {
         String methodSignature = emitter.emitMethodRange(method);
 

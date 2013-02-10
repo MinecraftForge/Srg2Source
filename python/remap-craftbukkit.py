@@ -243,13 +243,29 @@ class Remapper(object):
         return self.run_command(PATCH, cwd=target_dir)
       
     def generatecbrange(self, rangefile):
-        RANGE = ['java', '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
+        RANGE = ['java', 
+            '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
             os.path.join(self.cb_dir, 'src', 'main', 'java'),
-            os.path.abspath(os.path.join(self.data, self.version, 'libs')),
+            'none',
             'output.rangemap']
-            
+        
+        dep_file = os.path.abspath('classpath.txt')
+        DEPS = ['mvn', 'dependency:build-classpath', '-Dmdep.outputFile=%s' % dep_file]
+        if self.osname == 'win':
+            DEPS = ['cmd', '/C'] + DEPS
+        
+        if not self.run_command(DEPS, cwd=self.cb_dir):
+            self.logger.error('Could not extract dependancies from maven')
+            sys.exit(1)
+        
+        with open(dep_file, 'rb') as in_file:
+            RANGE[4] = in_file.read()
+        os.remove(dep_file)
+        
         self.logger.info('Generating CB rangemap')
-        self.run_command(RANGE)
+        if not self.run_command(RANGE):
+            self.logger.error('Could not extract craftbukkit rangemap')
+            sys.exit(1)
             
         self.clean_rangemap('output.rangemap', rangefile)
 
