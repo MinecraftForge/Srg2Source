@@ -482,7 +482,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
         else
         {
-            emitter.log("ERROR SimpleType: " + node + " " + node.resolveBinding().getClass());
+            emitter.log("ERROR SimpleType: " + node + " " + (bind != null ? bind.getClass() : "null"));
         }
         return false;
     }
