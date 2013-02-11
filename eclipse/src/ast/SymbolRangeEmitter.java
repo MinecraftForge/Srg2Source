@@ -136,10 +136,10 @@ public class SymbolRangeEmitter
             return bind;
         }
         //Cuz screw you CraftBukkit using Object names.
-        /*if (clazz.getQualifiedName().contains("NBT") && (bind.getName().equals("clone") || bind.getName().equals("equals")))
+        if (bind.getName().equals("clone") || bind.getName().equals("equals"))
         {
             return bind;
-        }*/
+        }
         bind = resolveOverrides(bind, clazz.getSuperclass());
         for (ITypeBinding intf : clazz.getInterfaces())
         {
