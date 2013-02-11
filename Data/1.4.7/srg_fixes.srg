@@ -2,6 +2,7 @@
 CL: net/minecraft/server/BlockSapling/TreeGenerator net/minecraft/block/BlockSapling/TreeGenerator
 MD: net/minecraft/server/BlockSapling/TreeGenerator/a (Lnet/minecraft/server/World;Ljava/util/Random;III)Z net/minecraft/block/BlockSapling/TreeGenerator/func_76484_a ((Lnet/minecraft/world/World;Ljava/util/Random;III)Z
 
+# World -> BlockChangeDelegate
 MD: net/minecraft/server/WorldGenTrees/b (Lorg/bukkit/BlockChangeDelegate;IIII)V net/minecraft/world/gen/feature/WorldGenTrees/func_76529_b (Lorg/bukkit/BlockChangeDelegate;IIII)V
 
 # BlockPistonBase return change
@@ -23,6 +24,3 @@ MD: net/minecraft/server/EntityLiving/l (I)Lnet/minecraft/server/ItemStack; net/
 MD: net/minecraft/server/EntitySkeleton/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/monster/EntitySkeleton/func_70600_l (I)Lnet/minecraft/item/ItemStack;
 MD: net/minecraft/server/EntityPigZombie/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/monster/EntityPigZombie/func_70600_l (I)Lnet/minecraft/item/ItemStack;
 MD: net/minecraft/server/EntityZombie/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/monster/EntityZombie/func_70600_l (I)Lnet/minecraft/item/ItemStack;
-
-#New Method in WorldServer
-MD: net/minecraft/server/WorldServer/getTileEntity (III)Lnet/minecraft/server/TileEntity; net/minecraft/world/WorldServer/func_72796_p (III)Lnet/minecraft/tileentity/TileEntity;

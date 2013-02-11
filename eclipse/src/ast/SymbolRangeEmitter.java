@@ -135,7 +135,11 @@ public class SymbolRangeEmitter
         {
             return bind;
         }
-        
+        //Cuz screw you CraftBukkit using Object names.
+        /*if (clazz.getQualifiedName().contains("NBT") && (bind.getName().equals("clone") || bind.getName().equals("equals")))
+        {
+            return bind;
+        }*/
         bind = resolveOverrides(bind, clazz.getSuperclass());
         for (ITypeBinding intf : clazz.getInterfaces())
         {
@@ -150,6 +154,7 @@ public class SymbolRangeEmitter
         {
             return bind;
         }
+        
         for (IMethodBinding sup : type.getDeclaredMethods())
         {
             if (bind.overrides(sup))
@@ -157,7 +162,23 @@ public class SymbolRangeEmitter
                 return resolveOverrides(sup);
             }
         }
-        return bind;
+        IMethodBinding tmp = resolveOverrides(bind, type.getSuperclass());
+        if (tmp == bind)
+        {
+            for (ITypeBinding intf : type.getInterfaces())
+            {
+                tmp = resolveOverrides(bind, intf);
+                if (tmp != bind)
+                {
+                    return tmp;
+                }
+            }
+            return bind;
+        }
+        else
+        {
+            return tmp;
+        }
     }
     
     public String emitMethodRange(MethodDeclaration method)
@@ -212,6 +233,7 @@ public class SymbolRangeEmitter
 
     public void emitReferencedMethod(Name name, IMethodBinding method)
     {
+        method = resolveOverrides(method);
         //systemInstall|method|org.fusesource.jansi.AnsiConsole|systemInstall|()V
         log(commonFields(name.toString(), name) + "method" + 
             FS + method.getDeclaringClass().getErasure().getQualifiedName() + 
