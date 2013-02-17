@@ -21,7 +21,7 @@ public class RangeExtractor
     private static String LIB = "C:/Users/Lex/Desktop/mc_dev_rev/1.4.6-R0.3/libs";
     private static String SRC = BASE + "src/main/java";
     private static PrintWriter logFile = null;
-    private static String[] libs = null;
+    private static String[] LIBS = null;
     
     public static void main(String[] args)
     {
@@ -36,17 +36,17 @@ public class RangeExtractor
         {
             if (args[1].contains(File.pathSeparator))
             {
-                libs = args[1].split(File.pathSeparator);
+                LIBS = args[1].split(File.pathSeparator);
             }
             else
             {
                 LIB = new File(args[1]).getAbsolutePath();
-                libs = gatherFiles(LIB, ".jar");
+                LIBS = gatherFiles(LIB, ".jar");
             }
         }
         else
         {
-            libs = new String[0];
+            LIBS = new String[0];
         }
         
         String logFilename = args[2];
@@ -121,7 +121,7 @@ public class RangeExtractor
         return true;
     }
     
-    private static CompilationUnit createUnit(String name, String data) throws Exception
+    public static CompilationUnit createUnit(String name, String data, String src, String[] libs) throws Exception
     {
         ASTParser parser = ASTParser.newParser(AST.JLS4);        
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
@@ -131,7 +131,7 @@ public class RangeExtractor
         options.put(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_1_6);
         parser.setCompilerOptions(options);
         parser.setUnitName(name);
-        parser.setEnvironment(libs, new String[]{SRC}, null, true);
+        parser.setEnvironment(libs, new String[]{src}, null, true);
         
         parser.setSource(data.toCharArray());
         return (CompilationUnit)parser.createAST(null);
@@ -143,7 +143,7 @@ public class RangeExtractor
         SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath, logFile);
         String data = FileUtils.readFileToString(new File(path), Charset.forName("UTF-8")).replaceAll("\r", "");
         
-        CompilationUnit cu = createUnit(path.replace('\\', '/').substring(SRC.length() + 1), data);
+        CompilationUnit cu = createUnit(path.replace('\\', '/').substring(SRC.length() + 1), data, SRC, LIBS);
 
         log("processing " + sourceFilePath);
 

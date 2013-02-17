@@ -20,7 +20,7 @@ public class MethodSignatureHelper
         return buf.toString();
     }
     
-    private static String getTypeSignature(ITypeBinding type)
+    public static String getTypeSignature(ITypeBinding type)
     {
         String ret = type.getErasure().getBinaryName().replace('.', '/');
         if (ret.indexOf('/') != -1 && !ret.endsWith(";"))
