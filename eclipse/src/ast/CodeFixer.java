@@ -1,15 +1,27 @@
 package ast;
 
 import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.compiler.IProblem;
-import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 @SuppressWarnings("unchecked")
 public class CodeFixer
@@ -17,6 +29,7 @@ public class CodeFixer
     private static String SRC = null;
     private static String[] libs = null;
     private static ClassTree TREE = new ClassTree(false);
+    private static SrgFile SRG;
     
     private static class SourceKey
     {
@@ -34,9 +47,12 @@ public class CodeFixer
         }
     }
     
-    public static void main(String[] args)
+    private static Method addURL;
+    
+    public static void main(String[] args) throws Exception
     {        
         SRC = new File(args[0]).getAbsolutePath();
+        SRG = new SrgFile(new File(args[2])).read();
         if  (!args[1].equalsIgnoreCase("none") && args[1].length() != 0)
         {
             if (args[1].contains(File.pathSeparator))
@@ -52,6 +68,13 @@ public class CodeFixer
         {
             libs = new String[0];
         }
+
+        addURL = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+        addURL.setAccessible(true);
+        for (String s : libs)
+        {
+            addURL.invoke(CodeFixer.class.getClassLoader(), new File(s).toURI().toURL());
+        }
         
         String[] files = RangeExtractor.gatherFiles(SRC, ".java");
         try
@@ -59,7 +82,18 @@ public class CodeFixer
             ArrayList<SourceKey> srcClasses = createTree(files);
             
             log("Processing Source:");
-            HashMap<String, ArrayList<FixTypes>> fixes = findFixes(srcClasses);
+            HashMap<String, ArrayList<FixTypes>> classFixes = findFixes(srcClasses);
+            for (String key : classFixes.keySet())
+            {
+                ArrayList<FixTypes> fixes = classFixes.get(key);
+                Collections.sort(fixes);
+                
+                System.out.println(key);
+                for (FixTypes fix : fixes)
+                {
+                    System.out.println("  Fix: " + fix + " " + fix.getStart() + " " + fix.getLength());   
+                }
+            }
         }
         catch (Exception e)
         {
@@ -106,7 +140,8 @@ public class CodeFixer
         return ret;
     }
     
-    private static HashMap<String, ArrayList<FixTypes>> findFixes(ArrayList<SourceKey> files)
+    @SuppressWarnings("rawtypes")
+    private static HashMap<String, ArrayList<FixTypes>> findFixes(ArrayList<SourceKey> files) throws ClassNotFoundException
     {
         HashMap<String, ArrayList<FixTypes>> ret = new HashMap<String, ArrayList<FixTypes>>();
         for (SourceKey src : files)
@@ -162,6 +197,74 @@ public class CodeFixer
                             }
                             if (exit) break;
                         }
+                    }
+                    else if (id == 400)
+                    {
+                        String name  = p.getArguments()[0];
+                        String tmp   = p.getArguments()[1];
+                        String owner = p.getArguments()[2];
+                        String impl  = p.getArguments()[3];
+                        String[] args = (tmp.length() == 0 ? new String[0] : tmp.split(", "));
+                        Class cls = Class.forName(owner, false, CodeFixer.class.getClassLoader());
+                        String signature = null; 
+                        
+                        for (Method m : cls.getMethods())
+                        {
+                            if (m.getName().equals(name))
+                            {
+                                Class[] types = m.getParameterTypes();
+                                if (types.length == args.length)
+                                {
+                                    boolean same = true;
+                                    for (int x = 0; x < args.length; x++)
+                                    {
+                                        if (!args[x].equals(types[x].getName().toString()))
+                                        {
+                                            same = false;
+                                            break;
+                                        }
+                                    }
+                                    if (same) signature = MethodSignatureHelper.getSignature(m);
+                                }   
+                            }
+                            if (signature != null) break;
+                        }
+                        
+                        SrgFile.Class icls = SRG.getClass2(impl.replace('.', '/'));
+                        if (icls == null)
+                        {
+                            System.out.println("Could not find class in SRG " + impl);
+                            System.exit(1);
+                        }
+                        
+                        SrgFile.Node mtd = icls.methods1.get(name + signature);
+                        
+                        ClassTree.Class treeNode = TREE.getClass(impl);
+                        treeNode = treeNode.getParent();
+                        if (treeNode == null)
+                        {
+                            System.out.println("Could not find missing method, and parent was null: " + impl + "." + name + signature);
+                            System.exit(1);
+                        }
+                        
+                        while(mtd == null && treeNode != null)
+                        {
+                            icls = SRG.getClass2(treeNode.name);
+                            treeNode = treeNode.getParent();
+                            if (icls != null)
+                            {
+                                mtd = icls.methods1.get(name + signature);
+                            }
+                        }
+                        
+                        if (mtd == null)
+                        {
+                            System.out.println("Could not find bounce rename " + icls.name + '/' + name + signature);
+                            System.exit(1);
+                        }
+                        
+                        if (!ret.containsKey(impl)) ret.put(impl, new ArrayList<FixTypes>());
+                        ret.get(impl).add(new FixTypes.BounceMethod(getClass(impl, files), name, mtd.rename, args));
                     }
                     else
                     {
@@ -245,13 +348,12 @@ public class CodeFixer
         {
             return false;
         }
-        MethodDeclaration mtd = null;
-        for (MethodDeclaration m : cls.getMethods())
+        for (MethodDeclaration mtd : cls.getMethods())
         {
-            if (m.getName().toString().equals(name))
+            if (mtd.getName().toString().equals(name))
             {
                 String[] pts = (args.length() > 0 ? args.split(", ") : new String[0]);
-                List<SingleVariableDeclaration> pars = m.parameters();
+                List<SingleVariableDeclaration> pars = mtd.parameters();
                 if (pars.size() == pts.length)
                 {
                     boolean same = true;
