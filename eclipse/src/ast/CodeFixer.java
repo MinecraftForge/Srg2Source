@@ -1,6 +1,8 @@
 package ast;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -16,10 +18,8 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
-import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
-import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
@@ -89,10 +89,49 @@ public class CodeFixer
                 Collections.sort(fixes);
                 
                 System.out.println(key);
+                
+                SourceKey data = null;
+                for (SourceKey s : srcClasses)
+                {
+                    if (s.name.equals(key))
+                    {
+                        data = s;
+                        break;
+                    }
+                }
+                
+                if (data == null)
+                {
+                    log("Could not find sourcekey for fixes: " + key);
+                    System.exit(1);
+                }
+                
+                int offset = 0;
+                String src = data.data;
+                
                 for (FixTypes fix : fixes)
                 {
-                    System.out.println("  Fix: " + fix + " " + fix.getStart() + " " + fix.getLength());   
+                    System.out.println("  Fix: " + fix + " " + fix.getStart() + " " + fix.getLength() + " " + offset);
+                    
+                    String pre = src.substring(0, fix.getStart() + offset);
+                    String post = src.substring(fix.getStart() + fix.getLength() + offset);
+                    
+                    src = pre + fix.newText + post; 
+                    offset += (fix.newText.length() - fix.getLength());
                 }
+                
+                String outFile = SRC + "/" + key + ".java";
+                try
+                {
+                    FileWriter out = new FileWriter(outFile);
+                    out.write(src);
+                    out.close();
+                }
+                catch (IOException e)
+                {
+                    System.out.println("Exception " + e.toString());
+                }
+                System.out.println("");
             }
         }
         catch (Exception e)
@@ -188,7 +227,7 @@ public class CodeFixer
                                 String name = frag.resolveBinding().getName();
                                 if (find.equals(name))
                                 {
-                                    String clsName = cls.getName().getFullyQualifiedName().replace('.', '/');
+                                    String clsName = cls.resolveBinding().getQualifiedName().replace('.', '/');
                                     if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
                                     ret.get(clsName).add(new FixTypes.PublicField(field));
                                     exit = true;
@@ -198,7 +237,7 @@ public class CodeFixer
                             if (exit) break;
                         }
                     }
-                    else if (id == 400)
+                    else if (id == 400) //Missing Method
                     {
                         String name  = p.getArguments()[0];
                         String tmp   = p.getArguments()[1];
@@ -206,7 +245,8 @@ public class CodeFixer
                         String impl  = p.getArguments()[3];
                         String[] args = (tmp.length() == 0 ? new String[0] : tmp.split(", "));
                         Class cls = Class.forName(owner, false, CodeFixer.class.getClassLoader());
-                        String signature = null; 
+                        String signature = null;
+                        Class<?> returnType = null; 
                         
                         for (Method m : cls.getMethods())
                         {
@@ -224,7 +264,11 @@ public class CodeFixer
                                             break;
                                         }
                                     }
-                                    if (same) signature = MethodSignatureHelper.getSignature(m);
+                                    if (same)
+                                    {
+                                        signature = MethodSignatureHelper.getSignature(m);
+                                        returnType = m.getReturnType();
+                                    }
                                 }   
                             }
                             if (signature != null) break;
@@ -263,8 +307,9 @@ public class CodeFixer
                             System.exit(1);
                         }
                         
-                        if (!ret.containsKey(impl)) ret.put(impl, new ArrayList<FixTypes>());
-                        ret.get(impl).add(new FixTypes.BounceMethod(getClass(impl, files), name, mtd.rename, args));
+                        String clsName = impl.replace('.', '/');
+                        if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
+                        ret.get(clsName).add(new FixTypes.BounceMethod(getClass(impl, files), name, mtd.rename, args, returnType));
                     }
                     else
                     {
@@ -333,7 +378,7 @@ public class CodeFixer
                     //in Mooshroom, which this works
                     if (mtd.resolveBinding() == null) 
                     {
-                        String clsName = cls.getName().getFullyQualifiedName().replace('.', '/');
+                        String clsName = cls.resolveBinding().getQualifiedName().replace('.', '/');
                         if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
                         ret.get(clsName).add(new FixTypes.RemoveMethod(mtd));
                     }
@@ -368,7 +413,7 @@ public class CodeFixer
                     }
                     if (same)
                     {
-                        String clsName = cls.getName().getFullyQualifiedName().replace('.', '/');
+                        String clsName = cls.resolveBinding().getQualifiedName().replace('.', '/');
                         if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
                         ret.get(clsName).add(new FixTypes.PublicMethod(mtd));
                         return true;
