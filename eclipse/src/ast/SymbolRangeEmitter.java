@@ -374,7 +374,7 @@ public class SymbolRangeEmitter
     }
     // Methods to actually write the output
     // Everything goes through these methods
-
+/*
     private void internalEmitPackageRange(String oldText, ASTNode textRange,
             String packageName, String typeUsedBy)
     {
@@ -415,7 +415,7 @@ public class SymbolRangeEmitter
         log(commonFields(oldText, textRange) + "localvar" + FS + className + FS
                 + methodName + FS + methodSignature + FS + variableName + FS
                 + variableIndex);
-    }
+    }*/
 
     public void log(String s)
     {

@@ -5,16 +5,21 @@ import java.util.List;
 
 public class FixTypes implements Comparable<FixTypes>
 {
-    protected ASTNode node;
     protected int start  = 0;
     protected int length = 0;
     protected String newText = null;
     
     private FixTypes(ASTNode ast)
     {
-        this.node = ast;
-        start = node.getStartPosition();
-        length = node.getLength();
+        start = ast.getStartPosition();
+        length = ast.getLength();
+    }
+
+    private FixTypes(int start, int length, String newText)
+    {
+        this.start = start;
+        this.length = length;
+        this.newText = newText;
     }
     
     @SuppressWarnings("unchecked")
@@ -39,7 +44,7 @@ public class FixTypes implements Comparable<FixTypes>
     public int getLength(){ return length; }
     public int getStart(){ return start; }
     @Override
-    public String toString(){ return this + " " + getStart() + " " + getLength(); }
+    public String toString(){ return super.toString() + " " + getStart() + " " + getLength(); }
     
     public static class RemoveMethod extends FixTypes
     {
@@ -52,22 +57,9 @@ public class FixTypes implements Comparable<FixTypes>
 
     public static class PublicMethod extends FixTypes
     {
-        public PublicMethod(MethodDeclaration node)
+        public PublicMethod(int start, int length, String newText)
         {
-            super(node);
-            
-            Modifier target = FixTypes.findAccessor(node);
-            newText = "public ";
-            if (target == null)
-            {
-                start = node.getReturnType2().getStartPosition();
-                length = 0;
-            }
-            else
-            {
-                start = target.getStartPosition();
-                length = target.getLength() + 1;
-            }
+            super(start, length, newText);
         }
     }
     
@@ -95,6 +87,11 @@ public class FixTypes implements Comparable<FixTypes>
     public static class BounceMethod extends FixTypes
     {
         public BounceMethod(TypeDeclaration node, String newName, String oldName, String[] args, Class<?> returnType)
+        {
+            this(node, newName, oldName, args, returnType.getName());
+        }
+        
+        public BounceMethod(TypeDeclaration node, String newName, String oldName, String[] args, String returnType)
         { 
             super(node);
             
@@ -102,7 +99,7 @@ public class FixTypes implements Comparable<FixTypes>
             length = 0;            
             
             StringBuffer buf = new StringBuffer();
-            buf.append("    public ").append(returnType.getName()).append(' ').append(newName).append('(');
+            buf.append("    public ").append(returnType).append(' ').append(newName).append('(');
             for (int x = 0; x < args.length; x++)
             {
                 buf.append(args[x]).append(' ').append((char)('a' + x));
@@ -110,7 +107,7 @@ public class FixTypes implements Comparable<FixTypes>
             }
             
             buf.append("){\n        ");
-            if (returnType != Void.TYPE) buf.append("return ");
+            if (!returnType.equals("void")) buf.append("return ");
             buf.append(oldName).append('(');
             for (int x = 0; x < args.length; x++)
             {

@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
@@ -188,7 +189,7 @@ public class CodeFixer
         HashMap<String, ArrayList<FixTypes>> ret = new HashMap<String, ArrayList<FixTypes>>();
         for (SourceKey src : files)
         {
-            System.out.println("    Processing " + src.name);
+            log("    Processing " + src.name);
             ArrayList<IProblem> errors = new ArrayList<IProblem>();
             HashMap<String, ArrayList<IProblem>> duplicates = new HashMap<String, ArrayList<IProblem>>();
             
@@ -207,11 +208,26 @@ public class CodeFixer
                     }
                     else if (id == 101) //Non-visible method
                     {
-                        if (!gatherMethod(ret, getClass(p.getArguments()[0], files), p.getArguments()[1], p.getArguments()[2]))
+                        String name = p.getArguments()[1];
+                        String args = p.getArguments()[2];
+                        String clsName = p.getArguments()[0];
+                        
+                        int start = p.getSourceStart();
+                        int length = p.getSourceEnd() - p.getSourceStart() + 1;
+                        String newName = name + "_CodeFix_Public";
+                        if (name.endsWith("_"))
+                            newName = name + "CodeFix_Public";
+                        
+                        if (!gatherMethod(ret, getClass(clsName, files), name, args, newName))
                         {
-                            log("Could not find class: " + p.getArguments()[0]);
+                            log("Could not find class: " + clsName);
                             log(p.toString());
                             System.exit(1);
+                        }
+                        else
+                        {
+                            if (!ret.containsKey(src.name)) ret.put(src.name, new ArrayList<FixTypes>());
+                            ret.get(src.name).add(new FixTypes.PublicMethod(start, length, newName));
                         }
                     }
                     else if (id == 71) //Non-visible field
@@ -391,7 +407,7 @@ public class CodeFixer
         }
     }
     
-    private static boolean gatherMethod(HashMap<String, ArrayList<FixTypes>> ret, TypeDeclaration cls, String name, String args)
+    private static boolean gatherMethod(HashMap<String, ArrayList<FixTypes>> ret, TypeDeclaration cls, String name, String args, String newName)
     {
         if (cls == null)
         {
@@ -417,9 +433,12 @@ public class CodeFixer
                     }
                     if (same)
                     {
+                        Type retType = mtd.getReturnType2();
+                        
                         String clsName = cls.resolveBinding().getQualifiedName().replace('.', '/');
                         if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
-                        ret.get(clsName).add(new FixTypes.PublicMethod(mtd));
+                        
+                        ret.get(clsName).add(new FixTypes.BounceMethod(cls, newName, name, pts, retType.toString()));
                         return true;
                     }
                 }

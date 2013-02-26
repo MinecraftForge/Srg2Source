@@ -376,7 +376,6 @@ class Remapper(object):
                     with open(patch_file, 'wb') as fh:
                         fh.write(patch)
 
-                        
     def merge_tree(self, root_src_dir, root_dst_dir):
         for src_dir, dirs, files in os.walk(root_src_dir):
             dst_dir = src_dir.replace(root_src_dir, root_dst_dir)
@@ -388,23 +387,51 @@ class Remapper(object):
                 if os.path.exists(dst_file):
                     os.remove(dst_file)
                 shutil.copy(src_file, dst_dir)
-                
+
+    def gather_files(self, src_dir, pattern, append_pattern=False, all_files=False):
+        dirs = []
+        for path, dirlist, filelist in os.walk(src_dir, followlinks=True):
+            sub_dir = os.path.relpath(path, src_dir)
+            files = fnmatch.filter(filelist, pattern)
+            if files:
+                if all_files:
+                    dirs.extend([os.path.join(path, f) for f in files])
+                elif append_pattern:
+                    dirs.append(os.path.join(path, pattern))
+                else:
+                    dirs.append(path)
+        return dirs
+        
     def compile_cb(self, deps):
-        self.logger.info('Gathering dependancies')
-        for dep in deps:
-            target = os.path.join(self.fml_dir, 'mcp', 'lib', os.path.basename(dep))
-            if os.path.isfile(target):
-                os.remove(target)
-            shutil.copyfile(dep, target)
+        #self.logger.info('Gathering dependancies')
+        #for dep in deps:
+        #    target = os.path.join(self.fml_dir, 'mcp', 'lib', os.path.basename(dep))
+        #    if os.path.isfile(target):
+        #        os.remove(target)
+        #    shutil.copyfile(dep, target)
             
-        self.logger.info('Moving sources')
+        #self.logger.info('Moving sources')
         SRC_MCP = os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server')
         SRC_CB  = os.path.join(self.cb_dir, 'src', 'main', 'java')
-        self.merge_tree(SRC_CB, SRC_MCP)
+        #self.merge_tree(SRC_CB, SRC_MCP)
+        
+        java_files = self.gather_files(SRC_CB, '*.java', append_pattern=self.osname == 'win', all_files=self.osname != 'win')
+        COMPILE = ['javac', 
+            '-cp', os.pathsep.join(deps),
+            '-encoding', 'UTF-8',
+            '-Xlint:-options', 
+            #'-deprecation',
+            '-g',
+            '-source', '1.6',
+            '-target', '1.6',
+            '-classpath', os.pathsep.join(deps),
+            '-sourcepath', SRC_CB,
+            '-d', os.path.join(self.fml_dir, 'mcp', 'bin', 'minecraft_server')
+            ] + java_files
         
         self.logger.info('Compiling CB with MCP')
-        if not self.run_command([sys.executable, os.path.join('runtime', 'recompile.py'), '--server'], os.path.join(self.fml_dir, 'mcp')):
-            self.logger.error('Could not setup FML')
+        if not self.run_command(COMPILE):
+            self.logger.error('Could not Compile CraftBukkit with MCP names')
             sys.exit(1)
             
         self.logger.info('Obfusicating CB with MCP')
@@ -454,7 +481,7 @@ def main(options, args):
     mapper.logger.info('Dependancies:')
     for x in range(0, len(cb_deps) - 1):
         if 'minecraft-server' in cb_deps[x]:
-            cb_deps[x] = os.path.abspath(os.path.join(mapper.fml_dir, 'mcp', 'temp', 'minecraft_server_exc.jar'))
+            cb_deps[x] = os.path.abspath(os.path.join(mapper.fml_dir, 'mcp', 'temp', 'minecraft_server_rg.jar'))
         mapper.logger.info('    ' + cb_deps[x])
         
     mapper.codefix_cb(cb_deps)

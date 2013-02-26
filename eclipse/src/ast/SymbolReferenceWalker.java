@@ -7,6 +7,7 @@ import org.eclipse.jdt.core.dom.*;
 /**
  * Recursively descends and processes symbol references
  */
+@SuppressWarnings("unused")
 public class SymbolReferenceWalker extends ASTVisitor
 {
     // Where to write results to
