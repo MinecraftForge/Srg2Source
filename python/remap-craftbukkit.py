@@ -328,7 +328,6 @@ class Remapper(object):
         from whitespaceneutralizer import nutralize_whitespace
         nutralize_whitespace(SRC_CB, SRC_MCP)
 
-
     def codefix_cb(self, deps):
         CODEFIX = ['java', 
             '-cp', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
@@ -376,6 +375,42 @@ class Remapper(object):
                         os.makedirs(patch_dir)
                     with open(patch_file, 'wb') as fh:
                         fh.write(patch)
+
+                        
+    def merge_tree(self, root_src_dir, root_dst_dir):
+        for src_dir, dirs, files in os.walk(root_src_dir):
+            dst_dir = src_dir.replace(root_src_dir, root_dst_dir)
+            if not os.path.exists(dst_dir):
+                os.mkdir(dst_dir)
+            for file_ in files:
+                src_file = os.path.join(src_dir, file_)
+                dst_file = os.path.join(dst_dir, file_)
+                if os.path.exists(dst_file):
+                    os.remove(dst_file)
+                shutil.copy(src_file, dst_dir)
+                
+    def compile_cb(self, deps):
+        self.logger.info('Gathering dependancies')
+        for dep in deps:
+            target = os.path.join(self.fml_dir, 'mcp', 'lib', os.path.basename(dep))
+            if os.path.isfile(target):
+                os.remove(target)
+            shutil.copyfile(dep, target)
+            
+        self.logger.info('Moving sources')
+        SRC_MCP = os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server')
+        SRC_CB  = os.path.join(self.cb_dir, 'src', 'main', 'java')
+        self.merge_tree(SRC_CB, SRC_MCP)
+        
+        self.logger.info('Compiling CB with MCP')
+        if not self.run_command([sys.executable, os.path.join('runtime', 'recompile.py'), '--server'], os.path.join(self.fml_dir, 'mcp')):
+            self.logger.error('Could not setup FML')
+            sys.exit(1)
+            
+        self.logger.info('Obfusicating CB with MCP')
+        if not self.run_command([sys.executable, os.path.join('runtime', 'reobfuscate.py'), '--server'], os.path.join(self.fml_dir, 'mcp')):
+            self.logger.error('Could not setup FML')
+            sys.exit(1)
         
 def main(options, args):
     mapper = Remapper(options)
@@ -426,9 +461,7 @@ def main(options, args):
     
     mapper.create_patches('patches')
     
-#    os.system("diff -ur "+os.path.join(MCP_ROOT,"src/minecraft_server/net/minecraft/")+" "+os.path.join(CB_ROOT, "src/main/java/net/minecraft/")+" > "+DIFF_OUT)
-
-#    print len(file(DIFF_OUT).readlines())
+    mapper.compile_cb(cb_deps)
     
 if __name__ == '__main__':
     parser = OptionParser()
