@@ -38,6 +38,8 @@ public class FixTypes implements Comparable<FixTypes>
     public int compareTo(FixTypes o){ return start - o.start; }
     public int getLength(){ return length; }
     public int getStart(){ return start; }
+    @Override
+    public String toString(){ return this + " " + getStart() + " " + getLength(); }
     
     public static class RemoveMethod extends FixTypes
     {

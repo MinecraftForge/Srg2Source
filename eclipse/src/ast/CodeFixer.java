@@ -81,14 +81,16 @@ public class CodeFixer
         {
             ArrayList<SourceKey> srcClasses = createTree(files);
             
-            log("Processing Source:");
+            log("Gathering Fixes:");
             HashMap<String, ArrayList<FixTypes>> classFixes = findFixes(srcClasses);
+            
+            log("Applying Fixes:");
             for (String key : classFixes.keySet())
             {
                 ArrayList<FixTypes> fixes = classFixes.get(key);
                 Collections.sort(fixes);
                 
-                System.out.println(key);
+                log("  " + key);
                 
                 SourceKey data = null;
                 for (SourceKey s : srcClasses)
@@ -102,7 +104,7 @@ public class CodeFixer
                 
                 if (data == null)
                 {
-                    log("Could not find sourcekey for fixes: " + key);
+                    log("    Could not find sourcekey for fixes: " + key);
                     System.exit(1);
                 }
                 
@@ -111,7 +113,7 @@ public class CodeFixer
                 
                 for (FixTypes fix : fixes)
                 {
-                    System.out.println("  Fix: " + fix + " " + fix.getStart() + " " + fix.getLength() + " " + offset);
+                    System.out.println("    Fix: " + fix + " " + offset);
                     
                     String pre = src.substring(0, fix.getStart() + offset);
                     String post = src.substring(fix.getStart() + fix.getLength() + offset);
@@ -150,6 +152,7 @@ public class CodeFixer
             {
                 String data = FileUtils.readFileToString(new File(file), Charset.forName("UTF-8")).replaceAll("\r", "");
                 String name = file.replace('\\', '/').substring(SRC.length() + 1);
+                log("    Processing " + name);
                 CompilationUnit cu = RangeExtractor.createUnit(name, data, SRC, libs);
 
                 ArrayList<TypeDeclaration> classes = new ArrayList<TypeDeclaration>();
@@ -185,6 +188,7 @@ public class CodeFixer
         HashMap<String, ArrayList<FixTypes>> ret = new HashMap<String, ArrayList<FixTypes>>();
         for (SourceKey src : files)
         {
+            System.out.println("    Processing " + src.name);
             ArrayList<IProblem> errors = new ArrayList<IProblem>();
             HashMap<String, ArrayList<IProblem>> duplicates = new HashMap<String, ArrayList<IProblem>>();
             

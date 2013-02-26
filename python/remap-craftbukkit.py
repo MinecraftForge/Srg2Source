@@ -1,6 +1,7 @@
 import os, os.path, sys, subprocess, zipfile
 import shutil, glob, fnmatch, signal
 import csv, re, logging, urllib, stat
+import difflib
 from pprint import pprint
 from pprint import pformat
 from zipfile import ZipFile
@@ -37,7 +38,7 @@ class Remapper(object):
         ch = logging.StreamHandler()
         ch.setFormatter(logging.Formatter("%(message)s"))
         self.logger.addHandler(ch)
-
+        
     def readversion(self):
         self.data = self.options.data_dir
         self.version = self.options.version
@@ -268,6 +269,8 @@ class Remapper(object):
             sys.exit(1)
             
         self.clean_rangemap('output.rangemap', rangefile)
+        
+        return RANGE[4].split(os.pathsep)
 
     def run_rangeapply(self, cbsrg, mcprange, cbrange):
         SRG_CHAIN = 'chained.srg'
@@ -324,9 +327,76 @@ class Remapper(object):
         
         from whitespaceneutralizer import nutralize_whitespace
         nutralize_whitespace(SRC_CB, SRC_MCP)
+
+
+    def codefix_cb(self, deps):
+        CODEFIX = ['java', 
+            '-cp', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
+            'ast.CodeFixer',
+            os.path.join(self.cb_dir, 'src', 'main', 'java'),
+            os.pathsep.join(deps),
+            'chained.srg']
+        
+        self.logger.info('Attempting to fix CB compiler errors')
+        if not self.run_command(CODEFIX):
+            self.logger.error('Could not run CodeFixer')
+            sys.exit(1)
+        
+    def create_patches(self, output):
+        self.logger.info('Creating patches')
+        SRC_MCP = os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server')
+        SRC_CB  = os.path.join(self.cb_dir, 'src', 'main', 'java')
+    
+        patchd = os.path.normpath(output)
+        base = os.path.normpath(SRC_MCP)
+        work = os.path.normpath(SRC_CB)
+        
+        if os.path.isdir(patchd):
+            shutil.rmtree(patchd, onerror=self.remove_readonly)
+    
+        for path, _, filelist in os.walk(work, followlinks=True):
+            for cur_file in fnmatch.filter(filelist, '*.java'):
+                file_base = os.path.normpath(os.path.join(base, path[len(work)+1:], cur_file)).replace(os.path.sep, '/')
+                file_work = os.path.normpath(os.path.join(work, path[len(work)+1:], cur_file)).replace(os.path.sep, '/')
+                
+                if not os.path.isfile(file_base):
+                    continue
+                fromlines = open(file_base, 'U').readlines()
+                tolines = open(file_work, 'U').readlines()
+                
+                patch = ''.join(difflib.unified_diff(fromlines, tolines, '../' + file_base[len(SRC_MCP)+1:], '../' + file_work[len(SRC_CB)+1:], '', '', n=3))
+                patch_dir = os.path.join(patchd, path[len(work)+1:])
+                patch_file = os.path.join(patch_dir, cur_file + '.patch')
+                
+                if len(patch) > 0:
+                    print patch_file[len(patchd)+1:]
+                    patch = patch.replace('\r\n', '\n')
+                    
+                    if not os.path.exists(patch_dir):
+                        os.makedirs(patch_dir)
+                    with open(patch_file, 'wb') as fh:
+                        fh.write(patch)
         
 def main(options, args):
     mapper = Remapper(options)
+        
+    class PrintHook:
+        def __init__(self, logger):
+            self.logger = logger
+            self.out = sys.__stdout__
+            sys.stdout = self
+            
+        def write(self, text):
+            text = text.rstrip('\r\n')
+            if len(text):
+                self.logger.info(text)
+            #self.out.write(text)
+            
+        def __getattr__(self, name):
+            return self.origOut.__getattr__(name)
+
+    hook = PrintHook(mapper.logger)
+    
     mapper.setupfml()
     
     cb_to_vanilla = os.path.join(mapper.data, mapper.version, 'cb_to_vanilla.srg')
@@ -340,12 +410,21 @@ def main(options, args):
     mapper.setupcb()
     
     cb_range = 'cb.rangemap'
-    mapper.generatecbrange(cb_range)
+    cb_deps = mapper.generatecbrange(cb_range)
     
     mapper.run_rangeapply(cb_to_vanilla, van_range, cb_range)
     
     mapper.cleanup_source(cb_to_vanilla)
     
+    mapper.logger.info('Dependancies:')
+    for x in range(0, len(cb_deps) - 1):
+        if 'minecraft-server' in cb_deps[x]:
+            cb_deps[x] = os.path.abspath(os.path.join(mapper.fml_dir, 'mcp', 'temp', 'minecraft_server_exc.jar'))
+        mapper.logger.info('    ' + cb_deps[x])
+        
+    mapper.codefix_cb(cb_deps)
+    
+    mapper.create_patches('patches')
     
 #    os.system("diff -ur "+os.path.join(MCP_ROOT,"src/minecraft_server/net/minecraft/")+" "+os.path.join(CB_ROOT, "src/main/java/net/minecraft/")+" > "+DIFF_OUT)
 
