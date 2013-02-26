@@ -403,12 +403,12 @@ class Remapper(object):
         return dirs
         
     def compile_cb(self, deps):
-        #self.logger.info('Gathering dependancies')
-        #for dep in deps:
-        #    target = os.path.join(self.fml_dir, 'mcp', 'lib', os.path.basename(dep))
-        #    if os.path.isfile(target):
-        #        os.remove(target)
-        #    shutil.copyfile(dep, target)
+        self.logger.info('Gathering dependancies')
+        for dep in deps:
+            target = os.path.join(self.fml_dir, 'mcp', 'lib', os.path.basename(dep))
+            if os.path.isfile(target):
+                os.remove(target)
+            shutil.copyfile(dep, target)
             
         #self.logger.info('Moving sources')
         SRC_MCP = os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server')
