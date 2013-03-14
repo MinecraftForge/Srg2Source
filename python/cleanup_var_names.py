@@ -1,3 +1,7 @@
+#!/usr/bin/python
+
+# Cleanup jad-style variable names with CB/MCP class names
+
 import os, os.path, sys, csv, re, fnmatch, shutil, zipfile, pprint
 from optparse import OptionParser
 from pprint import pprint

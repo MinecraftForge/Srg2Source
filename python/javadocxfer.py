@@ -86,8 +86,8 @@ def main():
         print "usage: %s cbRoot mcpRoot" % (sys.argv[0],)
         raise SystemExit
     
-    cbRoot = sys.argv[1]#"../CraftBukkit"
-    mcpRoot = sys.argv[2]#"../mcp725-pkgd"
+    cbRoot = sys.argv[1]
+    mcpRoot = sys.argv[2]
 
     cbSrc = os.path.join(cbRoot, "src/main/java/net/minecraft/")
     mcpSrc = os.path.join(mcpRoot, "src/minecraft_server/net/minecraft/")

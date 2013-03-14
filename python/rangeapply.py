@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 
-# Process symbol range maps produced by ApplySrg2Source
+# Process symbol range maps produced by Srg2Source
 
 import os, sys
 import srglib
@@ -363,6 +363,7 @@ def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, sh
         # BlockJukebox is the only file with CRLF line endings in NMS.. and.. IntelliJ IDEA treats offsets 
         # as line endings being one character, whether LF or CR+LF. So remove the extraneous character or
         # offsets will be all off :.
+        #  Yes I have a pull request on this: https://github.com/Bukkit/CraftBukkit/pull/985
         print "Warning: %s has CRLF line endings; consider switching to LF" % (filename,)
         data = data.replace("\r", "")
 

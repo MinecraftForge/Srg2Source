@@ -1,3 +1,7 @@
+#!/usr/bin/python
+
+# Remap CraftBukkit to MCP mappings - main driver script
+
 import os, os.path, sys, subprocess, zipfile
 import shutil, glob, fnmatch, signal
 import csv, re, logging, urllib, stat
@@ -21,8 +25,8 @@ class Remapper(object):
         elif sys.platform.startswith('win'):
             self.osname = 'win'
         else:
-            self.logger.error('OS not supported : %s', sys.platform)
-            sys.exit(1)
+            self.logger.error('Unrecognized OS: %s, assuming Linux-compatible', sys.platform)
+            self.osname = 'linux'
         self.logger.debug('OS : %s', sys.platform)
 
     def startlogger(self):
@@ -30,7 +34,7 @@ class Remapper(object):
         if os.path.isfile(log_file):
             os.remove(log_file)
         
-        self.logger = logging.getLogger('Refacoring')
+        self.logger = logging.getLogger('Refactoring')
         self.logger.setLevel(logging.INFO)
         fh = logging.FileHandler(log_file)
         fh.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
@@ -79,7 +83,7 @@ class Remapper(object):
         self.fml_dir = self.options.fml_dir
         self.fml_clean = False
         
-        if not self.fml_dir is None: # Dont setup fml if its specified
+        if not self.fml_dir is None: # Don't setup FML if directory is specified
             return
             
         self.fml_clean = True
@@ -110,7 +114,8 @@ class Remapper(object):
                 self.logger.error('Could not setup FML')
                 sys.exit(1)
                 
-            # Here until FML offocially rolls out renaming local vars in 1.5
+            # Here until FML officially rolls out renaming local vars in 1.5
+            # XXX: remove since 1.5 is officially out?
             from rename_vars import rename_file
             
             for path, _, filelist in os.walk(os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server'), followlinks=True):
@@ -141,6 +146,7 @@ class Remapper(object):
         OUT_SRG  = os.path.join('specialsource.srg')
         CB_JAR   = os.path.abspath('cb_minecraft_server.jar')
         VA_JAR   = os.path.abspath(os.path.join(self.fml_dir, 'mcp', 'jars', 'minecraft_server.jar'))
+        # TODO: download from http://search.maven.org/remotecontent?filepath=net/md-5/SpecialSource/1.4/SpecialSource-1.4-shaded.jar and update to release
         SS = ['java', '-jar', os.path.abspath(os.path.join('tools', 'SpecialSource-1.3-SNAPSHOT-shaded-14x.jar')),
             '--generate-dupes',
             '--first-jar',  CB_JAR, 
@@ -189,7 +195,7 @@ class Remapper(object):
         return rangeMap
         
     def generatemcprange(self, rangefile):
-        RANGE = ['java', '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
+        RANGE = ['java', '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')), # TODO: download? build?
             os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server'),
             os.path.join(self.fml_dir, 'mcp', 'lib'),
             'MCP.rangemap']
@@ -212,7 +218,7 @@ class Remapper(object):
         self.cb_dir = self.options.cb_dir
         self.cb_clean = False
         
-        if not self.cb_dir is None: # Dont setup fml if its specified, assume it's already setup
+        if not self.cb_dir is None: # Don't setup CB if its specified, assume it's already setup
             return
             
         self.cb_clean = True
@@ -263,7 +269,7 @@ class Remapper(object):
             DEPS = ['cmd', '/C'] + DEPS
         
         if not self.run_command(DEPS, cwd=self.cb_dir):
-            self.logger.error('Could not extract dependancies from maven')
+            self.logger.error('Could not extract dependancies from Maven')
             sys.exit(1)
         
         with open(dep_file, 'rb') as in_file:
@@ -414,7 +420,7 @@ class Remapper(object):
         return dirs
         
     def compile_cb(self, deps):
-        self.logger.info('Gathering dependancies')
+        self.logger.info('Gathering dependencies')
         for dep in deps:
             target = os.path.join(self.fml_dir, 'mcp', 'lib', os.path.basename(dep))
             if os.path.isfile(target):
@@ -442,10 +448,10 @@ class Remapper(object):
         
         self.logger.info('Compiling CB with MCP')
         if not self.run_command(COMPILE):
-            self.logger.error('Could not Compile CraftBukkit with MCP names')
+            self.logger.error('Could not compile CraftBukkit with MCP names')
             sys.exit(1)
             
-        self.logger.info('Obfusicating CB with MCP')
+        self.logger.info('Reobfuscating CB with MCP')
         if not self.run_command([sys.executable, os.path.join('runtime', 'reobfuscate.py'), '--server'], os.path.join(self.fml_dir, 'mcp')):
             self.logger.error('Could not setup FML')
             sys.exit(1)
@@ -569,7 +575,7 @@ def main(options, args):
     
     mapper.cleanup_source(cb_to_vanilla)
     
-    mapper.logger.info('Dependancies:')
+    mapper.logger.info('Dependencies:')
     for x in range(0, len(cb_deps) - 1):
         if 'minecraft-server' in cb_deps[x]:
             cb_deps[x] = os.path.abspath(os.path.join(mapper.fml_dir, 'mcp', 'temp', 'minecraft_server_rg.jar'))
@@ -586,12 +592,15 @@ def main(options, args):
     
 if __name__ == '__main__':
     parser = OptionParser()
-    parser.add_option('-d', '--data-dir',  action='store', dest='data_dir', help='Data directory, typically a checkout of MinecraftRemaper', default='../Data')
+    parser.add_option('-d', '--data-dir',  action='store', dest='data_dir', help='Data directory, typically a checkout of MinecraftRemapper', default='../Data')
     parser.add_option('-c', '--cb-dir',    action='store', dest='cb_dir',   help='Path to CraftBukkit clone, none to pull automatically', default=None)
-    parser.add_option('-f', '--fml-dir',   action='store', dest='fml_dir',  help='Path to setup FML, none to setup autoamtically', default=None)
+    parser.add_option('-f', '--fml-dir',   action='store', dest='fml_dir',  help='Path to setup FML, none to setup automatically', default=None)
     parser.add_option('-v', '--version',   action='store', dest='version',  help='Version to work on, must be a sub folder of --data-dir', default=None)
-    parser.add_option('-o', '--out-dir',   action='store', dest='out_dir', help='Output directory to place remaped files and patches', default='../output')
+    parser.add_option('-o', '--out-dir',   action='store', dest='out_dir', help='Output directory to place remapped files and patches', default='../output')
     options, args = parser.parse_args()
+
+    if not options.version:
+        parser.error("--version is required")
     
     main(options, args)
     

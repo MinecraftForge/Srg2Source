@@ -6,7 +6,8 @@ For porting, Minecraft, CraftBukkit, mods, plugins, etc.
 
 ## Usage
 
-python python/remap-craftbukkit.py --help
+    cd python
+    python remap-craftbukkit.py --help
 
 TODO
 
