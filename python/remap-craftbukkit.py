@@ -195,7 +195,8 @@ class Remapper(object):
         return rangeMap
         
     def generatemcprange(self, rangefile):
-        RANGE = ['java', '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')), # TODO: download? build?
+        self.download_file("https://github.com/LexManos/Srg2Source/blob/master/python/tools/RangeExtractor.jar?raw=true", "tools/RangeExtractor.jar") 
+        RANGE = ['java', '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
             os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server'),
             os.path.join(self.fml_dir, 'mcp', 'lib'),
             'MCP.rangemap']
