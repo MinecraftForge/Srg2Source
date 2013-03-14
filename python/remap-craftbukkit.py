@@ -7,7 +7,7 @@ import shutil
 DATA="../../jars"
 
 # Minecraft version
-MCVER="1.4.7"
+MCVER="1.5"
 
 # Root of checked out CraftBukkit repository
 CB_ROOT="../../CraftBukkit"
@@ -15,7 +15,7 @@ CB_ROOT="../../CraftBukkit"
 # MCP decompiled with FML repackaging, but not joined. See https://gist.github.com/4366333
 # TODO: update for new FML flags
 #MCP_ROOT="../../mcp726-pkgd"
-MCP_ROOT="../../mcp726-pkgd"
+MCP_ROOT="../../mcp742-pkgd"
 
 # Python 2.7+ installation 
 PYTHON="/usr/bin/python2.7"
@@ -27,11 +27,12 @@ IDEA="/Applications/IntelliJ\ IDEA\ 12.app/Contents/MacOS/idea"
 # Where to store CB/MCP patch output
 DIFF_OUT="/tmp/diff"
 
+# XXX - disabled for 1.5 now that FML uses jadnames
 # Pre-generated MCP rangemap for local variables
 # Currently you need to generate this manually by following the instructions on https://github.com/agaricusb/CraftBukkit/wiki/How-to-decompile-Minecraft-using-MCP-with-FML-repackaged-class-names,-without-FML's-other-changes
 # then importing the sources into IDEA, and extracting the range map with srg2source.
 # TODO: automate extracting rangemap for MCP? probably not necessary to automate, doesn't change much
-MCP_RANGEMAP=os.path.join(MCP_ROOT, os.path.basename(MCP_ROOT) + ".rangemap")
+#MCP_RANGEMAP=os.path.join(MCP_ROOT, os.path.basename(MCP_ROOT) + ".rangemap")
 
 # CB to MCP mapping
 SRG_CB2MCP=os.path.join(DATA, MCVER, "cb2pkgmcp.srg")
@@ -123,7 +124,7 @@ if shouldRename:
     assert status == 0
 
     # Apply the renames
-    status = os.system(PYTHON+" rangeapply.py --srcRoot "+CB_ROOT+" --srcRangeMap "+CB_RANGEMAP+" --lvRangeMap "+MCP_RANGEMAP+" --mcpConfDir "+os.path.join(MCP_ROOT, "conf")+" --srgFiles "+SRG_CB2MCP+" "+SRG_CB2MCP_FIXES)
+    status = os.system(PYTHON+" rangeapply.py --srcRoot "+CB_ROOT+" --srcRangeMap "+CB_RANGEMAP+" --mcpConfDir "+os.path.join(MCP_ROOT, "conf")+" --srgFiles "+SRG_CB2MCP+" "+SRG_CB2MCP_FIXES)
     assert status == 0
 
 if shouldFormat:
