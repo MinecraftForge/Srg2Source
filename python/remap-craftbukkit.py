@@ -6,6 +6,7 @@ import os, os.path, sys, subprocess, zipfile
 import shutil, glob, fnmatch, signal
 import csv, re, logging, urllib, stat
 import difflib
+import xml.dom.minidom
 from pprint import pprint
 from pprint import pformat
 from zipfile import ZipFile
@@ -16,7 +17,6 @@ class Remapper(object):
     def __init__(self, options):
         self.options = options
         self.startlogger()
-        self.readversion()
 
         if sys.platform.startswith('linux'):
             self.osname = 'linux'
@@ -45,9 +45,7 @@ class Remapper(object):
         
     def readversion(self):
         self.data = self.options.data_dir
-        self.version = self.options.version
         self.logger.debug('Data: %s' % self.data)
-        self.logger.debug('Version: %s' % self.version)
     
         config_file = os.path.join(self.data, self.version, 'config.properties')
         if not os.path.isfile(config_file):
@@ -215,7 +213,7 @@ class Remapper(object):
             os.chmod(path, stat.S_IWRITE)
             os.remove(path)
             
-    def setupcb(self):
+    def checkoutcb(self):
         self.cb_dir = self.options.cb_dir
         self.cb_clean = False
         
@@ -231,7 +229,11 @@ class Remapper(object):
         if not self.run_command(['git', 'clone', 'git://github.com/Bukkit/CraftBukkit.git', os.path.abspath(self.cb_dir)]):
             self.logger.error('Could not clone CraftBukkit!')
             sys.exit(1)
-            
+
+        self.version = str(xml.dom.minidom.parse(os.path.join(self.cb_dir, "pom.xml")).getElementsByTagName("minecraft.version")[0].firstChild.data)
+        print "Minecraft version (from CraftBukkit): %s" % (self.version,)
+
+    def setupcb(self):
         if not self.repo_version is None and not self.repo_version == '':
             self.logger.info('Resetting head to \'%s\'' % self.repo_version)
             if not self.run_command(['git', 'reset', '--hard', self.repo_version], os.path.abspath(self.cb_dir)):
@@ -532,7 +534,9 @@ class Remapper(object):
         #Just for good measure :P
         for pyc in glob.glob('*.pyc'):
             os.remove(pyc)
-        
+
+
+
 def main(options, args):
     mapper = Remapper(options)
         
@@ -553,7 +557,10 @@ def main(options, args):
 
     hook = PrintHook(mapper.logger)
     
+    mapper.checkoutcb()
+    mapper.readversion()
     mapper.setupfml()
+    mapper.setupcb()
     
     CHAINED_SRG = 'chained.srg'
     
@@ -565,8 +572,6 @@ def main(options, args):
     if not os.path.isfile(van_range):
         mapper.generatemcprange(van_range)
         
-    mapper.setupcb()
-    
     cb_range = 'cb.rangemap'
     cb_deps = mapper.generatecbrange(cb_range)
     
@@ -596,12 +601,8 @@ if __name__ == '__main__':
     parser.add_option('-d', '--data-dir',  action='store', dest='data_dir', help='Data directory, typically a checkout of MinecraftRemapper', default='../Data')
     parser.add_option('-c', '--cb-dir',    action='store', dest='cb_dir',   help='Path to CraftBukkit clone, none to pull automatically', default=None)
     parser.add_option('-f', '--fml-dir',   action='store', dest='fml_dir',  help='Path to setup FML, none to setup automatically', default=None)
-    parser.add_option('-v', '--version',   action='store', dest='version',  help='Version to work on, must be a sub folder of --data-dir', default=None)
     parser.add_option('-o', '--out-dir',   action='store', dest='out_dir', help='Output directory to place remapped files and patches', default='../output')
     options, args = parser.parse_args()
 
-    if not options.version:
-        parser.error("--version is required")
-    
     main(options, args)
     
