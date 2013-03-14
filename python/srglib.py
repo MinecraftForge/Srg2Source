@@ -10,7 +10,9 @@ EXC_RE = re.compile(r"^([^.]+)\.([^(]+)(\([^=]+)=([^|]*)\|(.*)")
 
 # Get map from full descriptive method name + signature -> list of descriptive parameter names
 def readParameterMap(mcpConfDir):
-    excFilename = os.path.join(mcpConfDir, "packaged.exc")  # TODO: what about joined.exc?
+    excFilename = os.path.join(mcpConfDir, "packaged.exc")  # FML/MCP
+    if not os.path.exists(excFilename):
+        excFilename = os.path.join(mcpConfDir, "joined.exc") # vanilla MCP
     methodNum2Name = readDescriptiveMethodNames(mcpConfDir)
     paramNum2Name = readDescriptiveParameterNames(mcpConfDir)
 
