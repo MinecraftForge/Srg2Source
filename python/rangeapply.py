@@ -2,11 +2,13 @@
 
 # Process symbol range maps produced by ApplySrg2Source
 
-import os
-import pprint
+import os, sys
 import srglib
 import argparse  # note: requires Python 2.7+
 import subprocess # for git
+
+from pprint import pprint
+from pprint import pformat
 
 SEP = "/"   # path-separator from srg2source - always '/' even on Windows! not os.path.sep
 
@@ -133,7 +135,7 @@ def qualifyClassRenameMaps(renameMap, importMap):
     return newRenameMap
 
 # Get all rename maps, keyed by globally unique symbol identifier, values are new names
-def getRenameMaps(srgFiles, mcpConfDir, lvRangeMapFile, dumpRenameMap, srcRoot):
+def getRenameMaps(srgFiles, mcpConfDir, lvRangeMapFile, dumpRenameMap, srcRoot, excFiles):
     maps = {}
     importMaps = {}
 
@@ -157,8 +159,14 @@ def getRenameMaps(srgFiles, mcpConfDir, lvRangeMapFile, dumpRenameMap, srcRoot):
     invMethodMap, invMethodSigMap = srglib.invertMethodMap(methodMap, methodSigMap)
     invClassMap = srglib.invertDict(classMap)
     if mcpConfDir is not None:
-        mcpParamMap = srglib.readParameterMap(mcpConfDir)
+        mcpParamMap = srglib.readParameterMap(mcpConfDir, apply_map = False)
         cbParamMap, removedParamMap = srglib.remapParameterMap(mcpParamMap, invMethodMap, invMethodSigMap, invClassMap)
+        if not excFiles is None:
+            for file in excFiles:
+                tmp = srglib.readParameterMap(mcpConfDir, file, apply_map = False)
+                tmp_clean, _ = srglib.remapParameterMap(tmp, invMethodMap, invMethodSigMap, invClassMap, keep_missing=True)
+                pprint(tmp_clean)
+                cbParamMap.update(tmp_clean)
         # removedParamMap = methods in FML/MCP repackaged+joined but not CB = client-only methods
 
     else:
@@ -340,22 +348,16 @@ def getTopLevelClassForFilename(filename):
     withoutExt, ext = os.path.splitext(filename)
     parts = withoutExt.split(SEP)
     # expect project-relative pathname, standard Maven structure
-    assert parts[0] == "src", "unexpected filename '%s', not in src" % (filename,)
-    assert parts[1] in ("main", "test"), "unexpected filename '%s', not in src/{test,main}" % (filename,)
-    assert parts[2] == "java", "unexpected filename '%s', not in src/{test,main}/java" % (filename,)
+    #assert parts[0] == "src", "unexpected filename '%s', not in src" % (filename,)
+    #assert parts[1] in ("main", "test"), "unexpected filename '%s', not in src/{test,main}" % (filename,)
+    #assert parts[2] == "java", "unexpected filename '%s', not in src/{test,main}/java" % (filename,)
 
-    return "/".join(parts[3:])  # "internal" fully-qualified class name, separated by /
+    return "/".join(parts[0:])  # "internal" fully-qualified class name, separated by /
 
 # Rename symbols in source code
 def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, shouldAnnotate, options):
     path = os.path.join(options.srcRoot, filename)
-    try:
-        data = file(path).read()
-    except Exception as e:
-        print "Failed to read %s: %s" % (path, e)
-        print "Skip?"
-        raw_input()
-        return
+    data = file(path).read().decode('utf8')
 
     if "\r" in data:
         # BlockJukebox is the only file with CRLF line endings in NMS.. and.. IntelliJ IDEA treats offsets 
@@ -396,7 +398,8 @@ def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, sh
 
         newName = getNewName(key, oldName, renameMap, shouldAnnotate)
         if newName is None:
-            print "No rename for "+key
+            if 'net/minecraft' in key.split(' ')[1]:
+                print "No rename for "+key
             continue
 
         print "Rename",key,[start+shift,end+shift],"::",oldName,"->",newName
@@ -422,8 +425,8 @@ def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, sh
 
     if options.renameFiles:
         if newTopLevelClassPackage is not None: # rename if package changed
-            newFilename = os.path.join("src/main/java/", newTopLevelClassPackage, newTopLevelClassName + ".java")
-            newPath = os.path.join(options.srcRoot, newFilename)
+            newFilename = os.path.join(newTopLevelClassPackage, newTopLevelClassName + ".java").replace('\\', '/')
+            newPath = os.path.join(options.srcRoot, newFilename).replace('\\', '/')
 
             print "Rename file",filename,"->",newFilename
 
@@ -437,13 +440,25 @@ def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, sh
 
                 #os.rename(path, newPath)
 
-                wd = os.getcwd()
-                os.chdir(options.srcRoot)
-                cmd = "%s mv '%s' '%s'" % (options.git, filename, newFilename)  # warning: if filename contains quotes..
-                status = os.system(cmd)
-                assert status == 0, "Failed to execute rename command: %s" % (cmd,)
-                os.chdir(wd)
+                cmd = [options.git, 'mv', filename, newFilename]
+                if not run_command(cmd, cwd=options.srcRoot):
+                    sys.exit(1)
 
+def run_command(command, cwd='.', verbose=True):
+    print 'Running command: '
+    print pformat(command)
+        
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, cwd=cwd)
+    while process.poll() is None:
+        line = process.stdout.readline()
+        if line:
+            line = line.rstrip()
+            if verbose:
+                print line
+    if process.returncode:
+        print "failed: %d", process.returncode
+        return False
+    return True
 
 # Get filename relative to project at srcRoot, instead of an absolute path
 def getProjectRelativePath(absFilename, srcRoot):
@@ -460,6 +475,7 @@ def main():
     parser.add_argument("--lvRangeMap", help="Original source range map generated by srg2source, for renaming local variables", required=False)  # TODO: csv instead?
     parser.add_argument("--mcpConfDir", help="MCP configuration directory, for renaming parameters", required=False)
     parser.add_argument("--srgFiles", help="Symbol map file(s)", required=True, nargs="+")
+    parser.add_argument("--excFiles", help="Parameter map file(s)", required=False, nargs="+")
     parser.add_argument("--rewriteFiles", help="Whether to rewrite files with new symbol mappings", type=bool, choices=(True, False), default=True)
     parser.add_argument("--renameFiles", help="Whether to rename files with new filenames", type=bool, choices=(True, False), default=True)
     parser.add_argument("--dumpRenameMap", help="Whether to dump symbol rename map before renaming", type=bool, choices=(True, False), default=True)
@@ -467,7 +483,7 @@ def main():
     options = parser.parse_args()
 
     print "Reading rename maps..."
-    renameMap, importMap = getRenameMaps(options.srgFiles, options.mcpConfDir, options.lvRangeMap, options.dumpRenameMap, options.srcRoot)
+    renameMap, importMap = getRenameMaps(options.srgFiles, options.mcpConfDir, options.lvRangeMap, options.dumpRenameMap, options.srcRoot, options.excFiles)
     print "Qualifying rename maps..."
     qualifiedRenameMap = qualifyClassRenameMaps(renameMap, importMap)
     print "Reading range map..."
@@ -481,9 +497,9 @@ def main():
     print "Processing files..."
 
     for filename in sorted(rangeMapByFile.keys()):
-        if filename.startswith("src/main/java/jline"):
+        if filename.startswith("jline"):
             continue
-        elif filename.startswith("src/main/java/net/minecraft"):
+        elif filename.startswith("net/minecraft"):
             processJavaSourceFile(options.srcRoot, filename, rangeMapByFile[filename], renameMap, importMap, shouldAnnotate=False, options=options)
         else:
             processJavaSourceFile(options.srcRoot, filename, rangeMapByFile[filename], qualifiedRenameMap, {}, shouldAnnotate=True, options=options)

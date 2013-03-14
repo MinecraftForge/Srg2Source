@@ -86,10 +86,12 @@ def main():
 
     cbSrc = os.path.join(cbRoot, "src/main/java/net/minecraft/")
     mcpSrc = os.path.join(mcpRoot, "src/minecraft_server/net/minecraft/")
-
+    nutralize_whitespace(cbSrc, mcpSrc)
+    
+def nutralize_whitespace(cbSrc, mcpSrc):
     for cbFilenamePath in srglib.getJavaSourceFiles(cbSrc):
         # Get corresponding MCP filename path
-        commonPath = cbFilenamePath.replace(os.path.commonprefix((cbFilenamePath, cbSrc)), "") 
+        commonPath = cbFilenamePath.replace(os.path.commonprefix((cbFilenamePath, cbSrc)), "")[1:].replace('\\', '/')
         className = os.path.splitext(commonPath)[0]  # class name including package path
         mcpFilenamePath = os.path.join(mcpSrc, commonPath)
 

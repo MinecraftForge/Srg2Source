@@ -4,3 +4,4 @@ workspace.xml
 out
 *.swp
 *.pyc
+/output/
