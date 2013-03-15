@@ -7,10 +7,10 @@ import os
 import shutil
 import xml.dom.minidom
 
-srcRoot = "../CraftBukkit"          # original source
-scriptDir = "../Srg2Source/python"  # relative to srcRoot
-outDir = "/tmp/MCPBukkit"           # remapped source output
-srcComponent = "src"                # common directory name for source
+inOriginalDir = "CraftBukkit"           # original source
+inRemappedDir = "craftbukkit-mcp"       # output of remapper
+outDirGitRepo = "/tmp/MCPBukkit"        # git repository to build
+srcComponent = "src"            # common directory name for source (in inOriginalDir and outDirGitRepo)
 
 shouldPullLatestChanges = True
 shouldCheckoutMaster = True
@@ -22,16 +22,14 @@ defaultStartCommit = "27f73b62998ef7ba6b951a5cc7acbb95a1a17bed" # Updated versio
 
 def runRemap():
     print "Starting remap script..."
-    mcVersion = getVersion("pom.xml")
-    pushd(scriptDir)
-    #run("./remap-craftbukkit.py --version "+mcVersion)
-    popd()
+    run("python remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml")
     print "Remap script finished"
 
 def run(cmd):
     print ">",cmd
     #raw_input()
-    assert os.system(cmd) == 0, "Failed to run "+cmd
+    status = os.system(cmd)
+    assert status == 0, "Failed to run '%s' status=%s" % (cmd, status)
 
 def runOutput(cmd):
     return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.read()
@@ -50,10 +48,6 @@ def popd():
 def clean():
     run("rm -rf src")
     run("git reset --hard HEAD")
-
-"""Get game version from project object model."""
-def getVersion(filename):
-    return str(xml.dom.minidom.parse(filename).getElementsByTagName("minecraft.version")[0].firstChild.data)
 
 """Get commit IDs and short messages after the starting commit, in reverse chronological order."""
 def readCommitLog(startCommit):
@@ -85,10 +79,14 @@ CREDIT_MESSAGE_PREFIX = "\n\nRemapped by Srg2Source from "+repoURL
 
 """Get the last remapped commit, if any"""
 def getStartCommit():
-    pushd(outDir)
+    if not os.path.exists(outDirGitRepo):
+        print "Creating",outDirGitRepo
+        os.mkdir(outDirGitRepo)
+
+    pushd(outDirGitRepo)
 
     if not os.path.exists(".git"):
-        print "No git repository found in "+outDir
+        print "No git repository found in "+outDirGitRepo
         print "Initializing new repository"
         run("git init")
         popd()
@@ -112,8 +110,10 @@ def getStartCommit():
     return commit
 
 def main():
-    if os.path.basename(os.getcwd()) != os.path.basename(srcRoot): os.chdir(srcRoot)
+    if not os.path.exists(inOriginalDir):
+        run("git clone http://github.com/Bukkit/CraftBukkit "+inOriginalDir)
 
+    pushd(inOriginalDir)
     if shouldPullLatestChanges:
         # Get all the latest changes 
         run("git pull "+remoteSource+" "+masterBranch)
@@ -125,33 +125,36 @@ def main():
     # Get commits beyond our last remapped commit, the new commits to be remapped
     startCommit = getStartCommit()
     commits = readCommitLog(startCommit)
+    popd()
 
     for commitInfo in commits:
         # Remap this commit
         commit, shortMessage = commitInfo
         print "\n\n*** %s %s" % (commit, shortMessage)
+        pushd(inOriginalDir)
         clean()
         run("git checkout "+commit)
-        runRemap()
         author, date, message = getCommitInfo(commit)
+        popd()
+        runRemap()
 
         # Append message to commit
         # TODO: former-commit in 'commit notes' like bfg? http://rtyley.github.com/bfg-repo-cleaner/
         message += CREDIT_MESSAGE_PREFIX+commit
 
         # Copy to target
-        a = os.path.join(srcRoot, srcComponent)
-        b = os.path.join(outDir, srcComponent)
+        a = os.path.join(inRemappedDir, srcComponent)
+        b = os.path.join(outDirGitRepo, srcComponent)
         print "Copying %s -> %s" % (a, b)
         if os.path.exists(b): shutil.rmtree(b)
         shutil.copytree(a, b)
 
         # Generate the new remapped commit
-        pushd(outDir)
-        commitFile = "commit.msg"
+        commitFile = os.path.join(os.getcwd(), "commit.msg")
+        pushd(outDirGitRepo)
         run("git add "+srcComponent)
         file(commitFile,"w").write(message)
-        run("git commit --file=%s --all --author='%s' --date='%s'" % (commitFile, author, date))
+        run("git commit --file='%s' --all --author='%s' --date='%s'" % (commitFile, author, date))
         os.unlink(commitFile)
         popd()
        
