@@ -593,8 +593,9 @@ def main(options, args):
     mapper.create_patches('patches')
     
     mapper.compile_cb(cb_deps)
-    
-    mapper.create_output('patches')
+   
+    if not options.skip_output_archive:
+        mapper.create_output('patches')
     
 if __name__ == '__main__':
     parser = OptionParser()
@@ -602,6 +603,7 @@ if __name__ == '__main__':
     parser.add_option('-c', '--cb-dir',    action='store', dest='cb_dir',   help='Path to CraftBukkit clone, none to pull automatically', default=None)
     parser.add_option('-f', '--fml-dir',   action='store', dest='fml_dir',  help='Path to setup FML, none to setup automatically', default=None)
     parser.add_option('-o', '--out-dir',   action='store', dest='out_dir', help='Output directory to place remapped files and patches', default='../output')
+    parser.add_option('-s', '--skip-output-archive',   action='store_true', dest='skip_output_archive', help='Skip creating output patches and cleaning original source', default=False)
     options, args = parser.parse_args()
 
     main(options, args)

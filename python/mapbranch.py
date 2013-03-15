@@ -7,11 +7,12 @@ import os
 import shutil
 import xml.dom.minidom
 
-inOriginalDir = "CraftBukkit"           # original source
-inRemappedDir = "craftbukkit-mcp"       # output of remapper
-outDirGitRepo = "/tmp/MCPBukkit"        # git repository to build
+inOriginalDir = "CraftBukkit"       # original source
+inRemappedDir = "CraftBukkit"       # output of remapper
+outDirGitRepo = "/tmp/MCPBukkit"    # git repository to build
 srcComponent = "src"            # common directory name for source (in inOriginalDir and outDirGitRepo)
 
+shouldCloneRepo = True
 shouldPullLatestChanges = True
 shouldCheckoutMaster = True
 remoteSource = "origin" # 'git remote' name
@@ -22,7 +23,7 @@ defaultStartCommit = "27f73b62998ef7ba6b951a5cc7acbb95a1a17bed" # Updated versio
 
 def runRemap():
     print "Starting remap script..."
-    run("python remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml")
+    run("python remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml --skip-output-archive")
     print "Remap script finished"
 
 def run(cmd):
@@ -110,7 +111,10 @@ def getStartCommit():
     return commit
 
 def main():
-    if not os.path.exists(inOriginalDir):
+    if shouldCloneRepo:
+        if os.path.exists(inOriginalDir):
+            shutil.rmtree(inOriginalDir) 
+
         run("git clone http://github.com/Bukkit/CraftBukkit "+inOriginalDir)
 
     pushd(inOriginalDir)
