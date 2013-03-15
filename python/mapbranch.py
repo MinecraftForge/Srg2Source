@@ -6,6 +6,7 @@ import subprocess
 import os
 import shutil
 import xml.dom.minidom
+import re
 
 inOriginalDir = "CraftBukkit"       # original source
 inRemappedDir = "CraftBukkit"       # output of remapper
@@ -94,20 +95,20 @@ def getStartCommit():
         print "Starting at default "+defaultStartCommit
         return defaultStartCommit
 
-    message = runOutput(("git", "show", "--format=%b"))
-    if CREDIT_MESSAGE_PREFIX not in message:
+    message = runOutput(("git", "show", "--format=%B"))
+
+    r = re.compile(CREDIT_MESSAGE_PREFIX.strip() + "([0-9a-f]+)")
+    match = r.search(message)
+    if not match:
         print "Unrecognized commit message: >>>\n"+message+"\n<<< - no match for '"+CREDIT_MESSAGE_PREFIX+"'"
         print "Starting at default "+defaultStartCommit
         popd()
         return defaultStartCommit
 
-    n = message.index(CREDIT_MESSAGE_PREFIX)
-    commit = message[CREDIT_MESSAGE_PREFIX:]
-    print "C1",commit
-    commit = commit[:commit.index("\n")]
-    print "C2",commit
+    commit = match.group(1)
     popd()
 
+    print "Resuming from upstream commit",repoURL+commit
     return commit
 
 def main():
