@@ -503,7 +503,7 @@ def main():
         elif filename.startswith("net/minecraft"):
             processJavaSourceFile(options.srcRoot, filename, rangeMapByFile[filename], renameMap, importMap, shouldAnnotate=False, options=options)
         else:
-            processJavaSourceFile(options.srcRoot, filename, rangeMapByFile[filename], qualifiedRenameMap, {}, shouldAnnotate=True, options=options)
+            processJavaSourceFile(options.srcRoot, filename, rangeMapByFile[filename], qualifiedRenameMap, {}, shouldAnnotate=False, options=options)
 
 if __name__ == "__main__":
     main()
