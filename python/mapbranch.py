@@ -141,7 +141,11 @@ def main():
         run("git checkout "+commit)
         author, date, message = getCommitInfo(commit)
         popd()
-        runRemap()
+        try:
+            runRemap()
+        except Exception as e:
+            print "WARNING!!! Remapping failed with exception:",e
+            print "Continuing anyways"
 
         # Append message to commit
         # TODO: former-commit in 'commit notes' like bfg? http://rtyley.github.com/bfg-repo-cleaner/
