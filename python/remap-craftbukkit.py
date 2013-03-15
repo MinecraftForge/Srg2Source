@@ -44,6 +44,9 @@ class Remapper(object):
         self.logger.addHandler(ch)
         
     def readversion(self):
+        self.version = str(xml.dom.minidom.parse(os.path.join(self.cb_dir, "pom.xml")).getElementsByTagName("minecraft.version")[0].firstChild.data)
+        print "Minecraft version (from CraftBukkit): %s" % (self.version,)
+ 
         self.data = self.options.data_dir
         self.logger.debug('Data: %s' % self.data)
     
@@ -229,9 +232,6 @@ class Remapper(object):
         if not self.run_command(['git', 'clone', 'git://github.com/Bukkit/CraftBukkit.git', os.path.abspath(self.cb_dir)]):
             self.logger.error('Could not clone CraftBukkit!')
             sys.exit(1)
-
-        self.version = str(xml.dom.minidom.parse(os.path.join(self.cb_dir, "pom.xml")).getElementsByTagName("minecraft.version")[0].firstChild.data)
-        print "Minecraft version (from CraftBukkit): %s" % (self.version,)
 
     def setupcb(self):
         if not self.repo_version is None and not self.repo_version == '':
