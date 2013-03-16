@@ -1,0 +1,26 @@
+# New inner class added by CB, implemented by world generators
+CL: net/minecraft/server/BlockSapling/TreeGenerator net/minecraft/block/BlockSapling/TreeGenerator
+MD: net/minecraft/server/BlockSapling/TreeGenerator/a (Lnet/minecraft/server/World;Ljava/util/Random;III)Z net/minecraft/block/BlockSapling/TreeGenerator/func_76484_a ((Lnet/minecraft/world/World;Ljava/util/Random;III)Z
+
+# World -> BlockChangeDelegate
+MD: net/minecraft/server/WorldGenTrees/b (Lorg/bukkit/BlockChangeDelegate;IIII)V net/minecraft/world/gen/feature/WorldGenTrees/func_76529_b (Lorg/bukkit/BlockChangeDelegate;IIII)V
+
+# BlockPistonBase return change
+MD: net/minecraft/server/BlockPiston/i (Lnet/minecraft/server/World;IIII)I net/minecraft/block/BlockPistonBase/func_72112_i (Lnet/minecraft/world/World;IIII)I
+
+# Bonemeal, Player, and itemstack param
+MD: net/minecraft/server/BlockMushroom/grow (Lnet/minecraft/server/World;IIILjava/util/Random;ZLorg/bukkit/entity/Player;Lnet/minecraft/server/ItemStack;)Z net/minecraft/block/BlockMushroom/func_72271_c (Lnet/minecraft/world/World;IIILjava/util/Random;ZLorg/bukkit/entity/Player;Lnet/minecraft/server/ItemStack;)Z
+MD: net/minecraft/server/BlockSapling/grow (Lnet/minecraft/server/World;IIILjava/util/Random;ZLorg/bukkit/entity/Player;Lnet/minecraft/server/ItemStack;)V net/minecraft/block/BlockSapling/func_72269_c (Lnet/minecraft/world/World;IIILjava/util/Random;ZLorg/bukkit/entity/Player;Lnet/minecraft/server/ItemStack;)V
+
+# boolean return, IPosition -> IBlockSource last argument
+MD: net/minecraft/server/DispenseBehaviorItem/a (Lnet/minecraft/server/World;Lnet/minecraft/server/ItemStack;ILnet/minecraft/server/EnumFacing;Lnet/minecraft/server/ISourceBlock;)Z net/minecraft/dispenser/BehaviorDefaultDispenseItem/func_82486_a (Lnet/minecraft/world/World;Lnet/minecraft/item/ItemStack;ILnet/minecraft/util/EnumFacing;Lnet/minecraft/dispenser/IBlockSource;)Z
+
+# Cuz CraftBukkit fuxed up...
+FD: net/minecraft/server/PathfinderGoalSit/a net/minecraft/entity/ai/EntityAISit/field_75272_a
+FD: net/minecraft/server/PathfinderGoalSit/b net/minecraft/entity/ai/EntityAISit/field_75271_b
+
+#Return change
+MD: net/minecraft/server/EntityLiving/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/EntityLiving/func_70600_l (I)Lnet/minecraft/item/ItemStack;
+MD: net/minecraft/server/EntitySkeleton/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/monster/EntitySkeleton/func_70600_l (I)Lnet/minecraft/item/ItemStack;
+MD: net/minecraft/server/EntityPigZombie/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/monster/EntityPigZombie/func_70600_l (I)Lnet/minecraft/item/ItemStack;
+MD: net/minecraft/server/EntityZombie/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/monster/EntityZombie/func_70600_l (I)Lnet/minecraft/item/ItemStack;
