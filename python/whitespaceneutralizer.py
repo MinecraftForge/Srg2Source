@@ -78,17 +78,13 @@ def isBlank(line):
 
 def main():
     if len(sys.argv) != 3:
-        print "usage: %s cbRoot mcpRoot" % (sys.argv[0],)
+        print "usage: %s <cbRoot>/src/main/java/net/minecraft/ <mcpRoot>/src/minecraft_server/net/minecraft/" % (sys.argv[0],)
         raise SystemExit
     
-    cbRoot = sys.argv[1]
-    mcpRoot = sys.argv[2]
-
-    cbSrc = os.path.join(cbRoot, "src/main/java/net/minecraft/")
-    mcpSrc = os.path.join(mcpRoot, "src/minecraft_server/net/minecraft/")
-    nutralize_whitespace(cbSrc, mcpSrc)
-    
-def nutralize_whitespace(cbSrc, mcpSrc):
+    neutralizeWhitespaceDirs(sys.argv[1], sys.argv[2])
+   
+"""Neutralize whitespace differences between two directories, cbSrc will be modified to match mcpSrc."""
+def neutralizeWhitespaceDirs(cbSrc, mcpSrc):
     for cbFilenamePath in srglib.getJavaSourceFiles(cbSrc):
         # Get corresponding MCP filename path
         commonPath = cbFilenamePath.replace(os.path.commonprefix((cbFilenamePath, cbSrc)), "")[1:].replace('\\', '/')

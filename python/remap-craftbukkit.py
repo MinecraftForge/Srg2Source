@@ -327,15 +327,15 @@ class Remapper(object):
         
         sys.path.append(os.path.join(self.fml_dir))
         from fml import cleanup_source
-        print 'Running MCP src cleanup:'
+        print 'Running FML/MCP src cleanup:'
         cleanup_source(SRC_CB)
     
         from cleanup_var_names import cleanup_var_names
         print 'Cleaning local variable names:'
         cleanup_var_names(SRG_MCP, cb_srg, SRC_CB)
         
-        from whitespaceneutralizer import nutralize_whitespace
-        nutralize_whitespace(SRC_CB, SRC_MCP)
+        from whitespaceneutralizer import neutralizeWhitespaceDirs
+        neutralizeWhitespaceDirs(SRC_CB, SRC_MCP)
 
     def codefix_cb(self, deps, chained_srg):
         CODEFIX = ['java', 
