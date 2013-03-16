@@ -9,7 +9,8 @@ import xml.dom.minidom
 import re
 
 inOriginalDir = "CraftBukkit"       # original source
-inRemappedDir = "CraftBukkit"       # output of remapper
+inRemappedDir = "../output"       # output of remapper
+inRemappedDirNames = ("patches", "src") # subdirectories in inRemappedDir to add 
 outDirGitRepo = "/tmp/MCPBukkit"    # git repository to build
 srcComponent = "src"            # common directory name for source (in inOriginalDir and outDirGitRepo)
 
@@ -19,11 +20,11 @@ shouldCheckoutMaster = True
 remoteSource = "origin" # 'git remote' name
 repoURL = "https://github.com/Bukkit/CraftBukkit/commit/"
 masterBranch = "master"
-defaultStartCommit = "d3d98a166f05f8fadfcd11adc0318c548da8a25b" # Update CraftBukkit to Minecraft 1.5
+defaultStartCommit = "437c575bc9b97cfc226128608e910ccf0f9a33b0" # commit before d3d98a166f05f8fadfcd11adc0318c548da8a25b Update CraftBukkit to Minecraft 1.5
 
 def runRemap():
     print "Starting remap script..."
-    run("python remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml --skip-output-archive")
+    run("python remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml --skip-finish-cleanup")
     print "Remap script finished"
 
 def run(cmd):
@@ -150,12 +151,21 @@ def main():
         # TODO: former-commit in 'commit notes' like bfg? http://rtyley.github.com/bfg-repo-cleaner/
         message += CREDIT_MESSAGE_PREFIX+commit
 
-        # Copy to target
-        a = os.path.join(inRemappedDir, srcComponent)
-        b = os.path.join(outDirGitRepo, srcComponent)
-        print "Copying %s -> %s" % (a, b)
-        if os.path.exists(b): shutil.rmtree(b)
-        shutil.copytree(a, b)
+        # Copy remapper output to git repository
+        for part in inRemappedDirNames:
+            a = os.path.join(inRemappedDir, part)
+            b = os.path.join(outDirGitRepo, part)
+            print "Copying %s -> %s" % (a, b)
+            if os.path.exists(b): shutil.rmtree(b)
+            shutil.copytree(a, b)
+
+        # For copying full NMS source (vs patches) with --skip-output-archive; might want this in a separate repo later
+        ## Copy to target
+        #a = os.path.join(inOriginalDir, srcComponent)
+        #b = os.path.join(outDirGitRepo, srcComponent)
+        #print "Copying %s -> %s" % (a, b)
+        #if os.path.exists(b): shutil.rmtree(b)
+        #shutil.copytree(a, b)
 
         # Generate the new remapped commit
         commitFile = os.path.join(os.getcwd(), "commit.msg")

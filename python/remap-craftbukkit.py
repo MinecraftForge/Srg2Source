@@ -488,7 +488,9 @@ class Remapper(object):
         
         self.logger.info('Grabbing sources')
         shutil.move(os.path.join(self.cb_dir, 'src', 'main', 'java'), SRC_OUT)
-        
+
+
+    def finish_cleanup():
         self.logger.info('Killing patched sources')
         for path, _, filelist in os.walk(PATCH_OUT, followlinks=True):
             for cur_file in fnmatch.filter(filelist, '*.java.patch'):
@@ -589,6 +591,8 @@ def main(options, args):
    
     if not options.skip_output_archive:
         mapper.create_output('patches')
+    if not options.skip_finish_cleanup:
+        mapper.finish_cleanup()
     
 if __name__ == '__main__':
     parser = OptionParser()
@@ -596,7 +600,8 @@ if __name__ == '__main__':
     parser.add_option('-c', '--cb-dir',    action='store', dest='cb_dir',   help='Path to CraftBukkit clone, none to pull automatically', default=None)
     parser.add_option('-f', '--fml-dir',   action='store', dest='fml_dir',  help='Path to setup FML, none to setup automatically', default=None)
     parser.add_option('-o', '--out-dir',   action='store', dest='out_dir', help='Output directory to place remapped files and patches', default='../output')
-    parser.add_option('-s', '--skip-output-archive',   action='store_true', dest='skip_output_archive', help='Skip creating output patches and cleaning original source', default=False)
+    parser.add_option('-s', '--skip-output-archive',   action='store_true', dest='skip_output_archive', help='Skip creating output patches', default=False)
+    parser.add_option('-S', '--skip-finish-cleanup', action='store_true', dest='skip_finish_cleanup', help='Skip cleaning up intermediate files after remapping is finished', default=False)
     options, args = parser.parse_args()
 
     main(options, args)
