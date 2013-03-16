@@ -27,16 +27,9 @@ IDEA="/Applications/IntelliJ\ IDEA\ 12.app/Contents/MacOS/idea"
 # Where to store CB/MCP patch output
 DIFF_OUT="/tmp/diff"
 
-# XXX - disabled for 1.5 now that FML uses jadnames
-# Pre-generated MCP rangemap for local variables
-# Currently you need to generate this manually by following the instructions on https://github.com/agaricusb/CraftBukkit/wiki/How-to-decompile-Minecraft-using-MCP-with-FML-repackaged-class-names,-without-FML's-other-changes
-# then importing the sources into IDEA, and extracting the range map with srg2source.
-# TODO: automate extracting rangemap for MCP? probably not necessary to automate, doesn't change much
-#MCP_RANGEMAP=os.path.join(MCP_ROOT, os.path.basename(MCP_ROOT) + ".rangemap")
-
 # CB to MCP mapping
 SRG_CB2MCP=os.path.join(DATA, MCVER, "cb2pkgmcp.srg")
-SRG_CB2MCP_FIXES=os.path.join(DATA, "1.4.6", "uncollide-cb2pkgmcp.srg")
+SRG_CB2MCP_FIXES=os.path.join(DATA, "1.5", "uncollide-cb2pkgmcp.srg")
 
 
 shouldPrepare = True
