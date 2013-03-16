@@ -221,7 +221,7 @@ class Remapper(object):
         if os.path.isdir(self.cb_dir):
             shutil.rmtree(self.cb_dir, onerror=self.remove_readonly)
             
-        self.logger.info('Cloneing CraftBukkit git')
+        self.logger.info('Cloning CraftBukkit git')
         if not self.run_command(['git', 'clone', 'git://github.com/Bukkit/CraftBukkit.git', os.path.abspath(self.cb_dir)]):
             self.logger.error('Could not clone CraftBukkit!')
             sys.exit(1)
@@ -325,10 +325,10 @@ class Remapper(object):
         print 'Running MCP src cleanup:'
         src_cleanup(SRC_CB, fix_imports=True, fix_unicode=True, fix_charval=True, fix_pi=True, fix_round=False)
         
-        sys.path.append(os.path.join(self.fml_dir))
-        from fml import cleanup_source
-        print 'Running FML/MCP src cleanup:'
-        cleanup_source(SRC_CB)
+        #sys.path.append(os.path.join(self.fml_dir))
+        #from fml import cleanup_source
+        #print 'Running FML/MCP src cleanup:'
+        #cleanup_source(SRC_CB)
     
         from cleanup_var_names import cleanup_var_names
         print 'Cleaning local variable names:'
