@@ -10,9 +10,8 @@ import re
 
 inOriginalDir = "CraftBukkit"       # original source
 inRemappedDir = "../output"       # output of remapper
-inRemappedDirNames = ("patches", "src") # subdirectories in inRemappedDir to add 
+inRemappedDirNames = ("patches", "src/org", "src/jline") # subdirectories in inRemappedDir to add 
 outDirGitRepo = "/tmp/MCPBukkit"    # git repository to build
-srcComponent = "src"            # common directory name for source (in inOriginalDir and outDirGitRepo)
 
 shouldCloneRepo = True
 shouldPullLatestChanges = True
@@ -24,7 +23,7 @@ defaultStartCommit = "437c575bc9b97cfc226128608e910ccf0f9a33b0" # commit before 
 
 def runRemap():
     print "Starting remap script..."
-    run("python remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml --skip-finish-cleanup")
+    run("python remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml --skip-finish-cleanup --skip-compile")
     print "Remap script finished"
 
 def run(cmd):
@@ -161,8 +160,8 @@ def main():
 
         # For copying full NMS source (vs patches) with --skip-output-archive; might want this in a separate repo later
         ## Copy to target
-        #a = os.path.join(inOriginalDir, srcComponent)
-        #b = os.path.join(outDirGitRepo, srcComponent)
+        #a = os.path.join(inOriginalDir, "src")
+        #b = os.path.join(outDirGitRepo, "src")
         #print "Copying %s -> %s" % (a, b)
         #if os.path.exists(b): shutil.rmtree(b)
         #shutil.copytree(a, b)
@@ -170,7 +169,8 @@ def main():
         # Generate the new remapped commit
         commitFile = os.path.join(os.getcwd(), "commit.msg")
         pushd(outDirGitRepo)
-        run("git add "+srcComponent)
+        for part in inRemappedDirNames:
+            run("git add "+part)
         file(commitFile,"w").write(message)
         run("git commit --file='%s' --all --author='%s' --date='%s'" % (commitFile, author, date))
         os.unlink(commitFile)

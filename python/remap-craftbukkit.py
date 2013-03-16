@@ -345,7 +345,7 @@ class Remapper(object):
             os.pathsep.join(deps),
             chained_srg]
         
-        self.logger.info('Attempting to fix CB compiler errors')
+        self.logger.info('Attempting to fix CB compiler errors: '+" ".join(CODEFIX))
         if not self.run_command(CODEFIX):
             self.logger.error('Could not run CodeFixer')
             sys.exit(1)
@@ -444,13 +444,11 @@ class Remapper(object):
         
         self.logger.info('Compiling CB with MCP')
         if not self.run_command(COMPILE):
-            self.logger.error('Could not compile CraftBukkit with MCP names')
-            sys.exit(1)
+            raise Exception('Could not compile CraftBukkit with MCP names')
             
         self.logger.info('Reobfuscating CB with MCP')
         if not self.run_command([sys.executable, os.path.join('runtime', 'reobfuscate.py'), '--server'], os.path.join(self.fml_dir, 'mcp')):
-            self.logger.error('Could not setup FML')
-            sys.exit(1)
+            raise Exception('Could not setup FML')
     
     def zipfolder(self, path, relname, archive):
         paths = os.listdir(path)
@@ -489,8 +487,6 @@ class Remapper(object):
         self.logger.info('Grabbing sources')
         shutil.move(os.path.join(self.cb_dir, 'src', 'main', 'java'), SRC_OUT)
 
-
-    def finish_cleanup():
         self.logger.info('Killing patched sources')
         for path, _, filelist in os.walk(PATCH_OUT, followlinks=True):
             for cur_file in fnmatch.filter(filelist, '*.java.patch'):
@@ -500,7 +496,8 @@ class Remapper(object):
                 if os.path.isfile(file):
                     self.logger.info('    %s' % file[len(SRC_OUT)+1:])
                     os.remove(file)
-                    
+ 
+    def finish_cleanup():
         def cleanDirs(path):
             if not os.path.isdir(path):
                 return
@@ -516,7 +513,7 @@ class Remapper(object):
             if len(files) == 0:
                 os.rmdir(path)
                 
-        cleanDirs(SRC_OUT)
+        cleanDirs(os.path.join(self.out_dir, 'src'))
         
         if self.fml_clean:
             self.logger.info('Cleaning FML')
@@ -586,8 +583,12 @@ def main(options, args):
     os.remove(CHAINED_SRG)
     
     mapper.create_patches('patches')
-    
-    mapper.compile_cb(cb_deps)
+  
+    if not options.skip_compile:
+        try:
+            mapper.compile_cb(cb_deps)
+        except Exception as e:
+            print "WARNING: Failed to compile remapped CB:",e
    
     if not options.skip_output_archive:
         mapper.create_output('patches')
@@ -602,6 +603,7 @@ if __name__ == '__main__':
     parser.add_option('-o', '--out-dir',   action='store', dest='out_dir', help='Output directory to place remapped files and patches', default='../output')
     parser.add_option('-s', '--skip-output-archive',   action='store_true', dest='skip_output_archive', help='Skip creating output patches', default=False)
     parser.add_option('-S', '--skip-finish-cleanup', action='store_true', dest='skip_finish_cleanup', help='Skip cleaning up intermediate files after remapping is finished', default=False)
+    parser.add_option('-n', '--skip-compile', action='store_true', dest='skip_compile', help='Skip recompiling remapped CB', default=False)
     options, args = parser.parse_args()
 
     main(options, args)
