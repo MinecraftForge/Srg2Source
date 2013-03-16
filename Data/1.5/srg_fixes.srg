@@ -6,7 +6,7 @@ MD: net/minecraft/server/BlockSapling/TreeGenerator/a (Lnet/minecraft/server/Wor
 MD: net/minecraft/server/WorldGenTrees/b (Lorg/bukkit/BlockChangeDelegate;IIII)V net/minecraft/world/gen/feature/WorldGenTrees/func_76529_b (Lorg/bukkit/BlockChangeDelegate;IIII)V
 
 # BlockPistonBase return change
-MD: net/minecraft/server/BlockPiston/i (Lnet/minecraft/server/World;IIII)I net/minecraft/block/BlockPistonBase/func_72112_i (Lnet/minecraft/world/World;IIII)I
+MD: net/minecraft/server/BlockPiston/e (Lnet/minecraft/server/World;IIII)I net/minecraft/block/BlockPistonBase/func_72112_i (Lnet/minecraft/world/World;IIII)I
 
 # Bonemeal, Player, and itemstack param
 MD: net/minecraft/server/BlockMushroom/grow (Lnet/minecraft/server/World;IIILjava/util/Random;ZLorg/bukkit/entity/Player;Lnet/minecraft/server/ItemStack;)Z net/minecraft/block/BlockMushroom/func_72271_c (Lnet/minecraft/world/World;IIILjava/util/Random;ZLorg/bukkit/entity/Player;Lnet/minecraft/server/ItemStack;)Z

@@ -115,15 +115,6 @@ class Remapper(object):
                 self.logger.error('Could not setup FML')
                 sys.exit(1)
                 
-            # Here until FML officially rolls out renaming local vars in 1.5
-            # XXX: remove since 1.5 is officially out?
-            from rename_vars import rename_file
-            
-            for path, _, filelist in os.walk(os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server'), followlinks=True):
-                for cur_file in fnmatch.filter(filelist, '*.java'):
-                    file = os.path.normpath(os.path.join(path, cur_file))
-                    rename_file(file, MCP=True)
-            
     def run_command(self, command, cwd='.', verbose=True):
         self.logger.info('Running command: ')
         self.logger.info(pformat(command))
@@ -147,8 +138,10 @@ class Remapper(object):
         OUT_SRG  = os.path.join('specialsource.srg')
         CB_JAR   = os.path.abspath('cb_minecraft_server.jar')
         VA_JAR   = os.path.abspath(os.path.join(self.fml_dir, 'mcp', 'jars', 'minecraft_server.jar'))
-        # TODO: download from http://search.maven.org/remotecontent?filepath=net/md-5/SpecialSource/1.4/SpecialSource-1.4-shaded.jar and update to release
-        SS = ['java', '-jar', os.path.abspath(os.path.join('tools', 'SpecialSource-1.3-SNAPSHOT-shaded-14x.jar')),
+        ss_filename = os.path.abspath(os.path.join('tools', 'SpecialSource-1.4-shaded.jar'))
+        if not self.download_file("http://search.maven.org/remotecontent?filepath=net/md-5/SpecialSource/1.4/SpecialSource-1.4-shaded.jar", ss_filename):
+            sys.exit(1)
+        SS = ['java', '-jar', ss_filename,
             '--generate-dupes',
             '--first-jar',  CB_JAR, 
             '--second-jar', VA_JAR,            

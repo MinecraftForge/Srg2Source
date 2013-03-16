@@ -19,8 +19,7 @@ shouldCheckoutMaster = True
 remoteSource = "origin" # 'git remote' name
 repoURL = "https://github.com/Bukkit/CraftBukkit/commit/"
 masterBranch = "master"
-defaultStartCommit = "27f73b62998ef7ba6b951a5cc7acbb95a1a17bed" # Updated version to 1.4.7-R1.0 in pom.xml for RB.
-
+defaultStartCommit = "d3d98a166f05f8fadfcd11adc0318c548da8a25b" # Update CraftBukkit to Minecraft 1.5
 
 def runRemap():
     print "Starting remap script..."
