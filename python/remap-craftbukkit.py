@@ -83,8 +83,8 @@ class Remapper(object):
     def setupfml(self):
         self.fml_dir = self.options.fml_dir
         self.fml_clean = False
-        
-        if not self.fml_dir is None: # Don't setup FML if directory is specified
+      
+        if self.fml_dir is not None and os.path.exists(self.fml_dir): # Don't setup FML if directory is specified and exists
             return
             
         self.fml_clean = True
@@ -581,7 +581,7 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option('-d', '--data-dir',  action='store', dest='data_dir', help='Data directory, typically a checkout of MinecraftRemapper', default='../Data')
     parser.add_option('-c', '--cb-dir',    action='store', dest='cb_dir',   help='Path to CraftBukkit clone, none to pull automatically', default=None)
-    parser.add_option('-f', '--fml-dir',   action='store', dest='fml_dir',  help='Path to setup FML, none to setup automatically', default=None)
+    parser.add_option('-f', '--fml-dir',   action='store', dest='fml_dir',  help='Path to setup FML, none or non-existent path to setup automatically', default=None)
     parser.add_option('-o', '--out-dir',   action='store', dest='out_dir', help='Output directory to place remapped files and patches', default='../output')
     parser.add_option('-s', '--skip-output-archive',   action='store_true', dest='skip_output_archive', help='Skip creating output patches', default=False)
     parser.add_option('-S', '--skip-finish-cleanup', action='store_true', dest='skip_finish_cleanup', help='Skip cleaning up intermediate files after remapping is finished', default=False)
