@@ -18,7 +18,9 @@ def get_class_map(mcp, cb):
         
     map_cb = get_cl(cb)
     map_mcp = get_cl(mcp)
-    map = {map_mcp[m]:t for t,m in map_cb.items()}
+    map = {}
+    for t,m in map_cb.iteritems():
+        map[map_mcp[m]] = t
     for k,v in map.items():
         if k == v:
             map.pop(k)
