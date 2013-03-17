@@ -485,12 +485,15 @@ def main():
 
     if options.srcRoot is None:
         print "--srcRoot required"
+        parser.print_help()
         sys.exit(-1)
     if options.srcRangeMap is None:
         print "--srcRangeMap required"
+        parser.print_help()
         sys.exit(-1)
     if options.srgFiles is None:
         print "--srgFiles required"
+        parser.print_help()
         sys.exit(-1)
 
     print "Reading rename maps..."

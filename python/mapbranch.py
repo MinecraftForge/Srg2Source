@@ -8,19 +8,9 @@ import shutil
 import xml.dom.minidom
 import re
 import sys
+import optparse
 
-inOriginalDir = "CraftBukkit"       # original source
-inRemappedDir = "../output"       # output of remapper
-inRemappedDirNames = ("patches", "src/org", "src/jline") # subdirectories in inRemappedDir to add 
-
-shouldCloneRepo = True
-shouldPullLatestChanges = True
-shouldCheckoutMaster = True
-remoteSource = "origin" # 'git remote' name
-repoURL = "https://github.com/Bukkit/CraftBukkit/commit/"
-masterBranch = "master"
-#defaultStartCommit = "437c575bc9b97cfc226128608e910ccf0f9a33b0" # commit before d3d98a166f05f8fadfcd11adc0318c548da8a25b Update CraftBukkit to Minecraft 1.5
-defaultStartCommit = "d3d98a166f05f8fadfcd11adc0318c548da8a25b" # Update CraftBukkit to Minecraft 1.5
+global repoURL, outDirGitRepo, inOriginalDir, inRemappedDir, defaultStartCommit
 
 def runRemap():
     print "Starting remap script..."
@@ -77,7 +67,8 @@ def getCommitInfo(commit):
 
     return author, date, message
 
-CREDIT_MESSAGE_PREFIX = "\n\nRemapped by Srg2Source from "+repoURL
+def getCreditMessagePrefix():
+    return "\n\nRemapped by Srg2Source from "+repoURL+"/commit/"
 
 """Get the last remapped commit, if any"""
 def getStartCommit():
@@ -97,10 +88,10 @@ def getStartCommit():
 
     message = runOutput(("git", "show", "--format=%B"))
 
-    r = re.compile(CREDIT_MESSAGE_PREFIX.strip() + "([0-9a-f]+)")
+    r = re.compile(getCreditMessagePrefix().strip() + "([0-9a-f]+)")
     match = r.search(message)
     if not match:
-        print "Unrecognized commit message: >>>\n"+message+"\n<<< - no match for '"+CREDIT_MESSAGE_PREFIX+"'"
+        print "Unrecognized commit message: >>>\n"+message+"\n<<< - no match for '"+getCreditMessagePrefix()+"'"
         print "Starting at default "+defaultStartCommit
         popd()
         return defaultStartCommit
@@ -112,28 +103,49 @@ def getStartCommit():
     return commit
 
 def main():
-    global outDirGitRepo
+    global outDirGitRepo, repoURL, inOriginalDir, inRemappedDir, defaultStartCommit
 
-    if len(sys.argv) != 2:
-        print "usage: %s <mcpbukkit-git-directory>" % (sys.argv[0],)
-        raise SystemExit
+    parser = optparse.OptionParser()
+    parser.add_option('-o', '--outDirGitRepo',  action='store', dest='outDirGitRepo', help='Output directory git repository')
+    parser.add_option('-n', '--no-cloneRepo', action='store_false', dest='shouldCloneRepo', help='Disable cloning upstream repository', default=True)
+    parser.add_option('-u', '--no-pullLatestChanges', action='store_false', dest='shouldPullLatestChanges', help='Disable pulling latest upstream changes', default=True)
+    parser.add_option('-c', '--no-checkoutMaster', action='store_false', dest='shouldCheckoutMaster', help='Disable checking out master branch', default=True)
+    parser.add_option('-s', '--remoteSource', action='store', dest='remoteSource', help='git remote source name', default='origin')
+    parser.add_option('-b', '--masterBranch', action='store', dest='masterBranch', help='git branch name', default='master')
+    parser.add_option('-r', '--repoURL', action='store', dest='repoURL', help='git repository URL', default='http://github.com/Bukkit/CraftBukkit')
+    parser.add_option('-i', '--inOriginalDir', action='store', dest='inOriginalDir', help='Original source directory', default='CraftBukkit')
+    parser.add_option('-I', '--inRemappedDir', action='store', dest='inRemappedDir', help='Remapper output directory', default='../output')
+    parser.add_option('-C', '--defaultStartCommit', action='store', dest='defaultStartCommit', help='Starting commit if no existing remapped commits found', 
+        #default="437c575bc9b97cfc226128608e910ccf0f9a33b0" # commit before d3d98a166f05f8fadfcd11adc0318c548da8a25b Update CraftBukkit to Minecraft 1.5
+        default="d3d98a166f05f8fadfcd11adc0318c548da8a25b") # Update CraftBukkit to Minecraft 1.5
 
-    outDirGitRepo = sys.argv[1]
+    options, args = parser.parse_args()
 
-    if shouldCloneRepo:
+    if options.outDirGitRepo is None:
+        print "--outDirGitRepo required"
+        parser.print_help()
+        sys.exit(1)
+    
+    outDirGitRepo = options.outDirGitRepo
+    repoURL = options.repoURL
+    inOriginalDir = options.inOriginalDir
+    inRemappedDir = options.inRemappedDir
+    defaultStartCommit = options.defaultStartCommit
+
+    if options.shouldCloneRepo:
         if os.path.exists(inOriginalDir):
             shutil.rmtree(inOriginalDir) 
 
-        run("git clone http://github.com/Bukkit/CraftBukkit "+inOriginalDir)
+        run("git clone "+repoURL+" "+inOriginalDir)
 
     pushd(inOriginalDir)
-    if shouldPullLatestChanges:
+    if options.shouldPullLatestChanges:
         # Get all the latest changes 
-        run("git pull "+remoteSource+" "+masterBranch)
+        run("git pull "+options.remoteSource+" "+options.masterBranch)
 
-    if shouldCheckoutMaster:
+    if options.shouldCheckoutMaster:
         clean()
-        run("git checkout "+masterBranch)
+        run("git checkout "+options.masterBranch)
 
     # Get commits beyond our last remapped commit, the new commits to be remapped
     startCommit = getStartCommit()
@@ -157,9 +169,10 @@ def main():
 
         # Append message to commit
         # TODO: former-commit in 'commit notes' like bfg? http://rtyley.github.com/bfg-repo-cleaner/
-        message += CREDIT_MESSAGE_PREFIX+commit
+        message += getCreditMessagePrefix()+commit
 
         # Copy remapper output to git repository
+        inRemappedDirNames = ("patches", "src/org", "src/jline") # subdirectories in inRemappedDir to add 
         for part in inRemappedDirNames:
             a = os.path.join(inRemappedDir, part)
             b = os.path.join(outDirGitRepo, part)
