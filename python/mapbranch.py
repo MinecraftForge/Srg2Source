@@ -24,9 +24,6 @@ defaultStartCommit = "d3d98a166f05f8fadfcd11adc0318c548da8a25b" # Update CraftBu
 
 def runRemap():
     print "Starting remap script..."
-    print "pwd=",os.getcwd()
-    if not os.path.exists("remap-craftbukkit.py"):
-        print "No remapping script found!"
     run(sys.executable + " remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml --skip-finish-cleanup --skip-compile")
     print "Remap script finished"
 
