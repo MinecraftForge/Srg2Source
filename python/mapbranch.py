@@ -7,6 +7,7 @@ import os
 import shutil
 import xml.dom.minidom
 import re
+import sys
 
 inOriginalDir = "CraftBukkit"       # original source
 inRemappedDir = "../output"       # output of remapper
@@ -24,7 +25,7 @@ defaultStartCommit = "d3d98a166f05f8fadfcd11adc0318c548da8a25b" # Update CraftBu
 
 def runRemap():
     print "Starting remap script..."
-    run("python remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml --skip-finish-cleanup --skip-compile")
+    run(sys.executable + " remap-craftbukkit.py --cb-dir "+inOriginalDir+" --fml-dir fml --skip-finish-cleanup --skip-compile")
     print "Remap script finished"
 
 def run(cmd):
