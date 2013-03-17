@@ -55,7 +55,7 @@ def readCommitLog(startCommit):
 
 """Get detailed information on a commit."""
 def getCommitInfo(commit):
-    out = runOutput(("git", "show", commit, "--format=format:%an <%ae>%n%aD%n%B%n---END---"))
+    out = runOutput(("git", "show", commit, "--format=format:%an <%ae>%n%aD%n%s%n%n%b%n---END---"))
     lines = out.split("\n")
     author = lines[0]
     date = lines[1]
@@ -86,7 +86,7 @@ def getStartCommit():
         print "Starting at default "+defaultStartCommit
         return defaultStartCommit
 
-    message = runOutput(("git", "show", "--format=%B"))
+    message = runOutput(("git", "show", "--format=%s%n%n%b"))
 
     r = re.compile(getCreditMessagePrefix().strip() + "([0-9a-f]+)")
     match = r.search(message)
