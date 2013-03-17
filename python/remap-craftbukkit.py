@@ -250,9 +250,10 @@ class Remapper(object):
             'output.rangemap']
         
         dep_file = os.path.abspath('classpath.txt')
-        possibleMaven = "/var/lib/jenkins/tools/Maven/Maven/mvn"
+        possibleMaven = "/var/lib/jenkins/tools/Maven/Maven/bin/mvn"
+        print "MVN??",possibleMaven, os.path.exists(possibleMaven)
         if os.getenv("MAVEN_HOME") is not None:
-            mvn = os.path.join(os.getenv("MAVEN_HOME"), "mvn")
+            mvn = os.path.join(os.getenv("MAVEN_HOME"), "bin/mvn")
         elif os.path.exists(possibleMaven):
             mvn = possibleMaven
         else:
