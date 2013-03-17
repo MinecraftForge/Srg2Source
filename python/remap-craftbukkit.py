@@ -335,6 +335,7 @@ class Remapper(object):
     def codefix_cb(self, deps, chained_srg):
         CODEFIX = ['java', 
             '-cp', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
+            '-mx2G',
             'ast.CodeFixer',
             os.path.join(self.cb_dir, 'src', 'main', 'java'),
             os.pathsep.join(deps),
