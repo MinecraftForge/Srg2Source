@@ -319,18 +319,56 @@ class Remapper(object):
         from cleanup_src import src_cleanup
         print 'Running MCP src cleanup:'
         src_cleanup(SRC_CB, fix_imports=True, fix_unicode=True, fix_charval=True, fix_pi=True, fix_round=False)
-        
-        #sys.path.append(os.path.join(self.fml_dir))
-        #from fml import cleanup_source
-        #print 'Running FML/MCP src cleanup:'
-        #cleanup_source(SRC_CB)
     
+        print 'Running FML/MCP src cleanup:'
+        self.fml_cleanup_source(SRC_CB)
+   
         from cleanup_var_names import cleanup_var_names
         print 'Cleaning local variable names:'
         cleanup_var_names(SRG_MCP, cb_srg, SRC_CB)
         
         from whitespaceneutralizer import neutralizeWhitespaceDirs
         neutralizeWhitespaceDirs(SRC_CB, SRC_MCP)
+
+    def fml_cleanup_source(self, path):
+        # Disabled until FML splits out jad-renaming (already in CB) from cleanup
+        #sys.path.append(os.path.join(self.fml_dir))
+        #from fml import cleanup_source
+        #cleanup_source(path)
+
+        # Based on fml/fml.py cleanup_source(), but without rename_vars
+        path = os.path.normpath(path)
+        regex_cases_before = re.compile(r'((case|default).+\r?\n)\r?\n', re.MULTILINE) #Fixes newline after case before case body
+        regex_cases_after = re.compile(r'\r?\n(\r?\n[ \t]+(case|default))', re.MULTILINE) #Fixes newline after case body before new case
+
+        def updatefile(src_file):
+            global count
+            tmp_file = src_file + '.tmp'
+            count = 0
+            with open(src_file, 'r') as fh:
+                buf = fh.read()
+                
+            def fix_cases(match):
+                global count
+                count += 1
+                return match.group(1)
+
+            buf = regex_cases_before.sub(fix_cases, buf)
+            buf = regex_cases_after.sub(fix_cases, buf)
+            old = buf.replace('\r', '')
+            #buf = rename_class(old, MCP=True)  # already renamed in CB
+
+            if count > 0 or buf != old:
+                with open(tmp_file, 'w') as fh:
+                    fh.write(buf)
+                shutil.move(tmp_file, src_file)
+                
+        for path, _, filelist in os.walk(path, followlinks=True):
+            sub_dir = os.path.relpath(path, path)
+            for cur_file in fnmatch.filter(filelist, '*.java'):
+                src_file = os.path.normpath(os.path.join(path, cur_file))
+                updatefile(src_file)
+
 
     def codefix_cb(self, deps, chained_srg):
         CODEFIX = ['java', 
@@ -494,7 +532,7 @@ class Remapper(object):
                     self.logger.info('    %s' % file[len(SRC_OUT)+1:])
                     os.remove(file)
  
-    def finish_cleanup():
+    def finish_cleanup(self):
         def cleanDirs(path):
             if not os.path.isdir(path):
                 return
