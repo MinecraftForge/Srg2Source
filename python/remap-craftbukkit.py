@@ -188,19 +188,6 @@ class Remapper(object):
         
         return rangeMap
         
-    def generatemcprange(self, rangefile):
-        self.download_file("https://github.com/LexManos/Srg2Source/blob/master/python/tools/RangeExtractor.jar?raw=true", "tools/RangeExtractor.jar") 
-        RANGE = ['java', '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
-            os.path.join(self.fml_dir, 'mcp', 'src', 'minecraft_server'),
-            os.path.join(self.fml_dir, 'mcp', 'lib'),
-            'MCP.rangemap']
-            
-        self.logger.info('Generating MCP rangemap')
-        self.run_command(RANGE)
-            
-        self.clean_rangemap('MCP.rangemap', rangefile)
-        os.remove('MCP.rangemap')
-
     def remove_readonly(self, fn, path, excinfo):
         if fn is os.rmdir:
             os.chmod(path, stat.S_IWRITE)
@@ -253,6 +240,7 @@ class Remapper(object):
         return self.run_command(PATCH, cwd=target_dir)
       
     def generatecbrange(self, rangefile):
+        self.download_file("https://github.com/LexManos/Srg2Source/blob/master/python/tools/RangeExtractor.jar?raw=true", "tools/RangeExtractor.jar") 
         RANGE = ['java', 
             '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
             os.path.join(self.cb_dir, 'src', 'main', 'java'),
@@ -282,11 +270,10 @@ class Remapper(object):
         
         return RANGE[4].split(os.pathsep)
 
-    def run_rangeapply(self, cbsrg, mcprange, cbrange, chained_srg):
+    def run_rangeapply(self, cbsrg, cbrange, chained_srg):
         RANGEAPPLY = [sys.executable, 'rangeapply.py',
             '--srcRoot', os.path.join(self.cb_dir, 'src', 'main', 'java'),
             '--srcRangeMap', cbrange,
-            '--lvRangeMap', mcprange,
             '--mcpConfDir', os.path.join(self.fml_dir, 'mcp', 'conf')]
             
         data = os.path.join(self.data, self.version)
@@ -560,15 +547,10 @@ def main(options, args):
     if not os.path.isfile(cb_to_vanilla):
         mapper.generatecbsrg(cb_to_vanilla)
         
-    van_range = os.path.join(mapper.data, mapper.version, 'mcp.rangemap')
-    if not os.path.isfile(van_range):
-        mapper.generatemcprange(van_range)
-        
     cb_range = 'cb.rangemap'
     cb_deps = mapper.generatecbrange(cb_range)
     
-    mapper.run_rangeapply(cb_to_vanilla, van_range, cb_range, CHAINED_SRG)
-    os.remove(van_range)
+    mapper.run_rangeapply(cb_to_vanilla, cb_range, CHAINED_SRG)
     os.remove(cb_range)
     
     mapper.cleanup_source(cb_to_vanilla)
