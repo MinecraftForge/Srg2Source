@@ -292,14 +292,11 @@ class Remapper(object):
         excs = [f for f in os.listdir(data) if f.endswith('.exc')]
         if len(excs) > 0:
             RANGEAPPLY += ['--excFiles']
-            for file in excs:
-                RANGEAPPLY += [os.path.join(data, file)]
+            RANGEAPPLY += [",".join([os.path.join(data, x) for x in excs])]
                 
         srgs = [f for f in os.listdir(os.path.join(self.data, self.version)) if f.endswith('.srg') and not f == 'cb_to_vanilla.srg']
-        RANGEAPPLY += ['--srgFiles', chained_srg]
-        if len(srgs) > 0:
-            for file in srgs:
-                RANGEAPPLY += [os.path.join(data, file)]
+        RANGEAPPLY += ['--srgFiles']
+        RANGEAPPLY += [",".join([chained_srg] + [os.path.join(data, x) for x in srgs])]
             
         from chain import chain
         chained = chain(os.path.join(self.fml_dir, 'mcp', 'conf', 'packaged.srg'), '^' + cbsrg, verbose=False)
