@@ -12,7 +12,6 @@ import sys
 inOriginalDir = "CraftBukkit"       # original source
 inRemappedDir = "../output"       # output of remapper
 inRemappedDirNames = ("patches", "src/org", "src/jline") # subdirectories in inRemappedDir to add 
-outDirGitRepo = "/tmp/MCPBukkit"    # git repository to build
 
 shouldCloneRepo = True
 shouldPullLatestChanges = True
@@ -113,6 +112,14 @@ def getStartCommit():
     return commit
 
 def main():
+    global outDirGitRepo
+
+    if len(sys.argv) != 2:
+        print "usage: %s <mcpbukkit-git-directory>" % (sys.argv[0],)
+        raise SystemExit
+
+    outDirGitRepo = sys.argv[1]
+
     if shouldCloneRepo:
         if os.path.exists(inOriginalDir):
             shutil.rmtree(inOriginalDir) 
