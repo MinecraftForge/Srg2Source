@@ -107,6 +107,7 @@ def main():
 
     parser = optparse.OptionParser()
     parser.add_option('-o', '--outDirGitRepo',  action='store', dest='outDirGitRepo', help='Output directory git repository')
+    parser.add_option('-p', '--pushGit',  action='store_true', dest='shouldPushGit', help='Run git push after each commit remap', default=False)
     parser.add_option('-n', '--no-cloneRepo', action='store_false', dest='shouldCloneRepo', help='Disable cloning upstream repository', default=True)
     parser.add_option('-u', '--no-pullLatestChanges', action='store_false', dest='shouldPullLatestChanges', help='Disable pulling latest upstream changes', default=True)
     parser.add_option('-c', '--no-checkoutMaster', action='store_false', dest='shouldCheckoutMaster', help='Disable checking out master branch', default=True)
@@ -196,6 +197,11 @@ def main():
         file(commitFile,"w").write(message)
         run("git commit --file='%s' --all --author='%s' --date='%s'" % (commitFile, author, date))
         os.unlink(commitFile)
+
+        # Push
+        if options.shouldPushGit:
+            run("git push")
+
         popd()
        
 if __name__ == "__main__":
