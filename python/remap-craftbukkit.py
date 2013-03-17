@@ -464,9 +464,10 @@ class Remapper(object):
             shutil.rmtree(self.out_dir, onerror=self.remove_readonly)
             
         os.mkdir(self.out_dir)
-        
-        self.logger.info('Grabbing binary')
-        self.create_zip(os.path.join(self.fml_dir, 'mcp', 'reobf', 'minecraft_server'), os.path.join(self.out_dir, 'craftbukkit_mcp.zip'))
+       
+        if not self.options.skip_compile:
+            self.logger.info('Grabbing binary')
+            self.create_zip(os.path.join(self.fml_dir, 'mcp', 'reobf', 'minecraft_server'), os.path.join(self.out_dir, 'craftbukkit_mcp.zip'))
         
         self.logger.info('Grabbing patches')
         shutil.move(patch_dir, PATCH_OUT)
