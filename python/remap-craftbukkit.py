@@ -250,7 +250,12 @@ class Remapper(object):
             'output.rangemap']
         
         dep_file = os.path.abspath('classpath.txt')
-        DEPS = ['mvn', 'dependency:build-classpath', '-Dmdep.outputFile=%s' % dep_file]
+        if os.getenv("MAVEN_HOME") is not None:
+            mvn = os.path.join(os.getenv("MAVEN_HOME"), "mvn")
+        else:
+            mvn = "mvn"
+
+        DEPS = [mvn, 'dependency:build-classpath', '-Dmdep.outputFile=%s' % dep_file]
         if self.osname == 'win':
             DEPS = ['cmd', '/C'] + DEPS
         
