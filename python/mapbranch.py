@@ -80,6 +80,10 @@ def getStartCommit():
 
     if not os.path.exists(".git"):
         print "No git repository found in "+outDirGitRepo
+        if defaultStartCommit is None:
+            print "--startCommit required for initializing new repository"
+            sys.exit(1)
+
         print "Initializing new repository"
         run("git init")
         popd()
@@ -92,6 +96,9 @@ def getStartCommit():
     match = r.search(message)
     if not match:
         print "Unrecognized commit message: >>>\n"+message+"\n<<< - no match for '"+getCreditMessagePrefix()+"'"
+        if defaultStartCommit is None:
+            print "No remapped commits found; --startCommit required!"
+            sys.exit(1)
         print "Starting at default "+defaultStartCommit
         popd()
         return defaultStartCommit
@@ -99,7 +106,7 @@ def getStartCommit():
     commit = match.group(1)
     popd()
 
-    print "Resuming from upstream commit",repoURL+commit
+    print "Resuming from upstream commit",repoURL+"/commit/"+commit
     return commit
 
 def main():
@@ -116,9 +123,7 @@ def main():
     parser.add_option('-r', '--repoURL', action='store', dest='repoURL', help='git repository URL', default='http://github.com/Bukkit/CraftBukkit')
     parser.add_option('-i', '--inOriginalDir', action='store', dest='inOriginalDir', help='Original source directory', default='CraftBukkit')
     parser.add_option('-I', '--inRemappedDir', action='store', dest='inRemappedDir', help='Remapper output directory', default='../output')
-    parser.add_option('-C', '--defaultStartCommit', action='store', dest='defaultStartCommit', help='Starting commit if no existing remapped commits found', 
-        #default="437c575bc9b97cfc226128608e910ccf0f9a33b0" # commit before d3d98a166f05f8fadfcd11adc0318c548da8a25b Update CraftBukkit to Minecraft 1.5
-        default="d3d98a166f05f8fadfcd11adc0318c548da8a25b") # Update CraftBukkit to Minecraft 1.5
+    parser.add_option('-C', '--startCommit', action='store', dest='defaultStartCommit', help='Starting commit if no existing remapped commits found', default=None)
 
     options, args = parser.parse_args()
 
