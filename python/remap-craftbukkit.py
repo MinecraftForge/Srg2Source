@@ -414,6 +414,7 @@ class Remapper(object):
                 if len(patch) > 0:
                     self.logger.info(patch_file[len(patchd)+1:])
                     patch = patch.replace('\r\n', '\n')
+                    patch = patch.replace('.java \n', '.java\n')  # Python 2.6 adds trailing space on +++/--- lines, Python 2.7+ doesn't; equalize
                     
                     if not os.path.exists(patch_dir):
                         os.makedirs(patch_dir)
