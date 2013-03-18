@@ -24,6 +24,7 @@ def run(cmd):
     assert status == 0, "Failed to run '%s' status=%s" % (cmd, status)
 
 def runOutput(cmd):
+    print ">",cmd
     return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.read()
 
 DIR_STACK = []
@@ -132,10 +133,10 @@ def main():
         parser.print_help()
         sys.exit(1)
     
-    outDirGitRepo = options.outDirGitRepo
+    outDirGitRepo = os.path.abspath(options.outDirGitRepo)
     repoURL = options.repoURL
-    inOriginalDir = options.inOriginalDir
-    inRemappedDir = options.inRemappedDir
+    inOriginalDir = os.path.abspath(options.inOriginalDir)
+    inRemappedDir = os.path.abspath(options.inRemappedDir)
     defaultStartCommit = options.defaultStartCommit
 
     if options.shouldCloneRepo:
