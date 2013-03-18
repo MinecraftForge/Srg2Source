@@ -73,7 +73,7 @@ def getCommitInfo(commit):
     return author, date, message
 
 def getCreditMessagePrefix():
-    return "\n\nRemapped by Srg2Source from "+repoURL+"/commit/"
+    return "\n\nRemapped by Srg2Source from "+repoURL.replace("http://github.com/","")+"@"  # github markup, Bukkit/CraftBukkit@hash
 
 """Get the last remapped commit, if any"""
 def getStartCommit():
