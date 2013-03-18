@@ -68,7 +68,7 @@ def getCommitInfo(commit):
 
     if commit == defaultStartCommit:
         # First commit!
-        message = defaultStartMessage
+        return None, None, defaultStartMessage
 
     return author, date, message
 
@@ -208,7 +208,12 @@ def main():
         for part in inRemappedDirNames:
             run("git add "+part)
         file(commitFile,"w").write(message)
-        run("git commit --file='%s' --all --author='%s' --date='%s'" % (commitFile, author, date))
+        cmd = "git commit --file='%s' --all" % (commitFile,) 
+        if author is not None:
+            cmd += " --author='%s'" % (author,)
+        if date is not None:
+            cmd += " --date='%s'" % (date,)
+        run(cmd)
         os.unlink(commitFile)
 
         # Push
