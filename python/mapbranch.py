@@ -117,7 +117,7 @@ def main():
     parser.add_option('-o', '--outDirGitRepo',  action='store', dest='outDirGitRepo', help='Output directory git repository')
     parser.add_option('-p', '--pushGit',  action='store_true', dest='shouldPushGit', help='Run git push after each commit remap', default=False)
     parser.add_option('-n', '--no-cloneRepo', action='store_false', dest='shouldCloneRepo', help='Disable cloning upstream repository', default=True)
-    parser.add_option('-u', '--no-pullLatestChanges', action='store_false', dest='shouldPullLatestChanges', help='Disable pulling latest upstream changes', default=True)
+    parser.add_option('-u', '--no-fetchLatestChanges', action='store_false', dest='shouldFetchLatestChanges', help='Disable fetching latest upstream changes', default=True)
     parser.add_option('-c', '--no-checkoutMaster', action='store_false', dest='shouldCheckoutMaster', help='Disable checking out master branch', default=True)
     parser.add_option('-s', '--remoteSource', action='store', dest='remoteSource', help='git remote source name', default='origin')
     parser.add_option('-b', '--masterBranch', action='store', dest='masterBranch', help='git branch name', default='master')
@@ -146,9 +146,10 @@ def main():
         run("git clone "+repoURL+" "+inOriginalDir)
 
     pushd(inOriginalDir)
-    if options.shouldPullLatestChanges:
-        # Get all the latest changes 
-        run("git pull "+options.remoteSource+" "+options.masterBranch)
+    if options.shouldFetchLatestChanges:
+        # Get all the latest changes, overwriting anything locally
+        run("git fetch --all")
+        run("git reset --hard "+options.remoteSource+"/"+options.masterBranch)
 
     if options.shouldCheckoutMaster:
         clean()
