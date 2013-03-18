@@ -48,9 +48,9 @@ def readCommitLog(startCommit):
     for line in runOutput(("git", "log", "--format=oneline")).split("\n"):
         assert len(line) != 0, "Reached end of commit log without finding starting commit "+startCommit
         commit, message = line.split(" ", 1)
+        if commit == startCommit: break
         print commit, message
         commits.append((commit, message))
-        if commit == startCommit: break
     commits.reverse()
     return commits
 
