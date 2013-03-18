@@ -10,7 +10,7 @@ import re
 import sys
 import optparse
 
-global repoURL, outDirGitRepo, inOriginalDir, inRemappedDir, defaultStartCommit
+global repoURL, outDirGitRepo, inOriginalDir, inRemappedDir, defaultStartCommit, defaultStartMessage
 
 def runRemap():
     print "Starting remap script..."
@@ -66,6 +66,10 @@ def getCommitInfo(commit):
         messageLines.append(lines[i])
     message = "\n".join(messageLines)
 
+    if commit == defaultStartCommit:
+        # First commit!
+        message = defaultStartMessage
+
     return author, date, message
 
 def getCreditMessagePrefix():
@@ -81,8 +85,8 @@ def getStartCommit():
 
     if not os.path.exists(".git"):
         print "No git repository found in "+outDirGitRepo
-        if defaultStartCommit is None:
-            print "--startCommit required for initializing new repository"
+        if defaultStartCommit is None or defaultStartMessage is None:
+            print "--startCommit and --startMessage required for initializing new repository"
             sys.exit(1)
 
         print "Initializing new repository"
@@ -97,8 +101,8 @@ def getStartCommit():
     match = r.search(message)
     if not match:
         print "Unrecognized commit message: >>>\n"+message+"\n<<< - no match for '"+getCreditMessagePrefix()+"'"
-        if defaultStartCommit is None:
-            print "No remapped commits found; --startCommit required!"
+        if defaultStartCommit is None or defaultStartMessage is None:
+            print "No remapped commits found; --startCommit and --startMessage required!"
             sys.exit(1)
         print "Starting at default "+defaultStartCommit
         popd()
@@ -111,7 +115,7 @@ def getStartCommit():
     return commit
 
 def main():
-    global outDirGitRepo, repoURL, inOriginalDir, inRemappedDir, defaultStartCommit
+    global outDirGitRepo, repoURL, inOriginalDir, inRemappedDir, defaultStartCommit, defaultStartMessage
 
     parser = optparse.OptionParser()
     parser.add_option('-o', '--outDirGitRepo',  action='store', dest='outDirGitRepo', help='Output directory git repository')
@@ -125,6 +129,7 @@ def main():
     parser.add_option('-i', '--inOriginalDir', action='store', dest='inOriginalDir', help='Original source directory', default='CraftBukkit')
     parser.add_option('-I', '--inRemappedDir', action='store', dest='inRemappedDir', help='Remapper output directory', default='../output')
     parser.add_option('-C', '--startCommit', action='store', dest='defaultStartCommit', help='Starting commit if no existing remapped commits found', default=None)
+    parser.add_option('-M', '--startMessage', action='store', dest='defaultStartMessage', help='Initial commit message for --startCommit', default=None)
 
     options, args = parser.parse_args()
 
@@ -138,6 +143,7 @@ def main():
     inOriginalDir = os.path.abspath(options.inOriginalDir)
     inRemappedDir = os.path.abspath(options.inRemappedDir)
     defaultStartCommit = options.defaultStartCommit
+    defaultStartMessage = options.defaultStartMessage
 
     if options.shouldCloneRepo:
         if os.path.exists(inOriginalDir):
