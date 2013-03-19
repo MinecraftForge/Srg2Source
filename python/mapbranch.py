@@ -203,10 +203,15 @@ def main():
         #shutil.copytree(a, b)
 
         # Generate the new remapped commit
-        commitFile = os.path.join(os.getcwd(), "commit.msg")
         pushd(outDirGitRepo)
         for part in inRemappedDirNames:
             run("git add "+part)
+        stagedDiff = runOutput(("git", "diff", "--staged"))
+        if len(stagedDiff.strip()) == 0:
+            print "Nothing changed in this commit; skipping"  # docs, 'add for diff visibility', etc.
+            popd()
+            continue
+        commitFile = os.path.join(os.getcwd(), "commit.msg")
         file(commitFile,"w").write(message)
         cmd = "git commit --file='%s' --all" % (commitFile,) 
         if author is not None:
