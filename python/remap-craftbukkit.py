@@ -52,7 +52,8 @@ class Remapper(object):
     
         config_file = os.path.join(self.data, self.version, 'config.properties')
         if not os.path.isfile(config_file):
-            self.logger.error('Could not find data file: %s' % config_file)
+            self.logger.error('FATAL ERROR: Could not find data file: %s for Minecraft version %s, please create this file and rerun' % (config_file, self.version))
+            sys.exit(1)
             
         config = ConfigParser()
         config.read(config_file)
