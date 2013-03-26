@@ -243,7 +243,7 @@ class Remapper(object):
       
     def generatecbrange(self, rangefile):
         if not os.path.exists("tools"): os.mkdir("tools")
-        self.download_file("https://github.com/LexManos/Srg2Source/blob/master/python/tools/RangeExtractor.jar?raw=true", "tools/RangeExtractor.jar") 
+        self.download_file("http://files.minecraftforge.net/fmllibs/RangeExtractor.jar", "tools/RangeExtractor.jar") 
         RANGE = ['java', 
             '-jar', os.path.abspath(os.path.join('tools', 'RangeExtractor.jar')),
             os.path.join(self.cb_dir, 'src', 'main', 'java'),
@@ -378,7 +378,8 @@ class Remapper(object):
             'ast.CodeFixer',
             os.path.join(self.cb_dir, 'src', 'main', 'java'),
             os.pathsep.join(deps),
-            chained_srg]
+            chained_srg,
+            '--non-fatal']
         
         self.logger.info('Attempting to fix CB compiler errors: '+" ".join(CODEFIX))
         if not self.run_command(CODEFIX):
