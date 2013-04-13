@@ -9,7 +9,7 @@ For porting, Minecraft, CraftBukkit, mods, plugins, etc.
     cd python
     python remap-craftbukkit.py --help
 
-TODO
+The `mapbranch.py` script is used to automatically update https://github.com/MinecraftForge/MCPBukkit
 
 ## See also
 
