@@ -140,8 +140,8 @@ class Remapper(object):
         CB_JAR   = os.path.abspath('cb_minecraft_server.jar')
         VA_JAR   = os.path.abspath(os.path.join(self.fml_dir, 'mcp', 'jars', 'minecraft_server.jar'))
         if not os.path.exists("tools"): os.mkdir("tools")
-        ss_filename = os.path.abspath(os.path.join('tools', 'SpecialSource-1.4-shaded.jar'))
-        if not self.download_file("http://search.maven.org/remotecontent?filepath=net/md-5/SpecialSource/1.4/SpecialSource-1.4-shaded.jar", ss_filename):
+        ss_filename = os.path.abspath(os.path.join('tools', 'SpecialSource-1.5-shaded.jar'))
+        if not self.download_file("http://search.maven.org/remotecontent?filepath=net/md-5/SpecialSource/1.5/SpecialSource-1.5-shaded.jar", ss_filename):
             sys.exit(1)
         SS = ['java', '-jar', ss_filename,
             '--generate-dupes',
