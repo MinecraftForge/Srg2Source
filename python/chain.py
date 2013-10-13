@@ -16,6 +16,7 @@ def process(filename, reverse=False):
         line = line.strip()
         if len(line) == 0: continue
         if line[0] == '#': continue
+        if '#' in line: line = line.split('#')[0].rstrip()
         assert ": " in line, "Invalid line: %s" % (line,)
         kind, argsString = line.split(": ")
         args = argsString.split(" ")
