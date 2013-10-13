@@ -215,7 +215,7 @@ def updateImports(data, newImports, importMap):
 
                 # Rewrite NMS imports
                 oldClass = line.replace("import ", "").replace(";", "");
-                print oldClass
+                print "Import: " + oldClass
                 if oldClass == "net.minecraft.server.*":
                     # wildcard NMS imports (CraftWorld, CraftEntity, CraftPlayer).. bad idea
                     continue
