@@ -1,0 +1,31 @@
+net/minecraft/server/BlockSapling/TreeGenerator.func_76484_a(Lnet/minecraft/world/World;Ljava/util/Random;III)Z=|p_76484_1_,p_76484_2_,p_76484_3_,p_76484_4_,p_76484_5_
+net/minecraft/server/BlockSapling/TreeGenerator.generate(Lorg/bukkit/BlockChangeDelegate;Ljava/util/Random;III)Z=|p_76484_1_,p_76484_2_,p_76484_3_,p_76484_4_,p_76484_5_
+net/minecraft/world/World.<init>(Lnet/minecraft/world/storage/ISaveHandler;Ljava/lang/String;Lnet/minecraft/world/WorldSettings;Lnet/minecraft/world/WorldProvider;Lnet/minecraft/profiler/Profiler;Lorg/bukkit/generator/ChunkGenerator;Lorg/bukkit/World$Environment;)V=|p_i3732_1_,p_i3732_2_,p_i3732_3_,p_i3732_4_,p_i3732_5_,gen,env
+net/minecraft/world/gen/feature/WorldGenTrees.func_76529_b(Lorg/bukkit/BlockChangeDelegate;IIII)V=|p_76529_1_,p_76529_2_,p_76529_3_,p_76529_4_,p_76529_5_
+
+net/minecraft/block/BlockOre.getExpDrop(Lnet/minecraft/world/World;II)I=|p_71914_1_,p_71914_7_
+net/minecraft/block/BlockRedstoneOre.getExpDrop(Lnet/minecraft/world/World;II)I=|p_71914_1_,p_71914_7_
+
+net/minecraft/block/BlockPistonBase.func_72112_i(Lnet/minecraft/world/World;IIII)I=|p_72112_0_,p_72112_1_,p_72112_2_,p_72112_3_,p_72112_4_
+
+net/minecraft/block/BlockMushroom.func_72271_c(Lnet/minecraft/world/World;IIILjava/util/Random;ZLorg/bukkit/entity/Player;Lnet/minecraft/server/ItemStack;)Z=|p_72271_1_,p_72271_2_,p_72271_3_,p_72271_4_,p_72271_5_,bonemeal,player,itemstack
+net/minecraft/block/BlockSapling.func_72269_c(Lnet/minecraft/world/World;IIILjava/util/Random;ZLorg/bukkit/entity/Player;Lnet/minecraft/server/ItemStack;)V=|p_72269_1_,p_72269_2_,p_72269_3_,p_72269_4_,p_72269_5_,bonemeal,player,itemstack
+
+# boolean return, IPosition -> IBlockSource last argument
+net/minecraft/dispenser/BehaviorDefaultDispenseItem.func_82486_a(Lnet/minecraft/world/World;Lnet/minecraft/item/ItemStack;ILnet/minecraft/util/EnumFacing;Lnet/minecraft/dispenser/IBlockSource;)Z=|p_82486_0_,p_82486_1_,p_82486_2_,p_82486_3_,p_82486_4_
+# New parameter isEffect
+net/minecraft/entity/effect/EntityLightningBolt.<init>(Lnet/minecraft/world/World;DDDZ)V=|p_i3533_1_,p_i3533_2_,p_i3533_4_,p_i3533_6_,isEffect
+# Param Name
+net/minecraft/entity/Entity.setPassengerOf(Lnet/minecraft/server/Entity;)V=|p_70078_1_
+net/minecraft/entity/EntityLiving.heal(ILorg/bukkit/event/entity/EntityRegainHealthEvent$RegainReason;)V=|p_70691_1_
+# Return
+net/minecraft/entity/EntityLiving.func_70600_l(I)Lnet/minecraft/server/ItemStack;=|p_70600_1_
+net/minecraft/entity/monster/EntityPigZombie.func_70600_l(I)Lnet/minecraft/server/ItemStack;=|p_70600_1_
+net/minecraft/entity/monster/EntitySkeleton.func_70600_l(I)Lnet/minecraft/server/ItemStack;=|p_70600_1_
+net/minecraft/entity/monster/EntityZombie.func_70600_l(I)Lnet/minecraft/server/ItemStack;=|p_70600_1_
+# Split Function
+net/minecraft/server/EntityFireball.setDirection(DDD)V=|p_i3573_3_,p_i3573_5_,p_i3573_7_
+# New Params
+net/minecraft/server/ItemDoor.place(Lnet/minecraft/server/World;IIIILnet/minecraft/server/Block;Lnet/minecraft/server/EntityHuman;III)Z=|p_77869_0_,p_77869_1_,p_77869_2_,p_77869_3_,p_77869_4_,p_77869_5_
+# 
+net/minecraft/server/MobEffectList.applyInstantEffect(Lnet/minecraft/server/EntityLiving;Lnet/minecraft/server/EntityLiving;ID)V=|p_76402_1_,p_76402_2_,p_76402_3_,p_76402_4_
