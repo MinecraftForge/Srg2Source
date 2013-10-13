@@ -24,3 +24,6 @@ MD: net/minecraft/server/EntityLiving/l (I)Lnet/minecraft/server/ItemStack; net/
 MD: net/minecraft/server/EntitySkeleton/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/monster/EntitySkeleton/func_70600_l (I)Lnet/minecraft/item/ItemStack;
 MD: net/minecraft/server/EntityPigZombie/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/monster/EntityPigZombie/func_70600_l (I)Lnet/minecraft/item/ItemStack;
 MD: net/minecraft/server/EntityZombie/l (I)Lnet/minecraft/server/ItemStack; net/minecraft/entity/monster/EntityZombie/func_70600_l (I)Lnet/minecraft/item/ItemStack;
+
+#New Argument
+MD: net/minecraft/server/ItemDye/a (Lnet/minecraft/server/ItemStack;Lnet/minecraft/server/World;IIILnet/minecraft/server/EntityHuman;)Z net/minecraft/item/ItemDye/func_96604_a (Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;IIILnet/minecraft/entity/player/EntityPlayer;)Z

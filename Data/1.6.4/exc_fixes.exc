@@ -29,3 +29,5 @@ net/minecraft/server/EntityFireball.setDirection(DDD)V=|p_i3573_3_,p_i3573_5_,p_
 net/minecraft/server/ItemDoor.place(Lnet/minecraft/server/World;IIIILnet/minecraft/server/Block;Lnet/minecraft/server/EntityHuman;III)Z=|p_77869_0_,p_77869_1_,p_77869_2_,p_77869_3_,p_77869_4_,p_77869_5_
 # 
 net/minecraft/server/MobEffectList.applyInstantEffect(Lnet/minecraft/server/EntityLiving;Lnet/minecraft/server/EntityLiving;ID)V=|p_76402_1_,p_76402_2_,p_76402_3_,p_76402_4_
+#
+net/minecraft/item/ItemDye.func_96604_a(Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;IIILnet/minecraft/entity/player/EntityPlayer;)Z=|p_96604_0_,p_96604_1_,p_96604_2_,p_96604_3_,p_96604_4_,player
