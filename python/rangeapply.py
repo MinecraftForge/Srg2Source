@@ -220,7 +220,10 @@ def updateImports(data, newImports, importMap):
                     # wildcard NMS imports (CraftWorld, CraftEntity, CraftPlayer).. bad idea
                     continue
                 else:
-                    newClass = importMap["class "+srglib.sourceName2Internal(oldClass)]
+                    if 'class ' + srglib.sourceName2Internal(oldClass) in importMap:
+                        newClass = importMap["class "+srglib.sourceName2Internal(oldClass)]
+                    else:
+                        newClass = srglib.sourceName2Internal(oldClass)
 
                 newLine = "import %s;" % (newClass,)
                 if newLine not in newImportLines:  # if not already added
