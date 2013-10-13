@@ -85,8 +85,12 @@ class Remapper(object):
         self.fml_dir = self.options.fml_dir
         self.fml_clean = False
       
-        if os.path.exists(self.fml_dir): # Don't setup FML if directory already exists
-            return
+        if os.path.exists(self.fml_dir): # Don't setup FML if directory already exists and is for our version
+            version_file = os.path.join(self.fml_dir, 'common', 'fmlversion.properties')
+            if os.path.isfile(version_file):
+                with open(version_file, 'r') as f:
+                    if ('fmlbuild.mcversion=%s' % self.version) in f.read():
+                        return
             
         self.fml_clean = True
         self.fml_dir = 'fml'
@@ -506,16 +510,15 @@ class Remapper(object):
         self.zipfolder(path, '', archive)
         archive.close()
     
-    def kill_folder(self, folder, kill_top=False):
+    def kill_folder(self, folder):
         for file in os.listdir(folder):
             path = os.path.join(folder, file)
             try:
                 if os.path.isfile(path):
                     os.unlink(path)
                 else:
-                    self.kill_folder(path, True)
-                    if kill_top:
-                        os.unlink(path)
+                    self.kill_folder(path)
+                    shutil.rmtree(path, onerror=self.remove_readonly)
             except Exception, e:
                 print e
     
@@ -539,7 +542,7 @@ class Remapper(object):
             self.create_zip(reobf, os.path.join(self.out_dir, 'craftbukkit_mcp.zip'))
         
         self.logger.info('Grabbing patches')
-        shutil.move(patch_dir, PATCH_OUT)
+        shutil.move(patch_dir, self.out_dir)
         
         self.logger.info('Grabbing sources')
         shutil.move(os.path.join(self.cb_dir, 'src', 'main', 'java'), SRC_OUT)
@@ -553,6 +556,21 @@ class Remapper(object):
                 if os.path.isfile(file):
                     self.logger.info('    %s' % file[len(SRC_OUT)+1:])
                     os.remove(file)
+        
+        self.logger.info('Normalizing Lines')
+        for path, _, filelist in os.walk(SRC_OUT, followlinks=True):
+            sub_dir = os.path.relpath(path, SRC_OUT)
+            for cur_file in fnmatch.filter(filelist, '*.java'):
+                src_file = os.path.normpath(os.path.join(path, cur_file))
+                self.normaliselines(src_file)
+                    
+    def normaliselines(self, in_filename):
+        in_filename = os.path.normpath(in_filename)
+        tmp_filename = in_filename + '.tmp'
+        with open(in_filename, 'rb') as in_file:
+            with open(tmp_filename, 'wb') as out_file:
+                out_file.write(in_file.read().replace('\r\n', '\n'))
+        shutil.move(tmp_filename, in_filename)
  
     def finish_cleanup(self):
         def cleanDirs(path):
