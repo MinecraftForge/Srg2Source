@@ -25,7 +25,7 @@ def run(cmd):
 
 def runOutput(cmd):
     print ">",cmd
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.read()
+    return subprocess.check_output(cmd, stderr=subprocess.STDOUT)
 
 DIR_STACK = []
 def pushd(newDir):
@@ -45,7 +45,7 @@ def clean():
 """Get commit IDs and short messages after the starting commit, in reverse chronological order."""
 def readCommitLog(startCommit):
     commits = []
-    for line in runOutput(("git", "log", "--format=oneline")).split("\n"):
+    for line in runOutput(['git', '--no-pager', 'log', '--format=oneline']).split("\n"):
         assert len(line) != 0, "Reached end of commit log without finding starting commit "+startCommit
         commit, message = line.split(" ", 1)
         if commit == startCommit: break
@@ -56,8 +56,7 @@ def readCommitLog(startCommit):
 
 """Get detailed information on a commit."""
 def getCommitInfo(commit):
-    out = runOutput(("git", "show", commit, "--format=format:%an <%ae>%n%aD%n%s%n%n%b%n---END---"))
-    lines = out.split("\n")
+    lines = runOutput(['git', '--no-pager', 'show', commit, '--format=format:%an <%ae>%n%aD%n%s%n%n%b%n---END---']).split("\n")
     author = lines[0]
     date = lines[1]
     messageLines = []
@@ -90,12 +89,12 @@ def getStartCommit():
             sys.exit(1)
 
         print "Initializing new repository"
-        run("git init")
+        run('git init')
         popd()
         print "Starting at default "+defaultStartCommit
         return defaultStartCommit
 
-    message = runOutput(("git", "show", "--format=%s%n%n%b"))
+    message = runOutput(['git', '--no-pager', 'show', '--format=%s%n%n%b'])
 
     r = re.compile(getCreditMessagePrefix().strip() + "([0-9a-f]+)")
     match = r.search(message)
@@ -180,13 +179,14 @@ def main():
         except Exception as e:
             print "WARNING!!! Remapping failed with exception:",e
             print "Continuing anyways"
+            sys.exit(1)
 
         # Append message to commit
         # TODO: former-commit in 'commit notes' like bfg? http://rtyley.github.com/bfg-repo-cleaner/
         message += getCreditMessagePrefix()+commit
 
         # Copy remapper output to git repository
-        inRemappedDirNames = ("patches", "src/org", "src/jline") # subdirectories in inRemappedDir to add 
+        inRemappedDirNames = ("patches", "src") # subdirectories in inRemappedDir to add 
         for part in inRemappedDirNames:
             a = os.path.join(inRemappedDir, part)
             b = os.path.join(outDirGitRepo, part)
@@ -206,18 +206,18 @@ def main():
         pushd(outDirGitRepo)
         for part in inRemappedDirNames:
             run("git add "+part)
-        stagedDiff = runOutput(("git", "diff", "--staged"))
+        stagedDiff = runOutput(['git', '--no-pager', 'diff', '--staged'])
         if len(stagedDiff.strip()) == 0:
             print "Nothing changed in this commit; skipping"  # docs, 'add for diff visibility', etc.
             popd()
             continue
         commitFile = os.path.join(os.getcwd(), "commit.msg")
         file(commitFile,"w").write(message)
-        cmd = "git commit --file='%s' --all" % (commitFile,) 
+        cmd = 'git commit --file "%s" --all' % commitFile
         if author is not None:
-            cmd += " --author='%s'" % (author,)
+            cmd += ' --author "%s"' % author
         if date is not None:
-            cmd += " --date='%s'" % (date,)
+            cmd += ' --date "%s"' % date
         run(cmd)
         os.unlink(commitFile)
 
