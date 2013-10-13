@@ -139,6 +139,8 @@ class Remapper(object):
         OUT_SRG  = os.path.join('specialsource.srg')
         CB_JAR   = os.path.abspath('cb_minecraft_server.jar')
         VA_JAR   = os.path.abspath(os.path.join(self.fml_dir, 'mcp', 'jars', 'minecraft_server.jar'))
+        if not os.path.isfile(VA_JAR):
+            VA_JAR = os.path.abspath(os.path.join(self.fml_dir, 'mcp', 'jars', 'minecraft_server.%s.jar.backup' % self.version))
         if not os.path.exists("tools"): os.mkdir("tools")
         ss_filename = os.path.abspath(os.path.join('tools', 'SpecialSource-1.5-shaded.jar'))
         if not self.download_file("http://search.maven.org/remotecontent?filepath=net/md-5/SpecialSource/1.5/SpecialSource-1.5-shaded.jar", ss_filename):
@@ -379,7 +381,8 @@ class Remapper(object):
             os.path.join(self.cb_dir, 'src', 'main', 'java'),
             os.pathsep.join(deps),
             chained_srg,
-            '--non-fatal']
+            '--non-fatal',
+            '--fix-config', os.path.abspath(os.path.join(self.data, self.version, 'code_fixes.properties'))]
         
         self.logger.info('Attempting to fix CB compiler errors: '+" ".join(CODEFIX))
         if not self.run_command(CODEFIX):
@@ -404,7 +407,8 @@ class Remapper(object):
                 file_work = os.path.normpath(os.path.join(work, path[len(work)+1:], cur_file)).replace(os.path.sep, '/')
                 
                 if not os.path.isfile(file_base):
-                    self.logger.info('Could not find base class? %s -> %s' % (file_base, file_work))
+                    if 'net/minecraft/' in file_base:
+                        self.logger.info('Could not find base class? %s -> %s' % (file_base, file_work))
                     continue
                 fromlines = open(file_base, 'U').readlines()
                 tolines = open(file_work, 'U').readlines()
@@ -414,7 +418,7 @@ class Remapper(object):
                 patch_file = os.path.join(patch_dir, cur_file + '.patch')
                 
                 if len(patch) > 0:
-                    self.logger.info(patch_file[len(patchd)+1:])
+                    self.logger.info('    ' + patch_file[len(patchd)+1:])
                     patch = patch.replace('\r\n', '\n')
                     patch = patch.replace('.java \n', '.java\n')  # Python 2.6 adds trailing space on +++/--- lines, Python 2.7+ doesn't; equalize
                     
@@ -502,6 +506,19 @@ class Remapper(object):
         self.zipfolder(path, '', archive)
         archive.close()
     
+    def kill_folder(self, folder, kill_top=False):
+        for file in os.listdir(folder):
+            path = os.path.join(folder, file)
+            try:
+                if os.path.isfile(path):
+                    os.unlink(path)
+                else:
+                    self.kill_folder(path, True)
+                    if kill_top:
+                        os.unlink(path)
+            except Exception, e:
+                print e
+    
     def create_output(self, patch_dir):
         self.out_dir = self.options.out_dir
         PATCH_OUT = os.path.join(self.out_dir, 'patches')
@@ -511,13 +528,15 @@ class Remapper(object):
         self.logger.info('Gathering output files to %s' % self.out_dir)
         
         if os.path.isdir(self.out_dir):
-            shutil.rmtree(self.out_dir, onerror=self.remove_readonly)
-            
-        os.mkdir(self.out_dir)
-       
-        if not self.options.skip_compile:
+            #shutil.rmtree(self.out_dir, onerror=self.remove_readonly)
+            self.kill_folder(self.out_dir)
+        else:
+            os.mkdir(self.out_dir)
+        
+        reobf = os.path.join(self.fml_dir, 'mcp', 'reobf', 'minecraft_server')
+        if not self.options.skip_compile and os.path.isdir(reobf):
             self.logger.info('Grabbing binary')
-            self.create_zip(os.path.join(self.fml_dir, 'mcp', 'reobf', 'minecraft_server'), os.path.join(self.out_dir, 'craftbukkit_mcp.zip'))
+            self.create_zip(reobf, os.path.join(self.out_dir, 'craftbukkit_mcp.zip'))
         
         self.logger.info('Grabbing patches')
         shutil.move(patch_dir, PATCH_OUT)
