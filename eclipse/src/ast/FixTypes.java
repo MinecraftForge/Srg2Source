@@ -44,7 +44,7 @@ public class FixTypes implements Comparable<FixTypes>
     public int getLength(){ return length; }
     public int getStart(){ return start; }
     @Override
-    public String toString(){ return super.toString() + " " + getStart() + " " + getLength(); }
+    public String toString(){ return getClass().getName() + " " + getStart() + " " + getLength(); }
     
     public static class RemoveMethod extends FixTypes
     {
@@ -117,6 +117,14 @@ public class FixTypes implements Comparable<FixTypes>
             buf.append(");\n    }\n");
             
             newText = buf.toString();
+        }
+    }
+
+    public static class Cast extends FixTypes
+    {
+        public Cast(int start, int length, String newText)
+        {
+            super(start, length, newText);
         }
     }
 }

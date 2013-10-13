@@ -1,6 +1,7 @@
 package ast;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -10,8 +11,10 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -31,6 +34,9 @@ public class CodeFixer
     private static String[] libs = null;
     private static ClassTree TREE = new ClassTree(false);
     private static SrgFile SRG;
+    private static boolean FATAL = true;
+    private static Properties FIXES = new Properties();
+    private static boolean DRYRUN = false;
     
     private static class SourceKey
     {
@@ -49,7 +55,30 @@ public class CodeFixer
     }
     
     private static Method addURL;
-    
+
+    private static boolean argExists(String arg, String[] args)
+    {
+        String needle = "--" + arg;
+        for (int x = 0; x < args.length; x++)
+        {
+            if (needle.equals(args[x])) return true;
+        }
+        return false;
+    }
+
+    private static String argValue(String arg, String[] args)
+    {
+        String needle = "--" + arg;
+        for (int x = 0; x < args.length - 1; x++)
+        {
+            if (needle.equals(args[x]))
+            {
+                return args[x + 1];
+            }
+        }
+        return null;
+    }
+
     public static void main(String[] args) throws Exception
     {        
         SRC = new File(args[0]).getAbsolutePath();
@@ -75,6 +104,18 @@ public class CodeFixer
         for (String s : libs)
         {
             addURL.invoke(CodeFixer.class.getClassLoader(), new File(s).toURI().toURL());
+        }
+
+        FATAL = !argExists("non-fatal", args);
+        DRYRUN = argExists("dry-run", args);
+        String data_file = argValue("fix-config", args);
+        if (data_file != null)
+        {
+            File f = new File(data_file);
+            if (f.exists())
+            {
+                FIXES.load(new FileInputStream(f));
+            }
         }
         
         String[] files = RangeExtractor.gatherFiles(SRC, ".java");
@@ -114,7 +155,7 @@ public class CodeFixer
                 
                 for (FixTypes fix : fixes)
                 {
-                    System.out.println("    Fix: " + fix + " " + offset);
+                    log("    Fix: " + fix + " " + offset);
                     
                     String pre = src.substring(0, fix.getStart() + offset);
                     String post = src.substring(fix.getStart() + fix.getLength() + offset);
@@ -126,9 +167,12 @@ public class CodeFixer
                 String outFile = SRC + "/" + key + ".java";
                 try
                 {
-                    FileWriter out = new FileWriter(outFile);
-                    out.write(src);
-                    out.close();
+                    if (!DRYRUN)
+                    {
+                        FileWriter out = new FileWriter(outFile);
+                        out.write(src);
+                        out.close();
+                    }
                 }
                 catch (IOException e)
                 {
@@ -153,7 +197,7 @@ public class CodeFixer
             {
                 String data = FileUtils.readFileToString(new File(file), Charset.forName("UTF-8")).replaceAll("\r", "");
                 String name = file.replace('\\', '/').substring(SRC.length() + 1);
-                log("    Processing " + name);
+                log("    " + name);
                 CompilationUnit cu = RangeExtractor.createUnit(name, data, SRC, libs);
 
                 ArrayList<TypeDeclaration> classes = new ArrayList<TypeDeclaration>();
@@ -187,9 +231,10 @@ public class CodeFixer
     private static HashMap<String, ArrayList<FixTypes>> findFixes(ArrayList<SourceKey> files) throws ClassNotFoundException
     {
         HashMap<String, ArrayList<FixTypes>> ret = new HashMap<String, ArrayList<FixTypes>>();
+        HashSet<String> added = new HashSet<String>();
         for (SourceKey src : files)
         {
-            log("    Processing " + src.name);
+            log("    " + src.name);
             ArrayList<IProblem> errors = new ArrayList<IProblem>();
             HashMap<String, ArrayList<IProblem>> duplicates = new HashMap<String, ArrayList<IProblem>>();
             
@@ -220,14 +265,19 @@ public class CodeFixer
                         
                         if (!gatherMethod(ret, getClass(clsName, files), name, args, newName))
                         {
-                            log("Could not find class: " + clsName);
-                            log(p.toString());
-                            System.exit(1);
+                            log("      Could not find class: " + clsName);
+                            log("      " + p.toString());
+                            if (FATAL) System.exit(1); else continue;
                         }
                         else
                         {
-                            if (!ret.containsKey(src.name)) ret.put(src.name, new ArrayList<FixTypes>());
-                            ret.get(src.name).add(new FixTypes.PublicMethod(start, length, newName));
+                            String key = "PUBLIC_" + clsName.replace('.', '/') + "/" + name + "(" + args + ")";
+                            if (!added.contains(key))
+                            {
+                                if (!ret.containsKey(src.name)) ret.put(src.name, new ArrayList<FixTypes>());
+                                ret.get(src.name).add(new FixTypes.PublicMethod(start, length, newName));
+                                added.add(key);
+                            }
                         }
                     }
                     else if (id == 71) //Non-visible field
@@ -236,8 +286,8 @@ public class CodeFixer
                         TypeDeclaration cls = getClass(p.getArguments()[1], files);
                         if (cls == null)
                         {
-                            log("Could not find class for field " + p.toString());
-                            System.exit(1);
+                            log("      Could not find class for field " + p.toString());
+                            if (FATAL) System.exit(1); else continue;
                         }
                         boolean exit = false;
                         for (FieldDeclaration field : cls.getFields())
@@ -248,8 +298,13 @@ public class CodeFixer
                                 if (find.equals(name))
                                 {
                                     String clsName = cls.resolveBinding().getQualifiedName().replace('.', '/');
-                                    if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
-                                    ret.get(clsName).add(new FixTypes.PublicField(field));
+                                    String key = "PUBLIC_" + clsName.replace('.', '/') + "/" + name;
+                                    if (!added.contains(key))
+                                    {
+                                        if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
+                                        ret.get(clsName).add(new FixTypes.PublicField(field));
+                                        added.add(key);
+                                    }
                                     exit = true;
                                     break;
                                 }
@@ -297,8 +352,8 @@ public class CodeFixer
                         SrgFile.Class icls = SRG.getClass2(impl.replace('.', '/'));
                         if (icls == null)
                         {
-                            System.out.println("Could not find class in SRG " + impl);
-                            System.exit(1);
+                            log("      Could not find class in SRG " + impl);
+                            if (FATAL) System.exit(1); else continue;
                         }
                         
                         SrgFile.Node mtd = icls.methods1.get(name + signature);
@@ -307,8 +362,8 @@ public class CodeFixer
                         treeNode = treeNode.getParent();
                         if (treeNode == null)
                         {
-                            System.out.println("Could not find missing method, and parent was null: " + impl + "." + name + signature);
-                            System.exit(1);
+                            log("    Could not find missing method, and parent was null: " + impl + "." + name + signature);
+                            if (FATAL) System.exit(1); else continue;
                         }
                         
                         while(mtd == null && treeNode != null)
@@ -320,16 +375,44 @@ public class CodeFixer
                                 mtd = icls.methods1.get(name + signature);
                             }
                         }
-                        
+
+                        String rename = null;
+
+                        String key = "BOUNCE_" + impl.replace('.', '/') + '/' + name + signature;
                         if (mtd == null)
                         {
-                            System.out.println("Could not find bounce rename " + icls.name + '/' + name + signature);
-                            System.exit(1);
+                            if (!FIXES.containsKey(key))
+                            {
+                                log("      Could not find bounce rename " + key);
+                                if (FATAL) System.exit(1); else continue;
+                            }
+                            else
+                            {
+                                rename = FIXES.getProperty(key, null);
+                                if (name != null)
+                                {
+                                    log("      Loaded bounce rename " + key + " -> " + rename);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            rename = mtd.rename;
                         }
                         
-                        String clsName = impl.replace('.', '/');
+                        if (rename != null && !added.contains(key))
+                        {
+                            String clsName = impl.replace('.', '/');
+                            if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
+                            ret.get(clsName).add(new FixTypes.BounceMethod(getClass(impl, files), name, rename, args, returnType));
+                            added.add(key);
+                        }
+                    }
+                    else if (id == 17) //Casting issue
+                    {
+                        String clsName = new String(p.getOriginatingFileName()).replace(".java", "");
                         if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
-                        ret.get(clsName).add(new FixTypes.BounceMethod(getClass(impl, files), name, mtd.rename, args, returnType));
+                        ret.get(clsName).add(new FixTypes.Cast(p.getSourceStart(), 0, "(" + p.getArguments()[1] + ")"));
                     }
                     else
                     {
@@ -342,10 +425,10 @@ public class CodeFixer
             
             if (errors.size() > 0)
             {
-                System.out.println(src.name);
+                log("      " + src.name);
                 for (IProblem p : errors)
                 {
-                    System.out.println("    " + p);
+                    log("        " + p);
                     //for (String s : p.getArguments()) System.out.println("        " + s);
                 }
             }
@@ -450,5 +533,5 @@ public class CodeFixer
     public static void log(String s)
     {
         System.out.println(s);
-    }  
+    }
 }
