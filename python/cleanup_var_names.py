@@ -20,7 +20,10 @@ def get_class_map(mcp, cb):
     map_mcp = get_cl(mcp)
     map = {}
     for t,m in map_cb.iteritems():
-        map[map_mcp[m]] = t
+        if m in map_mcp:
+            map[map_mcp[m]] = t
+        else:
+            print m + " " + t
     for k,v in map.items():
         if k == v:
             map.pop(k)
