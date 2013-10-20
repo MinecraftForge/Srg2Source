@@ -116,7 +116,7 @@ class Remapper(object):
             orig_dir = os.path.abspath('.')
             
             self.logger.info('Setting up FML')
-            if not self.run_command([sys.executable, 'install.py', '--no-client', '--server', '--no-rename'], self.fml_dir):
+            if not self.run_command([sys.executable, 'install.py', '--no-client', '--server', '--no-rename', '--no-assets'], self.fml_dir):
                 self.logger.error('Could not setup FML')
                 sys.exit(1)
                 
