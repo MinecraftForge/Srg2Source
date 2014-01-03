@@ -1,7 +1,9 @@
-workspace.xml
-**/.idea/workspace.xml
-*.jar
-out
-*.swp
-*.pyc
-/output/
+bin
+build
+.gradle
+run
+.settings
+.classpath
+.project
+lib
+eclipse
