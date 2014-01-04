@@ -1,0 +1,120 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven {
+            name = "eclipse"
+            url = "https://repo.eclipse.org/content/groups/eclipse/"
+        }
+    }
+}
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'maven'
+
+group = 'net.minecraftforge.srg2source'
+version = '3.0-SNAPSHOT'
+archivesBaseName = 'Srg2Source'
+targetCompatibility = '1.6'
+sourceCompatibility = '1.6'
+dependencies {
+    compile 'org.ow2.asm:asm-debug-all:4.1' // Debug version, so we can have generics!
+    compile 'org.eclipse.jdt:org.eclipse.jdt.core:3.10.0.v20131029-1755'
+    compile 'commons-io:commons-io:2.4'
+    compile 'org.eclipse.core:org.eclipse.core.runtime:3.7.0'
+}
+
+repositories {
+    maven {
+        name = "forge"
+        url = "http://files.minecraftforge.net/maven"
+    }
+    maven {
+        name = "eclipse"
+        url = "https://repo.eclipse.org/content/groups/eclipse"
+    }
+    mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes 'version':project.version, 'javaCompliance': project.targetCompatibility
+        attributes 'group':project.group
+    }
+}
+
+configurations {
+    deployerJars
+}
+
+artifacts { archives jar }
+
+uploadArchives {
+    repositories {
+        if (project.hasProperty("filesmaven")) {
+            logger.info('Publishing to files server')
+
+            mavenDeployer {
+                configuration = configurations.deployerJars
+
+                repository(url: project.filesmaven.url) {
+                    authentication(userName: project.filesmaven.username, privateKey: project.filesmaven.key)
+                }
+
+                pom {
+                    groupId = project.group
+                    version = project.version
+                    artifactId = project.archivesBaseName
+                    project {
+                        name project.archivesBaseName
+                        packaging 'jar'
+                        description 'Srg2Source library for ForgeGradle'
+                        url 'https://github.com/MinecraftForge/Srg2Source'
+
+                        scm {
+                            url 'https://github.com/MinecraftForge/Srg2Source'
+                            connection 'scm:git:git://github.com/MinecraftForge/Srg2Source.git'
+                            developerConnection 'scm:git:git@github.com:MinecraftForge/Srg2Source.git'
+                        }
+
+                        issueManagement {
+                            system 'github'
+                            url 'https://github.com/MinecraftForge/Srg2Source/issues'
+                        }
+
+                        licenses {
+                            license {
+                                name 'Eclipse Public License (EPL), Version 1.0'
+                                url 'http://www.eclipse.org/legal/epl-v10.html'
+                                distribution 'repo'
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id 'AbrarSyed'
+                                name 'Abrar Syed'
+                                roles { role 'developer' }
+                            }
+                        }
+                        developers {
+                            developer {
+                                id 'LexManos'
+                                name 'Lex Manos'
+                                roles { role 'developer' }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            add project.repositories.mavenLocal()
+        }
+    }
+}
