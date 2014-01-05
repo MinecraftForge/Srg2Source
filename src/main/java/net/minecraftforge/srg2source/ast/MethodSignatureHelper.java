@@ -1,4 +1,4 @@
-package ast;
+package net.minecraftforge.srg2source.ast;
 
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;

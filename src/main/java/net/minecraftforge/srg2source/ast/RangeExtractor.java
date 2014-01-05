@@ -1,4 +1,4 @@
-package ast;
+package net.minecraftforge.srg2source.ast;
 
 import java.io.*;
 import java.nio.charset.Charset;
