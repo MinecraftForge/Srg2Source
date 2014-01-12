@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -26,6 +25,8 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+
+import com.google.common.io.Files;
 
 @SuppressWarnings("unchecked")
 public class CodeFixer
@@ -195,7 +196,7 @@ public class CodeFixer
             log("Processing Source Tree:");
             for (String file : files)
             {
-                String data = FileUtils.readFileToString(new File(file), Charset.forName("UTF-8")).replaceAll("\r", "");
+                String data = Files.toString(new File(file), Charset.forName("UTF-8")).replaceAll("\r", "");
                 String name = file.replace('\\', '/').substring(SRC.length() + 1);
                 log("    " + name);
                 CompilationUnit cu = RangeExtractor.createUnit(name, data, SRC, libs);
