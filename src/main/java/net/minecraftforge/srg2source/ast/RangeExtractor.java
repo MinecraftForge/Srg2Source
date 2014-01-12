@@ -141,7 +141,7 @@ public class RangeExtractor
     {
         String sourceFilePath = path.replace('\\', '/').substring(SRC.length() + 1);
         SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath, logFile);
-        String data = FileUtils.readFileToString(new File(path), Charset.forName("UTF-8")).replaceAll("\r", "");
+        String data = FileUtils.readFileToString(new File(path), "UTF-8").replaceAll("\r", "");
         
         CompilationUnit cu = createUnit(path.replace('\\', '/').substring(SRC.length() + 1), data, SRC, LIBS);
 
