@@ -25,4 +25,6 @@ run
 .project
 lib
 eclipse
-
+.idea
+*.iml
+*.ipr

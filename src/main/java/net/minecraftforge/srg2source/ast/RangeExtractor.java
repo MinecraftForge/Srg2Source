@@ -1,18 +1,21 @@
 package net.minecraftforge.srg2source.ast;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
+
+import com.google.common.io.Files;
 
 @SuppressWarnings("unchecked")
 public class RangeExtractor
@@ -99,11 +102,13 @@ public class RangeExtractor
     
     public static String[] gatherFiles(String path, String filter)
     {
-        Collection<File> ret = FileUtils.listFiles(new File(path), new SuffixFileFilter(filter), DirectoryFileFilter.DIRECTORY);
         ArrayList<String> names = new ArrayList<String>();
-        for (File f : ret)
+        for (File f : new File(path).listFiles())
         {
-            names.add(f.getAbsolutePath());
+            if (f.isDirectory())
+                names.addAll(Arrays.asList(gatherFiles(f.getPath(), filter)));
+            else if (f.getName().endsWith(filter))
+                names.add(f.getAbsolutePath());
         }
         return names.toArray(new String[names.size()]);
     }
@@ -141,7 +146,7 @@ public class RangeExtractor
     {
         String sourceFilePath = path.replace('\\', '/').substring(SRC.length() + 1);
         SymbolRangeEmitter emitter = new SymbolRangeEmitter(sourceFilePath, logFile);
-        String data = FileUtils.readFileToString(new File(path), Charset.forName("UTF-8")).replaceAll("\r", "");
+        String data = Files.toString(new File(path), Charset.forName("UTF-8")).replaceAll("\r", "");
         
         CompilationUnit cu = createUnit(path.replace('\\', '/').substring(SRC.length() + 1), data, SRC, LIBS);
 
