@@ -3,18 +3,23 @@ package net.minecraftforge.srg2source;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
-import joptsimple.internal.Strings;
+import net.minecraftforge.srg2source.rangeapplier.RangeMap;
+import net.minecraftforge.srg2source.rangeapplier.RangeMap.RangeEntry;
+import net.minecraftforge.srg2source.rangeapplier.RenameMap;
+import net.minecraftforge.srg2source.rangeapplier.SrgContainer;
+import net.minecraftforge.srg2source.util.ExceptorFile;
+import net.minecraftforge.srg2source.util.LocalVarFile;
+import net.minecraftforge.srg2source.util.Util;
 
-import com.google.common.base.Splitter;
-import com.google.common.base.Supplier;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.io.Files;
 
 public class RangeApplier
@@ -36,67 +41,35 @@ public class RangeApplier
             parser.accepts("excFiles", "Parameter map file(s), separated by ' '").withRequiredArg().ofType(File.class); // var=excFiles
             parser.accepts("no-rewriteFiles", "Disable rewriting files with new symbol mappings"); //, var="rewriteFiles", default=True
             parser.accepts("no-renameFiles", "Disable renaming files with new filenames"); // var="renameFiles", default=True
-            parser.accepts("no-dumpRenameMap", "Disable dumping symbol rename map before renaming"); // var="dumpRenameMap", default=True
+            //parser.accepts("no-dumpRenameMap", "Disable dumping symbol rename map before renaming"); // var="dumpRenameMap", default=True
             parser.accepts("dumpRangeMap", "Enable dumping the ordered range map and quit"); // var=dumpRangeMap, default=False
             parser.accepts("outDir", "The output folder for editted classes.").withRequiredArg().ofType(File.class); // default null
         }
 
         OptionSet options = parser.parse(args);
 
+        if (options.has("help"))
+        {
+            parser.printHelpOn(System.out);
+            System.exit(0);
+        }
+
         //options.valuesOf("srgFiles");
         File srcRoot = (File) options.valueOf("srcRoot");
         File outDir = (File) options.valueOf("outDir");
         boolean rewriteFiles = !options.has("no-rewriteFiles");
         boolean renameFiles = !options.has("no-renameFiles");
-        boolean dumpRenameMap = !options.has("no-dumpRenameMap");
+        //boolean dumpRenameMap = !options.has("no-dumpRenameMap");
         boolean dumpRangeMap = options.has("dumpRangeMap");
-        
-        // get Srg files
-        List<File> srgFiles;
-        {
-           Object obj = options.valueOf("srgFiles");
-           if (obj instanceof File)
-           {
-               srgFiles = new ArrayList<File>(1);
-               srgFiles.add((File) obj);
-           }
-           else
-           {
-               srgFiles = (List<File>) obj;
-           }
-        }
-        
-        // getExcFiles
-        List<File> excFiles;
-        {
-           Object obj = options.valueOf("excFiles");
-           if (obj instanceof File)
-           {
-               excFiles = new ArrayList<File>(1);
-               excFiles.add((File) obj);
-           }
-           else
-           {
-               excFiles = (List<File>) obj;
-           }
-        }
 
-        System.out.println("Reading rename maps...");
-        Map<String, String>[] renameMaps = getRenameMaps(
-                srgFiles, (File) options.valueOf("mcpConfDir"), (File) options.valueOf("lvRangeMap"),
-                dumpRenameMap, srcRoot, excFiles
-                );
-        //        renameMap, importMap = getRenameMaps(options.srgFiles.split(","), options.mcpConfDir, options.lvRangeMap, options.dumpRenameMap, options.srcRoot, options.excFiles.split(","))
-        System.out.println("Qualifying rename maps...");
-        Map<String, String> qualifiedRenameMap = qualifyClassRenameMaps(renameMaps[0], renameMaps[1]);
-        System.out.println("Reading range map...");
-        Multimap<String, RangeEntry> rangeMapByFile = readRangeMap((File) options.valueOf("srcRangeMap"), srcRoot);
+        // read range map, spit, and return
 
         if (dumpRangeMap)
         {
-            for (String key : rangeMapByFile.keySet())
+            RangeMap ranges = new RangeMap().read((File) options.valueOf("srcRangeMap"));
+            for (String key : ranges.keySet())
             {
-                for (RangeEntry info : rangeMapByFile.get(key))
+                for (RangeEntry info : ranges.get(key))
                 {
                     System.out.println(info);
                 }
@@ -104,285 +77,58 @@ public class RangeApplier
             return;
         }
 
-        System.out.println("Processing files...");
+        // get Srg files.  they are required
+        SrgContainer srgs = new SrgContainer().readSrgs((List<File>) options.valuesOf("srgFiles"));
 
-        for (String key : rangeMapByFile.keySet())
+        // read Srgs into map
+        RenameMap map = new RenameMap();
+        map.readSrg(srgs);
+
+        // read parameter remaps
+        if (options.has("mcpConfDir") && options.hasArgument("mcpConfDir"))
+        {
+            File conf = (File) options.valueOf("mcpConfDir");
+            ExceptorFile primary, secondary = null;
+            primary = new ExceptorFile();
+            if (new File(conf, "joined.exc").exists())
+                primary.read(new File(conf, "joined.exc"));
+            else
+                primary.read(new File(conf, "packaged.exc"));
+
+            if (options.has("excFiles") && options.hasArgument("excFiles"))
+                secondary = new ExceptorFile().read((List<File>) options.valuesOf("excFiles"));
+
+            map.readParamMap(srgs, primary, secondary);
+        }
+
+        // read local varaible map
+        if (options.has("lvRangeMap") && options.hasArgument("lvRangeMap"))
+        {
+            LocalVarFile lv = new LocalVarFile().read((File) options.valueOf("lvRangeMap"));
+            map.readLocalVariableMap(lv, srgs);
+        }
+
+        // read range map
+        System.out.println("Reading range map...");
+        RangeMap ranges = new RangeMap().read((File) options.valueOf("srcRangeMap"));
+
+        System.out.println("Processing files...");
+        for (String key : ranges.keySet())
         {
             if (key.startsWith("jline"))
                 continue;
-            else if (key.startsWith("net/minecraft"))
-            {
-                processJavaSourceFile(srcRoot, outDir, key, rangeMapByFile.get(key), renameMaps[0], renameMaps[1], false, rewriteFiles, renameFiles);
-            }
+//            else if (key.startsWith("net/minecraft/"))
+//            {
+//                processJavaSourceFile(srcRoot, outDir, key, ranges.get(key), map.maps, map.imports, false, rewriteFiles, renameFiles);
+//            }
             else
             {
-                processJavaSourceFile(srcRoot, outDir, key, rangeMapByFile.get(key), qualifiedRenameMap, new HashMap<String, String>(), false, rewriteFiles, renameFiles);
+                //processJavaSourceFile(srcRoot, outDir, key, ranges.get(key), map.getQualified(), new HashMap<String, String>(), false, rewriteFiles, renameFiles);
+                processJavaSourceFile(srcRoot, outDir, key, ranges.get(key), map.maps, map.imports, false, rewriteFiles, renameFiles);
             }
         }
-        
+
         System.out.println("FINISHED!");
-    }
-
-    /**
-     * Transform a rename map to use fully-qualified, removing need for imports
-     */
-    private static Map<String, String> qualifyClassRenameMaps(Map<String, String> renameMap, Map<String, String> importMap)
-    {
-        Map<String, String> out = new HashMap<String, String>();
-        out.putAll(renameMap); // shallow copy OK
-
-        for (Entry<String, String> e : out.entrySet())
-        {
-            if (e.getKey().startsWith("class"))
-            {
-                // Replace with fully-qualified class name (usually imported, but now insert directly when referenced in source)
-                out.put(e.getKey(), importMap.get(e.getKey()));
-            }
-            else if (e.getKey().startsWith("package"))
-            {
-                // No package names in classes - removing existing qualifications
-                //newRenameMap[key] = ""
-                out.put(e.getKey(), "");
-            }
-        }
-
-        return out;
-    }
-
-    /**
-     * Read ApplySrg2Source symbol range map into a dictionary
-     * Keyed by filename -> list of (range start, end, expectedOldText, key)
-     */
-    public static Multimap<String, RangeEntry> readRangeMap(File file, File srcRoot)
-    {
-        Multimap<String, RangeEntry> rangeMap = Multimaps.newMultimap(new HashMap<String, Collection<RangeEntry>>(), new Supplier<Collection<RangeEntry>>()
-        {
-            @Override
-            public Collection<RangeEntry> get()
-            {
-                return new TreeSet<RangeEntry>();
-            }
-        });
-
-        try
-        {
-            for (String line : Files.readLines(file, Charset.defaultCharset()))
-            {
-                List<String> tokens = Splitter.on('|').splitToList(line);
-                if (!tokens.get(0).equals("@"))
-                    continue;
-                String absFilename = tokens.get(1);
-                int startRange = Integer.parseInt(tokens.get(2));
-                int endRange = Integer.parseInt(tokens.get(3));
-                String expectedOldText = tokens.get(4);
-                String kind = tokens.get(5);
-                String filename = getProjectRelativePath(absFilename, srcRoot);
-                List<String> info = tokens.subList(6, tokens.size());
-
-                String key;
-                // Build unique identifier for symbol
-                if (kind.equals("package"))
-                {
-                    String forClass = info.get(1);
-
-                    // key = "package "+packageName # ignore old name (unique identifier == filename)
-                    if (forClass.equals("(file)"))
-                        forClass = getTopLevelClassForFilename(filename);
-                    else
-                        forClass = SrgUtil.sourceName2Internal(forClass); // . -> /
-
-                    // 'forClass' == the class that == in this package; when the class is
-                    // remapped to a different package, this range should be updated
-
-                    key = "package " + forClass;
-                }
-                else if (kind.equals("class"))
-                {
-                    key = "class " + SrgUtil.sourceName2Internal(info.get(0));
-                }
-                else if (kind.equals("field"))
-                {
-                    key = "field " + SrgUtil.sourceName2Internal(info.get(0)) + "/" + info.get(1);
-                }
-                else if (kind.equals("method"))
-                {
-                    if (expectedOldText.contains("super") || expectedOldText.contains("this"))
-                        continue; // hack: avoid erroneously replacing super/this calls
-                    key = "method " + SrgUtil.sourceName2Internal(info.get(0)) + "/" + info.get(1) + " " + info.get(2);
-                }
-                else if (kind.equals("param"))
-                {
-                    key = "param " + SrgUtil.sourceName2Internal(info.get(0)) + "/" + info.get(1) + " " + info.get(2) + " " + info.get(4);  // ignore old name (positional)
-                }
-                else if (kind.equals("localvar"))
-                {
-                    key = "localvar " + SrgUtil.sourceName2Internal(info.get(0)) + "/" + info.get(1) + " " + info.get(2) + " " + info.get(4); // ignore old name (positional)
-                }
-                else
-                {
-                    throw new RuntimeException("Unknown kind: " + kind);
-                }
-
-                // (startRange, endRange, expectedOldText, key)
-                rangeMap.put(filename, new RangeEntry(startRange, endRange, expectedOldText, key));
-            }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-
-        return rangeMap;
-    }
-
-    /**
-     * Get all rename maps, keyed by globally unique symbol identifier, values are new names
-     * @throws IOException
-     */
-    @SuppressWarnings("unchecked")
-    private static Map<String, String>[] getRenameMaps(List<File> srgs, File mcpConfDir, File lvRangeMapFile, boolean dumpRenameMap, File srcRoot, List<File> excFiles) throws IOException
-    {
-        Map<String, String> maps = new TreeMap<String, String>();
-        Map<String, String> importMaps = new HashMap<String, String>();
-
-        // in order: packages classes fields methods sigs
-        Map<String, String>[] srg = SrgUtil.readMultipleSrgs(srgs);
-
-        // CB -> packaged MCP class/field/method
-        for (Entry<String, String> e : srg[1].entrySet()) // classes map
-        {
-            maps.put("class " + e.getKey(), SrgUtil.splitBaseName(e.getValue(), "/"));
-            importMaps.put("class " + e.getKey(), SrgUtil.internalName2Source(e.getValue())); // when renaming class, need to import it, too
-            
-            // and dont forget packages
-            maps.put("package " + SrgUtil.splitPackageName(e.getKey(), "/"), SrgUtil.internalName2Source(SrgUtil.splitPackageName(e.getValue(), "/")));
-        }
-
-        for (Entry<String, String> e : srg[2].entrySet())
-            // fields map
-            maps.put("field " + e.getKey(), SrgUtil.splitBaseName(e.getValue(), "/"));
-
-        for (Entry<String, String> e : srg[3].entrySet())
-            // methods map
-            maps.put("method " + e.getKey(), SrgUtil.splitBaseName(e.getValue(), "/"));
-
-        // Read parameter map from MCP.. it comes from MCP with MCP namings, so have to remap to CB
-        Map<String, String>[] invertedMethodMaps = SrgUtil.invertMethodMap(srg[3], srg[4]);
-
-        // init some stuff
-        Map<String, List<String>> mcpParamMap, cbParamMap;
-        if (mcpConfDir != null)
-        {
-            mcpParamMap = SrgUtil.readParameterMap(mcpConfDir, null, false);
-            // cbParamMap removedParamMap
-            cbParamMap = SrgUtil.remapParameterMap(mcpParamMap, invertedMethodMaps[0], invertedMethodMaps[1], ((BiMap<String, String>) srg[1]).inverse(), false);
-            if (excFiles != null)
-            {
-                for (File file : excFiles)
-                {
-                    Map<String, List<String>> tmp = SrgUtil.readParameterMap(mcpConfDir, file, false);
-                    Map<String, List<String>> tmpClean = SrgUtil.remapParameterMap(tmp, invertedMethodMaps[0], invertedMethodMaps[1], ((BiMap<String, String>) srg[1]).inverse(), true);
-                    // pprint(tmp_clean)
-                    cbParamMap.putAll(tmpClean);
-                }
-            }
-            // removedParamMap = methods in FML/MCP repackaged+joined but not CB = client-only methods
-        }
-        else
-        {
-            mcpParamMap = new HashMap<String, List<String>>();
-            cbParamMap = new HashMap<String, List<String>>();
-        }
-
-        for (Entry<String, List<String>> e : cbParamMap.entrySet())
-        {
-            int i = 0;
-            for (String val : e.getValue())
-            {
-                maps.put("param " + e.getKey() + " " + i, val);
-                i++;
-            }
-        }
-
-        // Local variable map - position in source -> name; derived from MCP rangemap
-        if (lvRangeMapFile != null)
-        {
-            readLocalVariableMap(lvRangeMapFile, maps, ((BiMap<String, String>) srg[1]).inverse(), invertedMethodMaps[0], invertedMethodMaps[1], srcRoot);
-        }
-
-        if (dumpRenameMap)
-        {
-            for (Entry<String, String> e : maps.entrySet())
-            {
-                System.out.println("RENAME MAP: " + e.getKey() + " -> " + e.getValue());
-            }
-        }
-
-        return new Map[] { maps, importMaps };
-    }
-
-    /**
-     * Read existing local variable name from MCP range map to get local variable positional mapping
-     * @throws IOException
-     */
-    private static void readLocalVariableMap(File lvFile, Map<String, String> renameMap, BiMap<String, String> invClassMap, Map<String, String> invMethodMap, Map<String, String> invMethodSigMap, File srcRoot) throws IOException
-    {
-        for (String line : Files.readLines(lvFile, Charset.defaultCharset()))
-        {
-            // @ absFilename startRangeStr endRangeStr expectedOldText kind
-            List<String> tokens = Splitter.on('|').splitToList(line.trim());
-
-            if (!tokens.get(0).equals("@"))
-                continue;
-
-            // mcpClassName, mcpMethodName, mcpMethodSignature, variableName, variableIndex
-            List<String> info = tokens.subList(6, tokens.size());
-            String className, methodName, methodSig;
-
-            if (!tokens.get(5).equals("localvar"))
-                continue;
-
-            String mcpClassName = SrgUtil.sourceName2Internal(info.get(0));
-            //Range map has MCP names, but we need to map from CB
-
-            if (!invClassMap.containsKey(mcpClassName))
-            {
-                className = "net.minecraft.server." + SrgUtil.splitBaseName(mcpClassName, "/"); // fake it, assuming CB mc-dev will choose similar name to MCP
-                System.out.println("WARNING: readLocalVariableMap: no CB class name for MCP class name " + mcpClassName + ", using " + className);
-            }
-            else
-                className = invClassMap.get(mcpClassName);
-
-            if (info.get(1).equals("{}"))
-            {
-                // Initializer - no name
-                methodName = className + "{}";
-                methodSig = "";
-            }
-            else if (info.get(1).equals(SrgUtil.splitBaseName(info.get(1), "/")))
-            {
-                // Constructor - same name as class
-                methodName = className + "/" + SrgUtil.splitBaseName(className, "/");
-                methodSig = SrgUtil.remapSig(info.get(2), invClassMap);
-            }
-            else
-            {
-                // Normal method
-                String key = mcpClassName + "/" + info.get(1) + " " + info.get(2);
-                if (!invMethodMap.containsKey(key))
-                {
-                    System.out.println("NOTICE: local variables available for " + key + " but no inverse method map; skipping");
-                    // probably a changed signature
-                    continue;
-                }
-
-                methodName = invMethodMap.get(key);
-                methodSig = invMethodSigMap.get(key);
-            }
-
-            String key = "localvar " + methodName + " " + methodSig + " " + info.get(4);
-            renameMap.put(key, tokens.get(4)); // existing name
-        }
     }
 
     /**
@@ -391,8 +137,6 @@ public class RangeApplier
      */
     private static void processJavaSourceFile(File srcRoot, File out, String fileName, Collection<RangeEntry> rangeList, Map<String, String> renameMap, Map<String, String> importMap, boolean shouldAnnotate, boolean rewrite, boolean rename) throws IOException
     {
-        //      def processJavaSourceFile(srcRoot, filename, rangeList, renameMap, importMap, shouldAnnotate, options):
-
         File inFile = new File(srcRoot, fileName);
         File outFile;
         if (out == null)
@@ -410,17 +154,20 @@ public class RangeApplier
             System.out.println("Warning: " + fileName + " has CRLF line endings; consider switching to LF");
             data = data.replace("\r", "");
         }
+        
+        StringBuilder outData = new StringBuilder();
+        outData.append(data);
 
         Set<String> importsToAdd = new TreeSet<String>();
         int shift = 0;
 
         // Existing package/class name (with package, internal) derived from filename
-        String oldTopLevelClassFullName = getTopLevelClassForFilename(fileName);
-        String oldTopLevelClassPackage = SrgUtil.splitPackageName(oldTopLevelClassFullName, "/");
-        String oldTopLevelClassName = SrgUtil.splitBaseName(oldTopLevelClassFullName, "/");
+        String oldTopLevelClassFullName = Util.getTopLevelClassForFilename(fileName);
+        String oldTopLevelClassPackage = Util.splitPackageName(oldTopLevelClassFullName);
+        String oldTopLevelClassName = Util.splitBaseName(oldTopLevelClassFullName);
 
         // New package/class name through mapping
-        String newTopLevelClassPackage = SrgUtil.sourceName2Internal(renameMap.get("package " + oldTopLevelClassPackage));
+        String newTopLevelClassPackage = Util.sourceName2Internal(renameMap.get("package " + oldTopLevelClassPackage));
         String newTopLevelClassName = renameMap.get("class " + oldTopLevelClassFullName);
         if (newTopLevelClassPackage != null && newTopLevelClassName == null)
             throw new RuntimeException("filename " + fileName + " found package " + oldTopLevelClassPackage + "->" + newTopLevelClassPackage + " but no class map for " + newTopLevelClassName);
@@ -443,7 +190,7 @@ public class RangeApplier
                 expectedOldText += ".";
             }
 
-            String oldName = data.substring(info.start + shift, end + shift);
+            String oldName = outData.substring(info.start + shift, end + shift);
 
             if (!oldName.equals(expectedOldText))
                 throw new RuntimeException("Rename sanity check failed: expected '" + expectedOldText + "' at [" + info.start + "," + end + "] (shifted " + shift + " to [" + (shift + info.start) + "," + (shift + end) + "]) in " + fileName + ", but found '" + oldName + "'\nRegenerate symbol map on latest sources or start with fresh source and try again");
@@ -456,322 +203,259 @@ public class RangeApplier
                 continue;
             }
 
-            System.out.println("Rename" + info.key + "[" + (info.start + shift) + "," + (end + shift) + "]" + "::" + oldName + "->" + newName);
+            System.out.println("Rename " + info.key + "[" + (info.start + shift) + "," + (end + shift) + "]" + "::" + oldName + "->" + newName);
 
             if (importMap.containsKey(info.key))
             {
                 // This rename requires adding an import, if it crosses packages
-                String importPackage = SrgUtil.splitPackageName(SrgUtil.sourceName2Internal(importMap.get(info.key)), "/");
+                String importPackage = Util.splitPackageName(Util.sourceName2Internal(importMap.get(info.key)));
                 if (!importPackage.equals(newTopLevelClassPackage))
                     importsToAdd.add(importMap.get(info.key));
             }
             // Rename algorithm: 
             // 1. textually replace text at specified range with new text
             // 2. shift future ranges by difference in text length
-            data = data.substring(0, info.start + shift) + newName + data.substring(end + shift);
+            //data = data.substring(0, info.start + shift) + newName + data.substring(end + shift);
+            outData.replace(info.start + shift, end + shift, newName);
             shift += (newName.length() - oldName.length());
         }
+        
+        if (fileName.endsWith("Transformer.java"))
+            System.out.println("lala");
 
-      // Lastly, update imports - this == separate from symbol range manipulation above
-      data = updateImports(data, importsToAdd, importMap);
+        // Lastly, update imports - this == separate from symbol range manipulation above
+        String outString = updateImports(outData, importsToAdd, importMap);
 
-      if (rewrite)
-      {
-          System.out.println("Writing "+outFile);
-          outFile.getParentFile().mkdirs();
-          Files.write(data, outFile, Charset.defaultCharset());
-      }
-      
-      if (rename)
-      {
-          if (newTopLevelClassPackage != null) // rename if package changed
-          {
-            String newFileName = (newTopLevelClassPackage + "/" + newTopLevelClassName + ".java").replace('\\', '/');
-            File newPath = new File(out == null ? srcRoot : out, newFileName);
-            newPath.getParentFile().mkdirs();
+        if (rewrite)
+        {
+            System.out.println("Writing " + outFile);
+            outFile.getParentFile().mkdirs();
+            Files.write(outString, outFile, Charset.defaultCharset());
+        }
 
-            System.out.println("Rename file "+fileName+" -> "+newFileName);
-
-            if (!fileName.equals(newFileName))
+        if (rename)
+        {
+            if (newTopLevelClassPackage != null) // rename if package changed
             {
-              // Create any missing directories in new path
-//              dirComponents = os.path.dirname(newPath).split(SEP)
-//              for i in range(2,len(dirComponents)+1):
-//                  intermediateDir = os.path.sep.join(dirComponents[0:i])
-//                  if not os.path.exists(intermediateDir):
-//                      os.mkdir(intermediateDir)
+                String newFileName = (newTopLevelClassPackage + "/" + newTopLevelClassName + ".java").replace('\\', '/');
+                File newPath = new File(out == null ? srcRoot : out, newFileName);
                 newPath.getParentFile().mkdirs();
 
-              //os.rename(path, newPath)
-                Files.copy(inFile, newPath);
-                if (out == null)
-                    inFile.delete();
-//              cmd = [options.git, 'mv', filename, newFilename]
-//              if not run_command(cmd, cwd=options.srcRoot):
-//                  sys.exit(1)
+                System.out.println("Rename file " + fileName + " -> " + newFileName);
+
+                if (!fileName.equals(newFileName))
+                {
+                    // Create any missing directories in new path
+                    //              dirComponents = os.path.dirname(newPath).split(SEP)
+                    //              for i in range(2,len(dirComponents)+1):
+                    //                  intermediateDir = os.path.sep.join(dirComponents[0:i])
+                    //                  if not os.path.exists(intermediateDir):
+                    //                      os.mkdir(intermediateDir)
+                    newPath.getParentFile().mkdirs();
+
+                    //os.rename(path, newPath)
+                    Files.copy(inFile, newPath);
+                    if (out == null)
+                        inFile.delete();
+                    //              cmd = [options.git, 'mv', filename, newFilename]
+                    //              if not run_command(cmd, cwd=options.srcRoot):
+                    //                  sys.exit(1)
+                }
             }
-          }
-      }
+        }
     }
-    
+
     /**
      * Add new import statements to source
      */
-    private static String updateImports(String data, Set<String> newImports, Map<String, String> importMap)
+    private static String updateImports(StringBuilder data, Set<String> newImports, Map<String, String> importMap)
     {
-        String[] lines = data.split("\n");
+        //String[] lines = data.split("\n");
+        
+        int lastIndex = 0;
+        int nextIndex = data.indexOf("\n");
         // Parse the existing imports and find out where to add ours
         // This doesn't use Psi.. but the syntax is easy enough to parse here
-        LinkedList<String> newLines = new LinkedList<String>();
         boolean addedNewImports = false;
-        
-        LinkedList<String> newImportLines = new LinkedList<String>();
-        for (String imp : newImports)
-        {
-            newImportLines.add("import " + imp + ";");
-        }
-
         boolean sawImports = false;
 
-        for (String line : lines)
+        String line;
+        while (nextIndex > -1)
         {
+            line = data.substring(lastIndex,  nextIndex);
+            
+            while (line.startsWith("\n"))
+            {
+                lastIndex++;
+                line = data.substring(lastIndex,  nextIndex);
+            }
+            
             if (line.startsWith("import "))
             {
                 sawImports = true;
-                
+
                 if (line.startsWith("import net.minecraft."))
                 {
                     // If no import map, *remove* NMS imports (OBC rewritten with fully-qualified names)
                     if (importMap.isEmpty())
+                    {
+                     // next line.
+                        lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
+                        nextIndex = data.indexOf("\n", lastIndex+1); // another +1 because otherwise it would just return lastIndex
                         continue;
-                    
+                    }
+
                     // Rewrite NMS imports
                     String oldClass = line.replace("import ", "").replace(";", "");
                     System.out.println("Import: " + oldClass);
-                    
-                    String newClass;
+
+                    String newClass = oldClass;
                     if (oldClass.equals("net.minecraft.server.*"))
+                    {
+                     // next line.
+                        lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
+                        nextIndex = data.indexOf("\n", lastIndex+1); // another +1 because otherwise it would just return lastIndex
+                        
                         // wildcard NMS imports (CraftWorld, CraftEntity, CraftPlayer).. bad idea
                         continue;
+                    }
+                    else if (importMap.containsKey("class " + Util.sourceName2Internal(oldClass)))
+                        newClass = importMap.get("class " + Util.sourceName2Internal(oldClass));
+
+                    if (newImports.contains(newClass))  // if not already added
+                    {
+                        // otherwise remove from the file... it will be added again later.
+                        data.delete(lastIndex, nextIndex + 1); // the newLine too
+                        nextIndex = data.indexOf("\n", lastIndex); // get from here to the end of the line.
+                        continue;
+                    }
                     else
                     {
-                        if (importMap.containsKey("class " + SrgUtil.sourceName2Internal(oldClass)))
-                            newClass = importMap.get("class " + SrgUtil.sourceName2Internal(oldClass));
-                        else
-                            newClass = SrgUtil.sourceName2Internal(oldClass);
+                        int change = "import ".length();
+                        data.replace(lastIndex, nextIndex, "import ");
+                        data.insert(lastIndex + change, newClass);
+                        change += newClass.length();
+                        data.insert(lastIndex + change, ";");
+                        nextIndex = lastIndex + change + 1; // +1 for the semicolon
                     }
-                    
-                    String newLine = "import "+newClass + ";";
-                    
-                  if (!newImportLines.contains(newLine))  // if not already added
-                      newLines.add(newLine);
                 }
-                else
-                    newLines.add(line);
             }
-            else
+            else if (sawImports && !addedNewImports)
             {
-              if (sawImports && !addedNewImports)
-              {
-                  // Add our new imports right after the last import
-                  System.out.println("Adding "+newImports.size()+" imports");
-                  newLines.addAll(newImportLines);
-                  addedNewImports = true;
-              }
-              newLines.add(line);
+                // Add our new imports right after the last import
+                System.out.println("Adding " + newImports.size() + " imports");
+                
+                CharSequence sub = data.subSequence(lastIndex, data.length()); // grab the rest of the string.
+                data.setLength(lastIndex); // cut off the build there
+                
+                for (String imp : newImports)
+                    data.append("import ").append(imp).append(";\n");
+                
+                int change = data.length() - lastIndex; // get changed size
+                lastIndex = data.length(); // reset the end to the actual end..
+                nextIndex += change; // shift nextIndex accordingly..
+                
+                data.append(sub); // add on the rest if the string again
+                
+                addedNewImports = true;
             }
+            
+            // next line.
+            lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
+            nextIndex = data.indexOf("\n", lastIndex+1); // another +1 because otherwise it would just return lastIndex
         }
 
-      if (!addedNewImports)
-      {
-          LinkedList<String> tmp = new LinkedList<String>();
-          tmp.addAll(newLines.subList(0, 2));
-          tmp.addAll(newImportLines);
-          tmp.addAll(newLines.subList(2, newLines.size()));
-          //newLines = newLines[0:2] + newImportLines + newLines[2:]
-          newLines = tmp;
-      }
+        // got through the whole file without seeing or adding any imports???
+        if (!addedNewImports)
+        {
+            // insert imports after the second line.
+            int index = data.indexOf("\n") + 1;
+            index = data.indexOf("\n", index) + 1; // search again from the second point, for 2 lines. +1 for after the \n
+            
+            CharSequence sub = data.subSequence(index, data.length()); // grab the rest of the string.
+            data.setLength(index); // cut off the build there
+            
+            for (String imp : newImports)
+                data.append("import ").append(imp).append(";\n");
+            
+            data.append(sub); // add on the rest if the string again
+        }
+        
+        String newData = data.toString();
 
-      String newData = Strings.join(newLines, "\n");
-
-      // Warning: ugly hack ahead
-      // The symbol range map extractor is supposed to emit package reference ranges, which we can 
-      // update with the correct new package names. However, it has a bug where the package ranges
-      // are not always emitted on fully-qualified names. For example: (net.minecraft.server.X)Y - a
-      // cast - will fail to recognize the net.minecraft.server package, so it won't be processed by us.
-      // This leads to some qualified names in the original source to becoming "overqualified", that is,
-      // net.minecraft.server.net.minecraft.X; the NMS class is replaced with its fully-qualified name
-      // (in non-NMS source, where we want it to always be fully-qualified): original package name isn't replaced.
-      // Occurs in OBC source which uses fully-qualified NMS names already, and NMS source which (unnecessarily)
-      // uses fully-qualified NMS names, too. Attempted to fix this problem for longer than I should.. 
-      // maybe someone smarter can figure it out -- but until then, in the interest of expediency, I present 
-      // this ugly workaround, replacing the overqualified names after-the-fact.
-      // Fortunately, this pattern is easy enough to reliably detect and replace textually!
-      newData = newData.replace("net.minecraft.server.net", "net");  // OBC overqualified symbols
-      newData = newData.replace("net.minecraft.server.Block", "Block"); // NMS overqualified symbols
-      // ..and qualified inner classes, only one.... last ugly hack, I promise :P
-      newData = newData.replace("net.minecraft.block.BlockSapling/*was:BlockSapling*/.net.minecraft.block.BlockSapling.TreeGenerator", "net.minecraft.block.BlockSapling.TreeGenerator");
-      newData = newData.replace("net.minecraft.block.BlockSapling.net.minecraft.block.BlockSapling.TreeGenerator", "net.minecraft.block.BlockSapling.TreeGenerator");
-
-      return newData;
+        // Warning: ugly hack ahead
+        // The symbol range map extractor is supposed to emit package reference ranges, which we can 
+        // update with the correct new package names. However, it has a bug where the package ranges
+        // are not always emitted on fully-qualified names. For example: (net.minecraft.server.X)Y - a
+        // cast - will fail to recognize the net.minecraft.server package, so it won't be processed by us.
+        // This leads to some qualified names in the original source to becoming "overqualified", that is,
+        // net.minecraft.server.net.minecraft.X; the NMS class is replaced with its fully-qualified name
+        // (in non-NMS source, where we want it to always be fully-qualified): original package name isn't replaced.
+        // Occurs in OBC source which uses fully-qualified NMS names already, and NMS source which (unnecessarily)
+        // uses fully-qualified NMS names, too. Attempted to fix this problem for longer than I should.. 
+        // maybe someone smarter can figure it out -- but until then, in the interest of expediency, I present 
+        // this ugly workaround, replacing the overqualified names after-the-fact.
+        // Fortunately, this pattern is easy enough to reliably detect and replace textually!
+        newData = newData.replace("net.minecraft.server.net", "net");  // OBC overqualified symbols
+        newData = newData.replace("net.minecraft.server.Block", "Block"); // NMS overqualified symbols
+        // ..and qualified inner classes, only one.... last ugly hack, I promise :P
+        newData = newData.replace("net.minecraft.block.BlockSapling/*was:BlockSapling*/.net.minecraft.block.BlockSapling.TreeGenerator", "net.minecraft.block.BlockSapling.TreeGenerator");
+        newData = newData.replace("net.minecraft.block.BlockSapling.net.minecraft.block.BlockSapling.TreeGenerator", "net.minecraft.block.BlockSapling.TreeGenerator");
+        
+        return newData;
     }
 
-    /**
-     * Get filename relative to project at srcRoot, instead of an absolute path
-     */
-    private static String getProjectRelativePath(String absFile, File srcRoot)
-    {
-        // if absFilename[0] != "/": return absFilename # so much for absolute
-        return absFile.replace(srcRoot.getAbsolutePath() + "/", "");
-    }
-
-    /**
-     * Get the top-level class required to be declared in a file by its given name, if in the main tree
-     * This is an internal name, including slashes for packages components
-     */
-    private static String getTopLevelClassForFilename(String filename)
-    {
-        //withoutExt, ext = os.path.splitext(filename)
-        
-        //String noExt = Files.getNameWithoutExtension(filename);
-        //noExt = noExt.replace('\\', '/'); // ya never know windows...
-        
-        // expect project-relative pathname, standard Maven structure
-        //assert parts[0] == "src", "unexpected filename '%s', not in src" % (filename,)
-        //assert parts[1] in ("main", "test"), "unexpected filename '%s', not in src/{test,main}" % (filename,)
-        //assert parts[2] == "java", "unexpected filename '%s', not in src/{test,main}/java" % (filename,)
-
-        // return "/".join(parts[0:])  # "internal" fully-qualified class name, separated by /
-        
-        //return noExt;
-        
-        return filename.replace("."+Files.getFileExtension(filename), "").replace('\\', '/');
-    }
-    
     private static String getNewName(String key, String oldName, Map<String, String> renameMap, boolean shouldAnnotate)
     {
         String newName;
         if (!renameMap.containsKey(key))
         {
-          String constructorClassName = getConstructor(key);
-          if (constructorClassName != null)
-          {
-              // Constructors are not in the method map (from .srg, and can't be derived
-              // exclusively from the class map since we don't know all the parameters).. so we
-              // have to synthesize a rename from the class map here. Ugh..but, it works.
-              System.out.println("FOUND CONSTR " +  key + " " + constructorClassName);
-              if (renameMap.containsKey("class "+constructorClassName))
-                  // Rename constructor to new class name
-                  newName = SrgUtil.splitBaseName(renameMap.get("class "+constructorClassName), "/");
-              else
-                  return null;
-          }
-          else
-              // Not renaming this
-              return null;
+            String constructorClassName = getConstructor(key);
+            if (constructorClassName != null)
+            {
+                // Constructors are not in the method map (from .srg, and can't be derived
+                // exclusively from the class map since we don't know all the parameters).. so we
+                // have to synthesize a rename from the class map here. Ugh..but, it works.
+                System.out.println("FOUND CONSTR " + key + " " + constructorClassName);
+                if (renameMap.containsKey("class " + constructorClassName))
+                    // Rename constructor to new class name
+                    newName = Util.splitBaseName(renameMap.get("class " + constructorClassName));
+                else
+                    return null;
+            }
+            else
+                // Not renaming this
+                return null;
         }
         else
             newName = renameMap.get(key);
-        
+
         if (shouldAnnotate)
-            newName += "/* was "+oldName + "*/";
-        
+            newName += "/* was " + oldName + "*/";
+
         return newName;
     }
-    
+
     /**
-     *  Check whether a unique identifier method key is a constructor, if so return full class name for remapping, else null
+     * Check whether a unique identifier method key is a constructor, if so return full class name for remapping, else null
      */
     private static String getConstructor(String key)
     {
-            String[] tokens = key.split(" ", 3);  // TODO: switch to non-conflicting separator..types can have spaces :(
-            if (!tokens[0].equals("method"))
-                return null;
-            System.out.println(Arrays.toString(tokens));
-            //kind, fullMethodName, methodSig = tokens
-            if (tokens[2].charAt(tokens[2].length()-1) != 'V') // constructors marked with 'V' return type signature in ApplySrg2Source and MCP
-                return null;
-            String fullClassName = SrgUtil.splitPackageName(tokens[1], "/");
-            String methodName = SrgUtil.splitBaseName(tokens[1], "/");
+        String[] tokens = key.split(" ", 3);  // TODO: switch to non-conflicting separator..types can have spaces :(
+        if (!tokens[0].equals("method"))
+            return null;
+        System.out.println(Arrays.toString(tokens));
+        //kind, fullMethodName, methodSig = tokens
+        if (tokens[2].charAt(tokens[2].length() - 1) != 'V') // constructors marked with 'V' return type signature in ApplySrg2Source and MCP
+            return null;
+        String fullClassName = Util.splitPackageName(tokens[1]);
+        String methodName = Util.splitBaseName(tokens[1]);
 
-            String className = SrgUtil.splitBaseName(fullClassName, "/");
+        String className = Util.splitBaseName(fullClassName);
 
-            if (className.equals(methodName)) // constructor has same name as class
-                return fullClassName;
-            else
-                return null;
-    }
-    
-    private static class RangeEntry implements Comparable<RangeEntry>
-    {
-        public final int start, end;
-        public final String expectedOldText, key;
-        
-        public RangeEntry(int start, int end, String expectedOldText, String key)
-        {
-            super();
-            this.start = start;
-            this.end = end;
-            this.expectedOldText = expectedOldText;
-            this.key = key;
-        }
-
-        @Override
-        public int compareTo(RangeEntry arg0)
-        {
-            if (start == arg0.start)
-                return 0;
-            
-            return start > arg0.start ? 1 : -1;
-        }
-
-        @Override
-        public int hashCode()
-        {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + end;
-            result = prime * result + ((expectedOldText == null) ? 0 : expectedOldText.hashCode());
-            result = prime * result + ((key == null) ? 0 : key.hashCode());
-            result = prime * result + start;
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj)
-        {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            RangeEntry other = (RangeEntry) obj;
-            if (end != other.end)
-                return false;
-            if (expectedOldText == null)
-            {
-                if (other.expectedOldText != null)
-                    return false;
-            }
-            else if (!expectedOldText.equals(other.expectedOldText))
-                return false;
-            if (key == null)
-            {
-                if (other.key != null)
-                    return false;
-            }
-            else if (!key.equals(other.key))
-                return false;
-            if (start != other.start)
-                return false;
-            return true;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "RangeEntry [start=" + start + ", end=" + end + ", expectedOldText=" + expectedOldText + ", key=" + key + "]";
-        }
+        if (className.equals(methodName)) // constructor has same name as class
+            return fullClassName;
+        else
+            return null;
     }
 }

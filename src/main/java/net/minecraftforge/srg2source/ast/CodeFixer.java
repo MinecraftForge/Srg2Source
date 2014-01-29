@@ -92,7 +92,7 @@ public class CodeFixer
             }
             else
             {
-                libs = RangeExtractor.gatherFiles(new File(args[1]).getAbsolutePath(), ".jar");
+                libs = RangeExtractor.gatherFiles(new File(args[1]).getAbsolutePath(), ".jar", false);
             }
         }
         else
@@ -119,7 +119,7 @@ public class CodeFixer
             }
         }
         
-        String[] files = RangeExtractor.gatherFiles(SRC, ".java");
+        String[] files = RangeExtractor.gatherFiles(SRC, ".java", false);
         try
         {
             ArrayList<SourceKey> srcClasses = createTree(files);
