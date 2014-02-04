@@ -69,8 +69,20 @@ jar {
     exclude 'data/**'
 }
 
-artifacts { 
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from 'build/docs/javadoc'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
     archives jar
+    archives javadocJar
+    archives sourcesJar
 }
 
 uploadArchives {
@@ -120,11 +132,14 @@ uploadArchives {
                                 name 'Agaricusb'
                                 roles { role 'developer' }
                             }
-                        }
-                        developers {
                             developer {
                                 id 'LexManos'
                                 name 'Lex Manos'
+                                roles { role 'developer' }
+                            }
+                            developer {
+                                id 'AbrarSyed'
+                                name 'Abrar Syed'
                                 roles { role 'developer' }
                             }
                         }
