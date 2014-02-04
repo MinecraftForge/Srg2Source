@@ -2,6 +2,7 @@ package net.minecraftforge.srg2source;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,8 +20,11 @@ import net.minecraftforge.srg2source.rangeapplier.SrgContainer;
 import net.minecraftforge.srg2source.util.ExceptorFile;
 import net.minecraftforge.srg2source.util.LocalVarFile;
 import net.minecraftforge.srg2source.util.Util;
+import net.minecraftforge.srg2source.util.io.FolderSupplier;
+import net.minecraftforge.srg2source.util.io.InputSupplier;
+import net.minecraftforge.srg2source.util.io.OutputSupplier;
 
-import com.google.common.io.Files;
+import com.google.common.io.ByteStreams;
 
 public class RangeApplier
 {
@@ -55,12 +59,17 @@ public class RangeApplier
         }
 
         //options.valuesOf("srgFiles");
-        File srcRoot = (File) options.valueOf("srcRoot");
-        File outDir = (File) options.valueOf("outDir");
+        FolderSupplier srcRoot = new FolderSupplier((File) options.valueOf("srcRoot"));
         boolean rewriteFiles = !options.has("no-rewriteFiles");
         boolean renameFiles = !options.has("no-renameFiles");
         //boolean dumpRenameMap = !options.has("no-dumpRenameMap");
         boolean dumpRangeMap = options.has("dumpRangeMap");
+        
+        // output supplier..
+        OutputSupplier outDir = (OutputSupplier) srcRoot;
+        if (options.has("outDir"))
+            outDir = new FolderSupplier((File) options.valueOf("outDir"));
+            
 
         // read range map, spit, and return
 
@@ -74,6 +83,11 @@ public class RangeApplier
                     System.out.println(info);
                 }
             }
+            
+            // y u annoy me eclipse!?!?!?
+            srcRoot.close();
+            outDir.close();
+            
             return;
         }
 
@@ -128,6 +142,8 @@ public class RangeApplier
             }
         }
 
+        srcRoot.close();
+        outDir.close();
         System.out.println("FINISHED!");
     }
 
@@ -135,15 +151,9 @@ public class RangeApplier
      * Rename symbols in source code
      * @throws IOException
      */
-    private static void processJavaSourceFile(File srcRoot, File out, String fileName, Collection<RangeEntry> rangeList, Map<String, String> renameMap, Map<String, String> importMap, boolean shouldAnnotate, boolean rewrite, boolean rename) throws IOException
+    private static void processJavaSourceFile(InputSupplier inSup, OutputSupplier outSup, String fileName, Collection<RangeEntry> rangeList, Map<String, String> renameMap, Map<String, String> importMap, boolean shouldAnnotate, boolean rewrite, boolean rename) throws IOException
     {
-        File inFile = new File(srcRoot, fileName);
-        File outFile;
-        if (out == null)
-            outFile = inFile;
-        else
-            outFile = new File(out, fileName);
-        String data = Files.toString(inFile, Charset.forName("UTF-8"));
+        String data = new String(ByteStreams.toByteArray(inSup.getInput(fileName)), Charset.forName("UTF-8"));
 
         if (data.contains("\r"))
         {
@@ -228,9 +238,10 @@ public class RangeApplier
 
         if (rewrite)
         {
-            System.out.println("Writing " + outFile);
-            outFile.getParentFile().mkdirs();
-            Files.write(outString, outFile, Charset.defaultCharset());
+            System.out.println("Writing " + fileName);
+            OutputStream outStream = outSup.getOutput(fileName);
+            outStream.write(outString.getBytes(Charset.forName("UTF-8")));
+            outStream.close();
         }
 
         if (rename)
@@ -238,28 +249,14 @@ public class RangeApplier
             if (newTopLevelClassPackage != null) // rename if package changed
             {
                 String newFileName = (newTopLevelClassPackage + "/" + newTopLevelClassName + ".java").replace('\\', '/');
-                File newPath = new File(out == null ? srcRoot : out, newFileName);
-                newPath.getParentFile().mkdirs();
 
                 System.out.println("Rename file " + fileName + " -> " + newFileName);
 
                 if (!fileName.equals(newFileName))
                 {
-                    // Create any missing directories in new path
-                    //              dirComponents = os.path.dirname(newPath).split(SEP)
-                    //              for i in range(2,len(dirComponents)+1):
-                    //                  intermediateDir = os.path.sep.join(dirComponents[0:i])
-                    //                  if not os.path.exists(intermediateDir):
-                    //                      os.mkdir(intermediateDir)
-                    newPath.getParentFile().mkdirs();
-
-                    //os.rename(path, newPath)
-                    Files.copy(inFile, newPath);
-                    if (out == null)
-                        inFile.delete();
-                    //              cmd = [options.git, 'mv', filename, newFilename]
-                    //              if not run_command(cmd, cwd=options.srcRoot):
-                    //                  sys.exit(1)
+                    OutputStream outStream = outSup.getOutput(newFileName);
+                    outStream.write(outString.getBytes(Charset.forName("UTF-8")));
+                    outStream.close();
                 }
             }
         }
