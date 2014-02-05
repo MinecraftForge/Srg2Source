@@ -22,6 +22,10 @@ archivesBaseName = 'Srg2Source'
 targetCompatibility = '1.6'
 sourceCompatibility = '1.6'
 
+configurations {
+    deployerJars
+}
+
 dependencies {
     compile 'org.ow2.asm:asm-debug-all:4.1' // Debug version, so we can have generics!
     compile 'com.google.guava:guava:15.0'
@@ -40,6 +44,9 @@ dependencies {
     compile 'org.eclipse.equinox:preferences:3.5.100-v20130422-1538'
     
     compile 'org.eclipse.jdt:org.eclipse.jdt.core:3.10.0.v20131029-1755'
+    
+    // maven deployer jar
+    deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
 }
 
 repositories {
@@ -59,10 +66,6 @@ jar {
         attributes 'version':project.version, 'javaCompliance': project.targetCompatibility
         attributes 'group':project.group
     }
-}
-
-configurations {
-    deployerJars
 }
 
 jar {
