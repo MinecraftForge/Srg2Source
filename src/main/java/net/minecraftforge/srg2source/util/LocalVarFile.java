@@ -11,12 +11,12 @@ public class LocalVarFile extends ListFile<LocalVar, LocalVarFile>
     {
         if (!line.startsWith("@"))
             return null;
-        
+
         LocalVar var = new LocalVar(line);
-        
+
         if (!var.kind.equals("localvar"))
             return null;
-        
+
         return var;
     }
 

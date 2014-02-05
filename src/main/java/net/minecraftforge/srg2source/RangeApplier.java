@@ -64,12 +64,11 @@ public class RangeApplier
         boolean renameFiles = !options.has("no-renameFiles");
         //boolean dumpRenameMap = !options.has("no-dumpRenameMap");
         boolean dumpRangeMap = options.has("dumpRangeMap");
-        
+
         // output supplier..
         OutputSupplier outDir = (OutputSupplier) srcRoot;
         if (options.has("outDir"))
             outDir = new FolderSupplier((File) options.valueOf("outDir"));
-            
 
         // read range map, spit, and return
 
@@ -83,11 +82,11 @@ public class RangeApplier
                     System.out.println(info);
                 }
             }
-            
+
             // y u annoy me eclipse!?!?!?
             srcRoot.close();
             outDir.close();
-            
+
             return;
         }
 
@@ -131,10 +130,10 @@ public class RangeApplier
         {
             if (key.startsWith("jline"))
                 continue;
-//            else if (key.startsWith("net/minecraft/"))
-//            {
-//                processJavaSourceFile(srcRoot, outDir, key, ranges.get(key), map.maps, map.imports, false, rewriteFiles, renameFiles);
-//            }
+            //            else if (key.startsWith("net/minecraft/"))
+            //            {
+            //                processJavaSourceFile(srcRoot, outDir, key, ranges.get(key), map.maps, map.imports, false, rewriteFiles, renameFiles);
+            //            }
             else
             {
                 //processJavaSourceFile(srcRoot, outDir, key, ranges.get(key), map.getQualified(), new HashMap<String, String>(), false, rewriteFiles, renameFiles);
@@ -164,7 +163,7 @@ public class RangeApplier
             System.out.println("Warning: " + fileName + " has CRLF line endings; consider switching to LF");
             data = data.replace("\r", "");
         }
-        
+
         StringBuilder outData = new StringBuilder();
         outData.append(data);
 
@@ -229,7 +228,7 @@ public class RangeApplier
             outData.replace(info.start + shift, end + shift, newName);
             shift += (newName.length() - oldName.length());
         }
-        
+
         if (fileName.endsWith("Transformer.java"))
             System.out.println("lala");
 
@@ -268,7 +267,7 @@ public class RangeApplier
     private static String updateImports(StringBuilder data, Set<String> newImports, Map<String, String> importMap)
     {
         //String[] lines = data.split("\n");
-        
+
         int lastIndex = 0;
         int nextIndex = data.indexOf("\n");
         // Parse the existing imports and find out where to add ours
@@ -279,14 +278,14 @@ public class RangeApplier
         String line;
         while (nextIndex > -1)
         {
-            line = data.substring(lastIndex,  nextIndex);
-            
+            line = data.substring(lastIndex, nextIndex);
+
             while (line.startsWith("\n"))
             {
                 lastIndex++;
-                line = data.substring(lastIndex,  nextIndex);
+                line = data.substring(lastIndex, nextIndex);
             }
-            
+
             if (line.startsWith("import "))
             {
                 sawImports = true;
@@ -296,9 +295,9 @@ public class RangeApplier
                     // If no import map, *remove* NMS imports (OBC rewritten with fully-qualified names)
                     if (importMap.isEmpty())
                     {
-                     // next line.
+                        // next line.
                         lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
-                        nextIndex = data.indexOf("\n", lastIndex+1); // another +1 because otherwise it would just return lastIndex
+                        nextIndex = data.indexOf("\n", lastIndex + 1); // another +1 because otherwise it would just return lastIndex
                         continue;
                     }
 
@@ -309,10 +308,10 @@ public class RangeApplier
                     String newClass = oldClass;
                     if (oldClass.equals("net.minecraft.server.*"))
                     {
-                     // next line.
+                        // next line.
                         lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
-                        nextIndex = data.indexOf("\n", lastIndex+1); // another +1 because otherwise it would just return lastIndex
-                        
+                        nextIndex = data.indexOf("\n", lastIndex + 1); // another +1 because otherwise it would just return lastIndex
+
                         // wildcard NMS imports (CraftWorld, CraftEntity, CraftPlayer).. bad idea
                         continue;
                     }
@@ -341,25 +340,25 @@ public class RangeApplier
             {
                 // Add our new imports right after the last import
                 System.out.println("Adding " + newImports.size() + " imports");
-                
+
                 CharSequence sub = data.subSequence(lastIndex, data.length()); // grab the rest of the string.
                 data.setLength(lastIndex); // cut off the build there
-                
+
                 for (String imp : newImports)
                     data.append("import ").append(imp).append(";\n");
-                
+
                 int change = data.length() - lastIndex; // get changed size
                 lastIndex = data.length(); // reset the end to the actual end..
                 nextIndex += change; // shift nextIndex accordingly..
-                
+
                 data.append(sub); // add on the rest if the string again
-                
+
                 addedNewImports = true;
             }
-            
+
             // next line.
             lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
-            nextIndex = data.indexOf("\n", lastIndex+1); // another +1 because otherwise it would just return lastIndex
+            nextIndex = data.indexOf("\n", lastIndex + 1); // another +1 because otherwise it would just return lastIndex
         }
 
         // got through the whole file without seeing or adding any imports???
@@ -368,16 +367,16 @@ public class RangeApplier
             // insert imports after the second line.
             int index = data.indexOf("\n") + 1;
             index = data.indexOf("\n", index) + 1; // search again from the second point, for 2 lines. +1 for after the \n
-            
+
             CharSequence sub = data.subSequence(index, data.length()); // grab the rest of the string.
             data.setLength(index); // cut off the build there
-            
+
             for (String imp : newImports)
                 data.append("import ").append(imp).append(";\n");
-            
+
             data.append(sub); // add on the rest if the string again
         }
-        
+
         String newData = data.toString();
 
         // Warning: ugly hack ahead
@@ -398,7 +397,7 @@ public class RangeApplier
         // ..and qualified inner classes, only one.... last ugly hack, I promise :P
         newData = newData.replace("net.minecraft.block.BlockSapling/*was:BlockSapling*/.net.minecraft.block.BlockSapling.TreeGenerator", "net.minecraft.block.BlockSapling.TreeGenerator");
         newData = newData.replace("net.minecraft.block.BlockSapling.net.minecraft.block.BlockSapling.TreeGenerator", "net.minecraft.block.BlockSapling.TreeGenerator");
-        
+
         return newData;
     }
 

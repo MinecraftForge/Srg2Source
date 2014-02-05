@@ -73,7 +73,7 @@ public abstract class ListFile<T, ME extends ListFile> implements Iterable<T>
         return lines.toArray(a);
     }
 
-    @SuppressWarnings({ "unchecked"})
+    @SuppressWarnings("unchecked")
     public ME read(File file)
     {
         try
@@ -93,8 +93,8 @@ public abstract class ListFile<T, ME extends ListFile> implements Iterable<T>
 
         return (ME) this;
     }
-    
-    @SuppressWarnings({ "unchecked"})
+
+    @SuppressWarnings("unchecked")
     public ME read(List<File> files)
     {
         for (File f : files)

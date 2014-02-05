@@ -23,6 +23,7 @@ run
 .settings
 .classpath
 .project
+.pydevproject
 lib
 eclipse
 .idea

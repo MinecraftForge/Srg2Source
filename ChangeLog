@@ -1,3 +1,7 @@
+2014-02-04  3.1
+    * added programatic access points to RangeApplier and RangeExtractor
+    * Implemented RangeApplier in pure java, original python implementation still exists.
+    * converted to a gradle project
 2013-03-26  3.0
     * Complete port to Eclipse AST, integration of renaming scripts, full automation (LexManos)
     * Remove IntelliJ IDEA / PSI support - still available in 2.x if you need it

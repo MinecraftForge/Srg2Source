@@ -189,7 +189,7 @@ public class Util
         else
             return sourceName.replace('.', '/');
     }
-    
+
     /**
      * Get filename relative to project at srcRoot, instead of an absolute path
      */
@@ -206,19 +206,19 @@ public class Util
     public static String getTopLevelClassForFilename(String filename)
     {
         //withoutExt, ext = os.path.splitext(filename)
-        
+
         //String noExt = Files.getNameWithoutExtension(filename);
         //noExt = noExt.replace('\\', '/'); // ya never know windows...
-        
+
         // expect project-relative pathname, standard Maven structure
         //assert parts[0] == "src", "unexpected filename '%s', not in src" % (filename,)
         //assert parts[1] in ("main", "test"), "unexpected filename '%s', not in src/{test,main}" % (filename,)
         //assert parts[2] == "java", "unexpected filename '%s', not in src/{test,main}/java" % (filename,)
 
         // return "/".join(parts[0:])  # "internal" fully-qualified class name, separated by /
-        
+
         //return noExt;
-        
-        return filename.replace("."+Files.getFileExtension(filename), "").replace('\\', '/');
+
+        return filename.replace("." + Files.getFileExtension(filename), "").replace('\\', '/');
     }
 }

@@ -17,7 +17,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 
 group = 'net.minecraftforge.srg2source'
-version = '3.1-SNAPSHOT'
+version = '3.1'
 archivesBaseName = 'Srg2Source'
 targetCompatibility = '1.6'
 sourceCompatibility = '1.6'
