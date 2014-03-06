@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -15,9 +15,12 @@ import com.google.common.io.ByteStreams;
 public class ZipInputSupplier implements InputSupplier
 {
     private final HashMap<String, byte[]> data = new HashMap<String, byte[]>();
+    private String root;
 
     public void readZip(File zip) throws IOException
     {
+        root = zip.getCanonicalPath();
+        
         // begin reading jar
         final ZipInputStream zin = new ZipInputStream(new FileInputStream(zip));
         ZipEntry entry;
@@ -51,7 +54,19 @@ public class ZipInputSupplier implements InputSupplier
     @Override
     public List<String> gatherAll(String endFilter)
     {
-        return Arrays.asList(data.keySet().toArray(new String[data.size()]));
+        LinkedList<String> out = new LinkedList<String>();
+        
+        for (String key : data.keySet())
+            if (key.endsWith(endFilter))
+                out.add(key);
+            
+        return out;
+    }
+
+    @Override
+    public String getRoot(String resource)
+    {
+        return root;
     }
 
 }

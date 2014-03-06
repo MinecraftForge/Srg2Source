@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 import net.minecraftforge.srg2source.util.Util;
+import net.minecraftforge.srg2source.util.io.FolderSupplier;
+import net.minecraftforge.srg2source.util.io.InputSupplier;
 
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
@@ -46,7 +48,7 @@ public class RangeExtractor
     private PrintStream outLogger = System.out;
     private PrintStream errorLogger = System.err;
     private final Set<File> libs = new HashSet<File>();
-    private File srcRoot;
+    private InputSupplier src;
 
     public static void main(String[] args) throws IOException
     {
@@ -56,11 +58,13 @@ public class RangeExtractor
             System.exit(1);
         }
         
+        File src = new File(args[0]);
+        
         RangeExtractor extractor = new RangeExtractor();
-        extractor.setSrceRoot(new File(args[0]));
+        extractor.setSrcRoot(new File(args[0]));
         
         if (args[1].equals("none") || args[1].isEmpty())
-            extractor.addLibs(extractor.getSrcRoot());
+            extractor.addLibs(src);
         else
             extractor.addLibs(args[1]);
         
@@ -97,7 +101,7 @@ public class RangeExtractor
 
         log("Symbol range map extraction starting");
 
-        String[] files = Util.gatherFiles(srcRoot.getAbsolutePath(), ".java", true);
+        String[] files = src.gatherAll(".java").toArray(new String[0]);
         log("Processing " + files.length + " files");
 
         if (files.length == 0)
@@ -118,18 +122,18 @@ public class RangeExtractor
         try
         {
             
-            for (String file : files)
+            for (String path : files)
             {
-                InputStream stream = Files.newInputStreamSupplier(new File(srcRoot, file)).getInput();
+                InputStream stream = src.getInput(path);
                 
                 // do stuff
                 {
-                    SymbolRangeEmitter emitter = new SymbolRangeEmitter(file, outFile);
+                    SymbolRangeEmitter emitter = new SymbolRangeEmitter(path, outFile);
                     String data = new String(ByteStreams.toByteArray(stream), Charset.forName("UTF-8")).replaceAll("\r", "");
 
-                    CompilationUnit cu = Util.createUnit(file, data, srcRoot.getAbsolutePath(), libArray);
+                    CompilationUnit cu = Util.createUnit(path, data, src.getRoot(path), libArray);
 
-                    log("processing " + file);
+                    log("processing " + path);
 
                     int[] newCode = getNewCodeRanges(cu, data);
 
@@ -300,7 +304,7 @@ public class RangeExtractor
         return walker.walk(method.getBody());
     }
 
-    private static int[] getNewCodeRanges(CompilationUnit cu, String data)
+    private int[] getNewCodeRanges(CompilationUnit cu, String data)
     {
         boolean inside = false;
         ArrayList<Integer> ret = new ArrayList<Integer>();
@@ -322,14 +326,14 @@ public class RangeExtractor
                     {
                         ret.add(cmt.getStartPosition());
                         if (inside)
-                            System.out.println("Unmatched newcode start: " + cmt.getStartPosition() + ": " + comment);
+                            log("Unmatched newcode start: " + cmt.getStartPosition() + ": " + comment);
                         inside = true;
                     }
                     else if (command.equalsIgnoreCase("end"))
                     {
                         ret.add(cmt.getStartPosition());
                         if (!inside)
-                            System.out.println("Unmatched newcode end: " + cmt.getStartPosition() + ": " + comment);
+                            log("Unmatched newcode end: " + cmt.getStartPosition() + ": " + comment);
                         inside = false;
                     }
                 }
@@ -396,14 +400,22 @@ public class RangeExtractor
         return this;
     }
 
-    public File getSrcRoot()
+    public InputSupplier getSrc()
     {
-        return srcRoot;
+        return src;
     }
 
-    public RangeExtractor setSrceRoot(File sourceRoot)
+    public RangeExtractor setSrcRoot(File srcRoot)
     {
-        this.srcRoot = sourceRoot;
+        if (srcRoot.isDirectory())
+            src = new FolderSupplier(srcRoot);
+        
+        return this;
+    }
+    
+    public RangeExtractor setSrc(InputSupplier supplier)
+    {
+        src = supplier;
         return this;
     }
     

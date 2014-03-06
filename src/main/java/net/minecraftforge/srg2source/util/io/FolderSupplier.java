@@ -60,14 +60,13 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
         
         int rootCut = root.getAbsolutePath().length() + 1; // +1 for the slash
 
-        File dir;
-        while((dir = dirStack.pop()) != null)
+        while(dirStack.size() > 0)
         {
-            for (File f : dir.listFiles())
+            for (File f : dirStack.pop().listFiles())
             {
                 if (f.isDirectory())
                     dirStack.push(f);
-                else
+                else if (f.getPath().endsWith(endFilter))
                     out.add(f.getAbsolutePath().substring(rootCut));
             }
         }
@@ -79,5 +78,11 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
     public void close() throws IOException
     {
         // they are files.. what do you want me to do?
+    }
+
+    @Override
+    public String getRoot(String resource)
+    {
+        return root.getAbsolutePath();
     }
 }

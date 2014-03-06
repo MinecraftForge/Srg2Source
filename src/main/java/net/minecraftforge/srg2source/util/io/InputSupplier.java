@@ -7,6 +7,14 @@ import java.util.List;
 public interface InputSupplier extends Closeable
 {
     /**
+     * The absolute path of the root entity of the given resource, be it a file or directory.
+     * The passed resource may only be useful when there are resources from multiple roots.
+     * @param resource 
+     * @return
+     */
+    public String getRoot(String resource);
+    
+    /**
      * Opens an input stream to the specified resource. You are expected to close this stream yourself.
      * Returns null if the resource does not exist.
      * @param relPath Reative path seperated with '/' and having no preceding slash.
