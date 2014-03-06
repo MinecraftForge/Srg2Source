@@ -3,12 +3,20 @@ package net.minecraftforge.srg2source.util;
 import java.io.File;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 
 import au.com.bytecode.opencsv.CSVParser;
 import au.com.bytecode.opencsv.CSVReader;
@@ -191,15 +199,6 @@ public class Util
     }
 
     /**
-     * Get filename relative to project at srcRoot, instead of an absolute path
-     */
-    private static String getProjectRelativePath(String absFile, File srcRoot)
-    {
-        // if absFilename[0] != "/": return absFilename # so much for absolute
-        return absFile.replace(srcRoot.getAbsolutePath() + "/", "");
-    }
-
-    /**
      * Get the top-level class required to be declared in a file by its given name, if in the main tree
      * This is an internal name, including slashes for packages components
      */
@@ -220,5 +219,69 @@ public class Util
         //return noExt;
 
         return filename.replace("." + Files.getFileExtension(filename), "").replace('\\', '/');
+    }
+    
+    /**
+     * 
+     * @param path Absolute directory path
+     * @param filter *.java or some similair filter
+     * @param relative whether or not the output paths should be relative
+     * @return
+     */
+    public static String[] gatherFiles(String path, String filter, boolean relative)
+    {
+        ArrayList<String> names = new ArrayList<String>();
+        for (File f : new File(path).listFiles())
+        {
+            if (f.isDirectory())
+            {
+                if (relative)
+                    names.addAll(gatherFiles(f.getAbsolutePath(), path.length()+1, filter));
+                else
+                    names.addAll(Arrays.asList(gatherFiles(f.getAbsolutePath(), filter, relative)));
+            }
+            else if (f.getName().endsWith(filter))
+            {
+                if (relative)
+                    names.add(f.getAbsolutePath().substring(path.length()+1).replace('\\', '/'));
+                else
+                    names.add(f.getAbsolutePath().replace('\\', '/'));
+            }
+        }
+        return names.toArray(new String[names.size()]);
+    }
+    
+    private static List<String> gatherFiles(String path, int cut, String filter)
+    {
+        ArrayList<String> names = new ArrayList<String>();
+        for (File f : new File(path).listFiles())
+        {
+            if (f.isDirectory())
+            {
+                names.addAll(gatherFiles(f.getPath(), cut, filter));
+            }
+            else if (f.getName().endsWith(filter))
+            {
+                names.add(f.getAbsolutePath().substring(cut).replace('\\', '/'));
+            }
+        }
+        return names;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static CompilationUnit createUnit(String name, String data, String srcRoot, String[] libs) throws Exception
+    {
+        ASTParser parser = ASTParser.newParser(AST.JLS4);
+        parser.setKind(ASTParser.K_COMPILATION_UNIT);
+        parser.setResolveBindings(true);
+        parser.setBindingsRecovery(true);
+        Hashtable<String, String> options = JavaCore.getDefaultOptions();
+        options.put(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_1_6);
+        parser.setCompilerOptions(options);
+        parser.setUnitName(name);
+        parser.setEnvironment(libs, new String[] {srcRoot}, null, true);
+
+        parser.setSource(data.toCharArray());
+        return (CompilationUnit) parser.createAST(null);
     }
 }

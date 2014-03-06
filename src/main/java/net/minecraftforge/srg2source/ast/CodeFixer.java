@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import net.minecraftforge.srg2source.util.Util;
+
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -92,7 +94,7 @@ public class CodeFixer
             }
             else
             {
-                libs = RangeExtractor.gatherFiles(new File(args[1]).getAbsolutePath(), ".jar", false);
+                libs = Util.gatherFiles(new File(args[1]).getAbsolutePath(), ".jar", false);
             }
         }
         else
@@ -119,7 +121,7 @@ public class CodeFixer
             }
         }
         
-        String[] files = RangeExtractor.gatherFiles(SRC, ".java", false);
+        String[] files = Util.gatherFiles(SRC, ".java", false);
         try
         {
             ArrayList<SourceKey> srcClasses = createTree(files);
@@ -199,7 +201,7 @@ public class CodeFixer
                 String data = Files.toString(new File(file), Charset.forName("UTF-8")).replaceAll("\r", "");
                 String name = file.replace('\\', '/').substring(SRC.length() + 1);
                 log("    " + name);
-                CompilationUnit cu = RangeExtractor.createUnit(name, data, SRC, libs);
+                CompilationUnit cu = Util.createUnit(name, data, SRC, libs);
 
                 ArrayList<TypeDeclaration> classes = new ArrayList<TypeDeclaration>();
                 List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>)cu.types();

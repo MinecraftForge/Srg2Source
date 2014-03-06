@@ -5,24 +5,48 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Hashtable;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.dom.*;
+import net.minecraftforge.srg2source.util.Util;
 
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.Comment;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.Initializer;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.PackageDeclaration;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+
+import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 
 @SuppressWarnings("unchecked")
 public class RangeExtractor
 {
-    private static PrintWriter logger;
+    private PrintWriter outFile;
+    private PrintStream outLogger = System.out;
+    private PrintStream errorLogger = System.err;
+    private final Set<File> libs = new HashSet<File>();
+    private File srcRoot;
 
     public static void main(String[] args) throws IOException
     {
@@ -31,210 +55,145 @@ public class RangeExtractor
             System.out.println("Usage: RangeExtract [SourceDir] [LibDir] [OutFile]");
             System.exit(1);
         }
-
-        File srcRoot = new File(args[0]);
-        String[] libs; // classpath
-        File outFile = new File(args[2]);
-
+        
+        RangeExtractor extractor = new RangeExtractor();
+        extractor.setSrceRoot(new File(args[0]));
+        
         if (args[1].equals("none") || args[1].isEmpty())
-        {
-            libs = gatherFiles(srcRoot.getAbsolutePath(), ".jar", false);
-        }
+            extractor.addLibs(extractor.getSrcRoot());
         else
+            extractor.addLibs(args[1]);
+        
+        boolean worked = extractor.generateRangeMap(new File(args[2]));
+        
+        System.out.println("Srg2source batch mode finished - now exiting");
+        System.exit(worked ? 0 : 1);
+    }
+    
+    /**
+     * Generates the rangemap.
+     * @param out The file where the RangeMap will be put out.
+     * @return FALSE if it failed for some reason, TRUE otehrwise.
+     */
+    public boolean generateRangeMap(File out)
+    {
+        try
         {
-            if (args[1].contains(File.pathSeparator))
+            if (!out.exists())
             {
-                libs = args[1].split(File.pathSeparator);
+                Files.createParentDirs(out);
+                out.createNewFile();
             }
-            else
-            {
-                libs = gatherFiles(args[1], ".jar", false);
-            }
-        }
 
-        logger = new PrintWriter(new BufferedWriter(new FileWriter(outFile)));
+            // setup printwriter
+            outFile = new PrintWriter(new BufferedWriter(new FileWriter(out)));
+        }
+        catch (Exception e)
+        {
+            // some isue making the output thing.
+            Throwables.propagate(e);
+            return false;
+        }
 
         log("Symbol range map extraction starting");
 
-        String[] files = gatherFiles(srcRoot.getAbsolutePath(), ".java", true);
+        String[] files = Util.gatherFiles(srcRoot.getAbsolutePath(), ".java", true);
         log("Processing " + files.length + " files");
 
         if (files.length == 0)
         {
-            logger.close();
-            return;
+            // no files? well.. nothing to do then.
+            cleanup();
+            return true;
         }
-
-        boolean success = false;
+        
+        // convert libs list
+        String[] libArray = new String[libs.size()];
+        {
+            int i = 0;
+            for (File f : libs)
+                libArray[i++] = f.getAbsolutePath();
+        }
 
         try
         {
-            success = processFiles(files, srcRoot, logger, libs);
+            
+            for (String file : files)
+            {
+                InputStream stream = Files.newInputStreamSupplier(new File(srcRoot, file)).getInput();
+                
+                // do stuff
+                {
+                    SymbolRangeEmitter emitter = new SymbolRangeEmitter(file, outFile);
+                    String data = new String(ByteStreams.toByteArray(stream), Charset.forName("UTF-8")).replaceAll("\r", "");
+
+                    CompilationUnit cu = Util.createUnit(file, data, srcRoot.getAbsolutePath(), libArray);
+
+                    log("processing " + file);
+
+                    int[] newCode = getNewCodeRanges(cu, data);
+
+                    PackageDeclaration pkg = cu.getPackage();
+                    if (pkg != null)
+                    {
+                        emitter.emitPackageRange(pkg);
+                    }
+
+                    List<ImportDeclaration> imports = cu.imports();
+                    for (ImportDeclaration imp : imports)
+                    {
+                        emitter.emitImportRange(imp);
+                    }
+
+                    List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>) cu.types();
+                    for (AbstractTypeDeclaration type : types)
+                    {
+                        if (!processAbstractClass(emitter, type, newCode))
+                        {
+                            cleanup();
+                            stream.close(); // dont forget this!
+                            return false;
+                        }
+                    }
+                }
+                
+                stream.close();
+            }
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
 
-        logger.close();
-
-        System.out.println("Srg2source batch mode finished - now exiting");
-        if (!success)
-        {
-            System.exit(1);
-        }
-    }
-
-    private static void log(String s)
-    {
-        log(s, logger);
-    }
-
-    private static void log(String s, PrintWriter out)
-    {
-        System.out.println(s);
-        out.println(s);
-    }
-
-    /**
-     * 
-     * @param path Absolute directory path
-     * @param filter *.java or some similair filter
-     * @param relative whether or not the output paths should be relative
-     * @return
-     */
-    public static String[] gatherFiles(String path, String filter, boolean relative)
-    {
-        ArrayList<String> names = new ArrayList<String>();
-        for (File f : new File(path).listFiles())
-        {
-            if (f.isDirectory())
-            {
-                if (relative)
-                    names.addAll(gatherFiles(f.getAbsolutePath(), path.length()+1, filter));
-                else
-                    names.addAll(Arrays.asList(gatherFiles(f.getAbsolutePath(), filter, relative)));
-            }
-            else if (f.getName().endsWith(filter))
-            {
-                if (relative)
-                    names.add(f.getAbsolutePath().substring(path.length()+1).replace('\\', '/'));
-                else
-                    names.add(f.getAbsolutePath().replace('\\', '/'));
-            }
-        }
-        return names.toArray(new String[names.size()]);
+        cleanup();
+        return true;
     }
     
-    private static List<String> gatherFiles(String path, int cut, String filter)
+    private void cleanup()
     {
-        ArrayList<String> names = new ArrayList<String>();
-        for (File f : new File(path).listFiles())
-        {
-            if (f.isDirectory())
-            {
-                names.addAll(gatherFiles(f.getPath(), cut, filter));
-            }
-            else if (f.getName().endsWith(filter))
-            {
-                names.add(f.getAbsolutePath().substring(cut).replace('\\', '/'));
-            }
-        }
-        return names;
+        outFile.close();
+        outFile = null;
     }
 
-    /**
-     * @param files Array of relative file paths, with '/' as the seperator
-     * @param inStream Input stream of the file.
-     * @param writer Writer for the output range map
-     * @param libs Classpath entries
-     * @return
-     * @throws Exception
-     */
-    public static boolean processFiles(String[] files, File srcRoot, PrintWriter writer, String[] libs) throws Exception
+    private void log(String s)
     {
-        for (String file : files)
-        {
-            InputStream stream = Files.newInputStreamSupplier(new File(srcRoot, file)).getInput();
-            boolean worked = processFile(file, srcRoot.getAbsolutePath(), stream, writer, libs);
-
-            if (!worked)
-                return false;
-        }
-        return true;
+        outFile.println(s);
+        outLogger.println(s);
     }
 
-    public static CompilationUnit createUnit(String name, String data, String srcRoot, String[] libs) throws Exception
-    {
-        ASTParser parser = ASTParser.newParser(AST.JLS4);
-        parser.setKind(ASTParser.K_COMPILATION_UNIT);
-        parser.setResolveBindings(true);
-        parser.setBindingsRecovery(true);
-        Hashtable<String, String> options = JavaCore.getDefaultOptions();
-        options.put(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_1_6);
-        parser.setCompilerOptions(options);
-        parser.setUnitName(name);
-        parser.setEnvironment(libs, new String[] {srcRoot}, null, true);
-
-        parser.setSource(data.toCharArray());
-        return (CompilationUnit) parser.createAST(null);
-    }
-
-    /**
-     * @param path File path relative to the srcRoot. Should only contain '/'
-     * @param inStream Input stream of the file.
-     * @param writer Writer for the output range map
-     * @param libs Classpath entries
-     * @return
-     * @throws Exception
-     */
-    public static boolean processFile(String path, String root, InputStream inStream, PrintWriter writer, String[] libs) throws Exception
-    {
-        SymbolRangeEmitter emitter = new SymbolRangeEmitter(path, writer);
-        String data = new String(ByteStreams.toByteArray(inStream), Charset.forName("UTF-8")).replaceAll("\r", "");
-
-        CompilationUnit cu = createUnit(path, data, root, libs);
-
-        log("processing " + path, writer);
-
-        int[] newCode = getNewCodeRanges(cu, data);
-
-        PackageDeclaration pkg = cu.getPackage();
-        if (pkg != null)
-        {
-            emitter.emitPackageRange(pkg);
-        }
-
-        List<ImportDeclaration> imports = cu.imports();
-        for (ImportDeclaration imp : imports)
-        {
-            emitter.emitImportRange(imp);
-        }
-
-        List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>) cu.types();
-        for (AbstractTypeDeclaration type : types)
-        {
-            if (!processAbstractClass(emitter, type, newCode, writer))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean processAbstractClass(SymbolRangeEmitter emitter, AbstractTypeDeclaration type, int[] newCode, PrintWriter writer)
+    private boolean processAbstractClass(SymbolRangeEmitter emitter, AbstractTypeDeclaration type, int[] newCode)
     {
         if (type instanceof AnnotationTypeDeclaration)
         {
-            log("Annotation!", writer);
+            log("Annotation!");
         }
         else if (type instanceof EnumDeclaration)
         {
-            log("ENUM!", writer);
+            log("ENUM!");
         }
         else if (type instanceof TypeDeclaration)
         {
-            if (!processClass(emitter, (TypeDeclaration) type, newCode, writer))
+            if (!processClass(emitter, (TypeDeclaration) type, newCode))
             {
                 return false;
             }
@@ -242,7 +201,7 @@ public class RangeExtractor
         return true;
     }
 
-    private static boolean processClass(SymbolRangeEmitter emitter, TypeDeclaration clazz, int[] newCode, PrintWriter writer)
+    private boolean processClass(SymbolRangeEmitter emitter, TypeDeclaration clazz, int[] newCode)
     {
         String className = emitter.emitClassRange(clazz);
 
@@ -301,7 +260,7 @@ public class RangeExtractor
         {
             if (body instanceof AbstractTypeDeclaration)
             {
-                if (!processAbstractClass(emitter, (AbstractTypeDeclaration) body, newCode, writer))
+                if (!processAbstractClass(emitter, (AbstractTypeDeclaration) body, newCode))
                 {
                     return false;
                 }
@@ -413,5 +372,71 @@ public class RangeExtractor
             r[x] = ret.get(x);
         }
         return r;
+    }
+
+    public PrintStream getOutLogger()
+    {
+        return outLogger;
+    }
+
+    public RangeExtractor setOutLogger(PrintStream outLogger)
+    {
+        this.outLogger = outLogger;
+        return this;
+    }
+
+    public PrintStream getErrorLogger()
+    {
+        return errorLogger;
+    }
+
+    public RangeExtractor setErrorLogger(PrintStream errorLogger)
+    {
+        this.errorLogger = errorLogger;
+        return this;
+    }
+
+    public File getSrcRoot()
+    {
+        return srcRoot;
+    }
+
+    public RangeExtractor setSrceRoot(File sourceRoot)
+    {
+        this.srcRoot = sourceRoot;
+        return this;
+    }
+    
+    /**
+     * @param lib Either a directory or a file
+     */
+    public RangeExtractor addLibs(File lib)
+    {
+        if (lib.isDirectory())
+            for (File f : lib.listFiles())
+                addLibs(f);
+        else if (lib.getPath().endsWith("jar")) // to be sure its 
+            libs.add(lib);
+
+        return this;
+    }
+    
+    /**
+     * @param lib Either a directory or a file
+     */
+    public RangeExtractor addLibs(String path)
+    {
+        if (path.contains(File.pathSeparator))
+            for (String f : Splitter.on(File.pathSeparatorChar).splitToList(path))
+                addLibs(new File(f));
+        else
+            addLibs(new File(path));
+
+        return this;
+    }
+
+    public Set<File> getLibs()
+    {
+        return libs;
     }
 }
