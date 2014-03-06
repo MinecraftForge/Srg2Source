@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -316,6 +317,20 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             if (line.startsWith("import "))
             {
                 sawImports = true;
+                
+                // remove stuff thats already added by a wildcard
+                if (line.indexOf('*') > 0)
+                {
+                    LinkedList<String> remove = new LinkedList<String>();
+                    String starter = line.replace("import ", "").replace(".*;", "");
+                    for (String imp : newImports)
+                    {
+                        String impStart = imp.substring(0, imp.lastIndexOf('.'));
+                        if (impStart.equals(starter))
+                            remove.add(imp);
+                    }
+                    newImports.removeAll(remove);
+                }
 
                 if (line.startsWith("import net.minecraft."))
                 {
@@ -335,22 +350,29 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                     String newClass = oldClass;
                     if (oldClass.equals("net.minecraft.server.*"))
                     {
-                        // next line.
+                        // wildcard NMS imports (CraftWorld, CraftEntity, CraftPlayer).. bad idea
+                        
+                        // next line.  Duplicated from the bottom of the loop.
                         lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
                         nextIndex = data.indexOf("\n", lastIndex + 1); // another +1 because otherwise it would just return lastIndex
-
-                        // wildcard NMS imports (CraftWorld, CraftEntity, CraftPlayer).. bad idea
                         continue;
                     }
                     else if (importMap.containsKey("class " + Util.sourceName2Internal(oldClass)))
                         newClass = importMap.get("class " + Util.sourceName2Internal(oldClass));
 
-                    if (newImports.contains(newClass))  // if not already added
+                    if (newImports.contains(newClass))  // if not already added & its changed
                     {
-                        // otherwise remove from the file... it will be added again later.
-                        data.delete(lastIndex, nextIndex + 1); // the newLine too
-                        nextIndex = data.indexOf("\n", lastIndex); // get from here to the end of the line.
-                        continue;
+                        if (oldClass.equals(newClass))
+                        {
+                            newImports.remove(newClass);
+                        }
+                        else
+                        {
+                            // otherwise remove from the file... it will be added again later.
+                            data.delete(lastIndex, nextIndex + 1); // the newLine too
+                            nextIndex = data.indexOf("\n", lastIndex); // get from here to the end of the line.
+                            continue;
+                        }
                     }
                     else
                     {
@@ -419,7 +441,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         // maybe someone smarter can figure it out -- but until then, in the interest of expediency, I present 
         // this ugly workaround, replacing the overqualified names after-the-fact.
         // Fortunately, this pattern is easy enough to reliably detect and replace textually!
-        newData = newData.replace("net.minecraft.server.net", "net");  // OBC overqualified symbols
+        newData = newData.replace("net.minecraft.server.net.minecraft", "net.minecraft");  // OBC overqualified symbols
         newData = newData.replace("net.minecraft.server.Block", "Block"); // NMS overqualified symbols
         // ..and qualified inner classes, only one.... last ugly hack, I promise :P
         newData = newData.replace("net.minecraft.block.BlockSapling/*was:BlockSapling*/.net.minecraft.block.BlockSapling.TreeGenerator", "net.minecraft.block.BlockSapling.TreeGenerator");

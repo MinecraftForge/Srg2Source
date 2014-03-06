@@ -33,6 +33,7 @@ public class SrgContainer
                 if (Strings.isNullOrEmpty(line) || line.startsWith("#"))
                     continue;
 
+                line = line.replace('$', '.');
                 String type = line.substring(0, 2);
                 line = line.substring(4);
                 String[] args = line.split(" ");
