@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import net.minecraftforge.srg2source.util.Util;
+import net.minecraftforge.srg2source.util.io.ConfLogger;
 import net.minecraftforge.srg2source.util.io.FolderSupplier;
 import net.minecraftforge.srg2source.util.io.InputSupplier;
 
@@ -42,11 +42,9 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 
 @SuppressWarnings("unchecked")
-public class RangeExtractor
+public class RangeExtractor extends ConfLogger<RangeExtractor>
 {
     private PrintWriter outFile;
-    private PrintStream outLogger = System.out;
-    private PrintStream errorLogger = System.err;
     private final Set<File> libs = new HashSet<File>();
     private InputSupplier src;
 
@@ -166,7 +164,7 @@ public class RangeExtractor
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            e.printStackTrace(errorLogger);
         }
 
         cleanup();
@@ -179,7 +177,8 @@ public class RangeExtractor
         outFile = null;
     }
 
-    private void log(String s)
+    @Override
+    protected void log(String s)
     {
         outFile.println(s);
         outLogger.println(s);
@@ -354,14 +353,14 @@ public class RangeExtractor
                         {
                             ret.add(cmt.getStartPosition());
                             if (inside)
-                                System.out.println("Unmatched newcode start: " + cmt.getStartPosition() + ": " + comment);
+                                log("Unmatched newcode start: " + cmt.getStartPosition() + ": " + comment);
                             inside = true;
                         }
                         else if (command.equalsIgnoreCase("end"))
                         {
                             ret.add(cmt.getStartPosition());
                             if (!inside)
-                                System.out.println("Unmatched newcode end: " + cmt.getStartPosition() + ": " + comment);
+                                log("Unmatched newcode end: " + cmt.getStartPosition() + ": " + comment);
                             inside = false;
                         }
                     }
@@ -376,28 +375,6 @@ public class RangeExtractor
             r[x] = ret.get(x);
         }
         return r;
-    }
-
-    public PrintStream getOutLogger()
-    {
-        return outLogger;
-    }
-
-    public RangeExtractor setOutLogger(PrintStream outLogger)
-    {
-        this.outLogger = outLogger;
-        return this;
-    }
-
-    public PrintStream getErrorLogger()
-    {
-        return errorLogger;
-    }
-
-    public RangeExtractor setErrorLogger(PrintStream errorLogger)
-    {
-        this.errorLogger = errorLogger;
-        return this;
     }
 
     public InputSupplier getSrc()

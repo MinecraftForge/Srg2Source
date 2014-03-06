@@ -6,15 +6,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import net.minecraftforge.srg2source.util.ExceptorFile;
-import net.minecraftforge.srg2source.util.ExceptorFile.ExcLine;
-import net.minecraftforge.srg2source.util.LocalVarFile;
-import net.minecraftforge.srg2source.util.LocalVarFile.LocalVar;
+import net.minecraftforge.srg2source.rangeapplier.ExceptorFile.ExcLine;
+import net.minecraftforge.srg2source.rangeapplier.LocalVarFile.LocalVar;
 import net.minecraftforge.srg2source.util.Util;
 
 import com.google.common.collect.BiMap;
 
-public class RenameMap
+class RenameMap
 {
     public Map<String, String> maps, imports;
 
@@ -28,7 +26,7 @@ public class RenameMap
      * Generates values in the RenameMap with data from the provided SrgContainer.
      * @param srgs
      */
-    public void readSrg(SrgContainer srgs)
+    public RenameMap readSrg(SrgContainer srgs)
     {
         // CB -> packaged MCP class/field/method
         for (Entry<String, String> e : srgs.classMap.entrySet()) // classes map
@@ -47,6 +45,8 @@ public class RenameMap
         for (Entry<MethodData, MethodData> e : srgs.methodMap.entrySet())
             // methods map
             maps.put("method " + e.getKey(), Util.splitBaseName(e.getValue().name));
+        
+        return this;
     }
 
     public Map<String, String> getQualified()
@@ -72,7 +72,7 @@ public class RenameMap
         return out;
     }
 
-    public void readParamMap(SrgContainer srg, ExceptorFile primaryExc, ExceptorFile secondaryExc)
+    public RenameMap readParamMap(SrgContainer srg, ExceptorFile primaryExc, ExceptorFile secondaryExc)
     {
         //inverted stuff
         BiMap<String, String> classMap = srg.classMap.inverse();
@@ -113,7 +113,7 @@ public class RenameMap
         }
         // do secondary EXC
         if (secondaryExc == null)
-            return;
+            return this;
         for (ExcLine line : primaryExc)
         {
             paramKey = line.getMethodData();
@@ -149,13 +149,15 @@ public class RenameMap
                 i++;
             }
         }
+        
+        return this;
     }
 
     /**
      * Read existing local variable name from MCP range map to get local variable positional mapping
      * @throws IOException
      */
-    public void readLocalVariableMap(LocalVarFile localVars, SrgContainer srg) throws IOException
+    public RenameMap readLocalVariableMap(LocalVarFile localVars, SrgContainer srg) throws IOException
     {
         //inverted stuff
         BiMap<String, String> classMap = srg.classMap.inverse();
@@ -206,5 +208,7 @@ public class RenameMap
             String key = "localvar " + val + " " + var.variableIndex;
             maps.put(key, var.expectedOldText); // existing name
         }
+        
+        return this;
     }
 }

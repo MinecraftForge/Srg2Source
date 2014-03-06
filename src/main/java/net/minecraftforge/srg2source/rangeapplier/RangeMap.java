@@ -17,7 +17,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.io.Files;
 
-public class RangeMap
+class RangeMap
 {
     private final Multimap<String, RangeEntry> rangeMap;
 

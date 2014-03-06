@@ -1,16 +1,16 @@
-package net.minecraftforge.srg2source.util;
+package net.minecraftforge.srg2source.rangeapplier;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.minecraftforge.srg2source.rangeapplier.MethodData;
-import net.minecraftforge.srg2source.util.ExceptorFile.ExcLine;
+import net.minecraftforge.srg2source.rangeapplier.ExceptorFile.ExcLine;
+import net.minecraftforge.srg2source.util.ListFile;
 
 import com.google.common.base.Splitter;
 
-public class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
+class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
 {
     static final Pattern  EXC_REGEX = Pattern.compile("^([^.]+)\\.([^(]+)(\\([^=]+)=([^|]*)\\|(.*)");
     static final Splitter SPLIT     = Splitter.on(",").omitEmptyStrings().trimResults();

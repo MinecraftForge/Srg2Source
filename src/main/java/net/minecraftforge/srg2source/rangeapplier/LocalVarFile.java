@@ -1,8 +1,9 @@
-package net.minecraftforge.srg2source.util;
+package net.minecraftforge.srg2source.rangeapplier;
 
 import java.io.Serializable;
 
-import net.minecraftforge.srg2source.util.LocalVarFile.LocalVar;
+import net.minecraftforge.srg2source.rangeapplier.LocalVarFile.LocalVar;
+import net.minecraftforge.srg2source.util.ListFile;
 
 public class LocalVarFile extends ListFile<LocalVar, LocalVarFile>
 {
