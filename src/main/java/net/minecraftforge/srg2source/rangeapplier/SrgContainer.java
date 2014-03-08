@@ -33,7 +33,6 @@ public class SrgContainer
                 if (Strings.isNullOrEmpty(line) || line.startsWith("#"))
                     continue;
 
-                line = line.replace('$', '.');
                 String type = line.substring(0, 2);
                 line = line.substring(4);
                 String[] args = line.split(" ");
@@ -45,10 +44,13 @@ public class SrgContainer
                     classMap.put(args[0], args[1]);
                 }
                 else if (type.equals("FD"))
-                    fieldMap.put(args[0], args[1]);
+                    fieldMap.put(args[0].replace('$', '/'), args[1].replace('$', '/'));
                 else if (type.equals("MD"))
                 {
-                    methodMap.put(new MethodData(args[0], args[1]), new MethodData(args[2], args[3]));
+                    methodMap.put(
+                            new MethodData(args[0].replace('$', '/'), args[1].replace('$', '/')),
+                            new MethodData(args[2].replace('$', '/'), args[3].replace('$', '/'))
+                            );
                 }
                 else
                     throw new RuntimeException("Invalid SRG file: " + srg);

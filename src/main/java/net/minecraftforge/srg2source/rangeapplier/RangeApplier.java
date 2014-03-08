@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -97,8 +98,6 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         {
             app.readLvRangeMap((File) options.valueOf("lvRangeMap"));
         }
-        
-        
 
         //options.valuesOf("srgFiles");
         FolderSupplier srcRoot = new FolderSupplier((File) options.valueOf("srcRoot"));
@@ -106,7 +105,6 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         OutputSupplier outDir = (OutputSupplier) srcRoot;
         if (options.has("outDir"))
             outDir = new FolderSupplier((File) options.valueOf("outDir"));
-        
         
         app.remapSources(srcRoot, outDir, (File) options.valueOf("srcRangeMap"), false);
         
@@ -165,8 +163,27 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
         return this;
     }
+    
+    /**
+     * Outputs the contents of the rename map.
+     * Spits everything to the outLogger.
+     */
+    public void dumpRenameMap()
+    {
+        for (Entry<String, String> e : map.maps.entrySet())
+        {
+            log("RENAME MAP: " + e.getKey() + " -> " + e.getValue());
+        }
+    }
 
-    //  REAL work
+    /**
+     * Actually remaps stuff.
+     * @param inSupp
+     * @param outSupp
+     * @param rangeMap
+     * @param annotate Marks all renamed symbols with a comment and the old name.
+     * @throws IOException
+     */
     public void remapSources(InputSupplier inSupp, OutputSupplier outSupp, File rangeMap, boolean annotate) throws IOException
     {
         RangeMap range = new RangeMap().read(rangeMap);

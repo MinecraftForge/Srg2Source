@@ -23,6 +23,7 @@ class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
     @Override
     protected ExcLine parseLine(String line)
     {
+        line = line.replace('$', '/');
         Matcher match = EXC_REGEX.matcher(line);
 
         if (match.find())
