@@ -249,7 +249,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         {
             int end = info.end;
             String expectedOldText = info.expectedOldText;
-            if (map.maps.containsKey(info.key) && map.maps.get(info.key).isEmpty())
+            if (map.maps.containsKey(info.key) && map.maps.get(info.key).isEmpty()) // has an empty key.
             {
                 // Replacing a symbol with no text = removing a symbol
                 if (!info.key.startsWith("package "))

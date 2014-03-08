@@ -31,8 +31,16 @@ class RenameMap
         // CB -> packaged MCP class/field/method
         for (Entry<String, String> e : srgs.classMap.entrySet()) // classes map
         {
-            maps.put("class " + e.getKey(), Util.splitBaseName(e.getValue()));
-            imports.put("class " + e.getKey(), Util.internalName2Source(e.getValue())); // when renaming class, need to import it, too
+            String replacedKey = e.getKey().replace('$', '/');
+            maps.put("class " + replacedKey, Util.splitBaseName(e.getValue()).replace('$', '.'));
+            
+            // when renaming class, need to import it, too.
+            // ensure that it doesnt include the full refernce to the inner class...
+            int index = e.getValue().indexOf('$');
+            if (index > 0)
+                imports.put("class " + replacedKey, Util.internalName2Source(e.getValue().substring(0, index)));
+            else
+                imports.put("class " + replacedKey, Util.internalName2Source(e.getValue()));
 
             // and dont forget packages
             maps.put("package " + Util.splitPackageName(e.getKey()), Util.internalName2Source(Util.splitPackageName(e.getValue())));
@@ -40,11 +48,11 @@ class RenameMap
 
         for (Entry<String, String> e : srgs.fieldMap.entrySet())
             // fields map
-            maps.put("field " + e.getKey(), Util.splitBaseName(e.getValue()));
+            maps.put("field " + e.getKey().replace('$', '/'), Util.splitBaseName(e.getValue()).replace('$', '/'));
 
         for (Entry<MethodData, MethodData> e : srgs.methodMap.entrySet())
             // methods map
-            maps.put("method " + e.getKey(), Util.splitBaseName(e.getValue().name));
+            maps.put("method " + e.getKey().toString().replace('$', '/'), Util.splitBaseName(e.getValue().name).replace('$', '/'));
         
         return this;
     }

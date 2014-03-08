@@ -44,13 +44,10 @@ public class SrgContainer
                     classMap.put(args[0], args[1]);
                 }
                 else if (type.equals("FD"))
-                    fieldMap.put(args[0].replace('$', '/'), args[1].replace('$', '/'));
+                    fieldMap.put(args[0], args[1]);
                 else if (type.equals("MD"))
                 {
-                    methodMap.put(
-                            new MethodData(args[0].replace('$', '/'), args[1].replace('$', '/')),
-                            new MethodData(args[2].replace('$', '/'), args[3].replace('$', '/'))
-                            );
+                    methodMap.put(new MethodData(args[0], args[1]), new MethodData(args[2], args[3]));
                 }
                 else
                     throw new RuntimeException("Invalid SRG file: " + srg);
