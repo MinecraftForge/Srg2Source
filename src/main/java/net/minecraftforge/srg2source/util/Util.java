@@ -167,6 +167,28 @@ public class Util
     {
         return className.substring(className.lastIndexOf('/') + 1);
     }
+    
+    /**
+     * Returns the last few names in the string.
+     * @param num the number of extra names to include
+     * @return The last few names in the string. Seperated by '.'
+     */
+    public static String splitBaseName(String qualName, int num)
+    {
+        char c = '.';
+        int index = qualName.lastIndexOf(c);
+        
+        while (index >= 0 && num > 0)
+        {
+            index = qualName.lastIndexOf(c, index-1);
+            num--;
+        }
+        
+        if (index < 0)
+            return qualName;
+        
+        return qualName.substring(index+1);
+    }
 
     /**
      * @return The everything up till last name in the string. Names are seperated by '/'
@@ -185,6 +207,20 @@ public class Util
             return null;
         else
             return internalName.replace('/', '.');
+    }
+    
+    public static int countChar(String str, char c)
+    {
+        int index = str.indexOf(c);
+        int num = 0;
+        
+        while (index >= 0)
+        {
+            num++;
+            index = str.indexOf(c, index+1);
+        }
+        
+        return num;
     }
 
     /**

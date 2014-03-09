@@ -52,7 +52,7 @@ class RenameMap
 
         for (Entry<MethodData, MethodData> e : srgs.methodMap.entrySet())
             // methods map
-            maps.put("method " + e.getKey().toString().replace('$', '/'), Util.splitBaseName(e.getValue().name).replace('$', '/'));
+            maps.put("method " + e.getKey().name.replace('$', '/') + " " + e.getKey().sig, Util.splitBaseName(e.getValue().name).replace('$', '.'));
         
         return this;
     }

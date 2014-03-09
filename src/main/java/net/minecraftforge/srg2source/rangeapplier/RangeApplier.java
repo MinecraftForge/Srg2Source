@@ -491,6 +491,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         }
         else
             newName = renameMap.get(key);
+        
+        newName = Util.splitBaseName(newName, Util.countChar(oldName, '.'));
 
         if (shouldAnnotate)
             newName += "/* was " + oldName + "*/";
