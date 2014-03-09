@@ -303,11 +303,11 @@ public class Util
         }
         return names;
     }
-    
+
+    private static ASTParser parser = ASTParser.newParser(AST.JLS4);
     @SuppressWarnings("unchecked")
     public static CompilationUnit createUnit(String name, String data, String srcRoot, String[] libs) throws Exception
     {
-        ASTParser parser = ASTParser.newParser(AST.JLS4);
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
         parser.setResolveBindings(true);
         parser.setBindingsRecovery(true);
