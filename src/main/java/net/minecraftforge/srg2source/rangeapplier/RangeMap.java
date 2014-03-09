@@ -51,6 +51,7 @@ class RangeMap
         {
             for (String line : Files.readLines(file, Charset.defaultCharset()))
             {
+                line = line.trim();
                 List<String> tokens = Splitter.on('|').splitToList(line);
                 if (!tokens.get(0).equals("@"))
                     continue;
