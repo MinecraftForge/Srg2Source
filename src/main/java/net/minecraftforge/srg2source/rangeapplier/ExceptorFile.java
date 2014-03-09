@@ -23,7 +23,6 @@ class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
     @Override
     protected ExcLine parseLine(String line)
     {
-        line = line.replace('$', '/');
         Matcher match = EXC_REGEX.matcher(line);
 
         if (match.find())
@@ -49,8 +48,8 @@ class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
         ExcLine(String className, String methodName, String methodSig, List<String> exceptions, List<String> params)
         {
             super();
-            this.className = className;
-            this.methodName = methodName;
+            this.className = className.replace('$', '/');
+            this.methodName = methodName.replace('$', '/');
             this.methodSig = methodSig;
             this.exceptions = exceptions;
             this.params = params;
