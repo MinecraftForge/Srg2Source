@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,22 +19,11 @@ import net.minecraftforge.srg2source.util.io.FolderSupplier;
 import net.minecraftforge.srg2source.util.io.InputSupplier;
 
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
-import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
-import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.Comment;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.EnumDeclaration;
-import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
-import org.eclipse.jdt.core.dom.Initializer;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
-import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
-import org.eclipse.jdt.core.dom.Type;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -55,7 +44,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
             System.out.println("Usage: RangeExtract [SourceDir] [LibDir] [OutFile]");
             System.exit(1);
         }
-        
+
         File src = new File(args[0]);
         
         RangeExtractor extractor = new RangeExtractor();
@@ -68,7 +57,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         
         boolean worked = extractor.generateRangeMap(new File(args[2]));
         
-        System.out.println("Srg2source batch mode finished - now exiting");
+        System.out.println("Srg2source batch mode finished - now exiting " + (worked ? 0 : 1));
         System.exit(worked ? 0 : 1);
     }
     
@@ -99,7 +88,9 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
 
         log("Symbol range map extraction starting");
 
-        String[] files = src.gatherAll(".java").toArray(new String[0]);
+        List<String> tmp = src.gatherAll(".java");
+        Collections.sort(tmp);
+        String[] files = tmp.toArray(new String[tmp.size()]);
         log("Processing " + files.length + " files");
 
         if (files.length == 0)
@@ -147,16 +138,16 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                         emitter.emitImportRange(imp);
                     }
 
-                    List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>) cu.types();
-                    for (AbstractTypeDeclaration type : types)
-                    {
-                        if (!processAbstractClass(emitter, type, newCode))
-                        {
-                            cleanup();
-                            stream.close(); // dont forget this!
-                            return false;
-                        }
-                    }
+                    List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>)cu.types();
+                    AbstractTypeDeclaration type = types.get(0);
+
+                    String qualified = ((ITypeBinding)type.getName().resolveBinding()).getQualifiedName();
+                    SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, qualified, newCode);
+
+                    walker.walk(type);
+
+                    emitter.log("endProcessing " + path);
+                    emitter.log("");
                 }
                 
                 stream.close();
@@ -184,6 +175,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         outLogger.println(s);
     }
 
+    /*
     private boolean processAbstractClass(SymbolRangeEmitter emitter, AbstractTypeDeclaration type, int[] newCode)
     {
         if (type instanceof AnnotationTypeDeclaration)
@@ -273,7 +265,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         return true;
     }
 
-    private static boolean processMethod(SymbolRangeEmitter emitter, String className, MethodDeclaration method, int[] newCode)
+    private boolean processMethod(SymbolRangeEmitter emitter, String className, MethodDeclaration method, int[] newCode)
     {
         String methodSignature = emitter.emitMethodRange(method);
 
@@ -302,7 +294,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
 
         return walker.walk(method.getBody());
     }
-
+    */
     private int[] getNewCodeRanges(CompilationUnit cu, String data)
     {
         boolean inside = false;

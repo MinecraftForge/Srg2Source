@@ -24,6 +24,11 @@ public class SymbolRangeEmitter
         log(commonFields(name, pkg.getName()) + "package" + FS + name + FS + "(file)");
     }
 
+    public String getSourcePath()
+    {
+        return sourceFilePath;
+    }
+
     /**
      * Emit range of import statement, including name of the imported
      * package/class
@@ -113,13 +118,16 @@ public class SymbolRangeEmitter
         }
     }
 
-    public void emitFieldRange(VariableDeclarationFragment field)
+    public void emitFieldRange(VariableDeclarationFragment field) { emitFieldRange(field, null); }
+    public void emitFieldRange(VariableDeclarationFragment field, String parent)
     {
         IVariableBinding var = field.resolveBinding();
         String name = var.getName();
         String cls = var.getDeclaringClass().getQualifiedName();
         String init = "";
 
+        if (cls.isEmpty())
+            cls = parent;
 
         //server|field|net.minecraft.server.WorldManager|server
         if (name.equals("__OBFID"))
@@ -200,6 +208,17 @@ public class SymbolRangeEmitter
         log(commonFields(name, method.getName()) + "method" + FS + owner + FS + name + FS + signature);
 
         return signature;
+    }
+
+    public String getMethodSignature(MethodDeclaration method)
+    {
+        IMethodBinding bind = resolveOverrides(method.resolveBinding());
+        if (bind == null)
+        {
+            log("Null method binding! " + method);
+            throw new RuntimeException("Null method binding! " + method);
+        }
+        return MethodSignatureHelper.getSignature(bind);
     }
     
     public void emitParameterRange(MethodDeclaration method, String signature, SingleVariableDeclaration param, int index)
@@ -367,7 +386,7 @@ public class SymbolRangeEmitter
     // Field separator
     private final String FS = "|";
 
-    private String commonFields(String oldText, ASTNode textRange)
+    public String commonFields(String oldText, ASTNode textRange)
     {
         // Include source filename for opening, textual range start/end, and old
         // text for sanity check
@@ -421,12 +440,15 @@ public class SymbolRangeEmitter
                 + variableIndex);
     }*/
 
+    private String tab = "";
+    public void tab(){ tab += "   "; }
+    public void untab(){ tab = tab.substring(0, tab.length() - 3); }
     public void log(String s)
     {
         //System.out.println(s);
         if (logFile != null)
         {
-            logFile.println(s);
+            logFile.println(tab + s);
         }
     }
 

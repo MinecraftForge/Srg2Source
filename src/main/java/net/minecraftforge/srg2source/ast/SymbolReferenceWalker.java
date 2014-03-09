@@ -1,15 +1,18 @@
 package net.minecraftforge.srg2source.ast;
 
 import java.util.HashMap;
+import java.util.List;
 
 import org.eclipse.jdt.core.dom.*;
 
 /**
  * Recursively descends and processes symbol references
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "unchecked"})
 public class SymbolReferenceWalker extends ASTVisitor
 {
+    private static final String FS = "|";
+
     // Where to write results to
     private SymbolRangeEmitter emitter;
 
@@ -17,6 +20,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     private String className;
     private String methodName = "(outside-method)";
     private String methodSignature = "";
+    private SymbolReferenceWalker parent = null;
 
     private int[] newCodeRanges = new int[0];
 
@@ -36,13 +40,21 @@ public class SymbolReferenceWalker extends ASTVisitor
     {
         this.emitter = emitter;
         this.className = className;
+        this.newCodeRanges = newCode;
     }
 
-    public SymbolReferenceWalker(SymbolRangeEmitter emitter, String className, int[] newCode, String methodName, String methodSignature)
+    private SymbolReferenceWalker(String className, SymbolReferenceWalker parent)
+    {
+        this(parent.emitter, className, parent.newCodeRanges);
+        this.parent = parent;
+    }
+
+    private SymbolReferenceWalker(SymbolRangeEmitter emitter, String className, int[] newCode, String methodName, String methodSignature)
     {
         this(emitter, className, newCode);
         this.methodName = methodName;
         this.methodSignature = methodSignature;
+        this.newCodeRanges = newCode;
     }
 
     /**
@@ -113,329 +125,140 @@ public class SymbolReferenceWalker extends ASTVisitor
 
         return index;
     }
-/*
-    private boolean walk(Expression expression, int depth)
+
+    public boolean visit(AnnotationTypeDeclaration node) {
+        emitter.log("Annotation Start: " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
+        emitter.tab();
+        return true;
+    }
+    public void endVisit(AnnotationTypeDeclaration node) {
+        emitter.log("Annotation End  : " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
+        emitter.untab();
+    }
+
+    private int anonCount = 1;
+    public boolean visit(AnonymousClassDeclaration node)
     {
-        // .. and foreach
-        if (expression instanceof PsiForeachStatement)
+        String name = this.className + "$" + anonCount++;
+        emitter.log("Anon Class Start: " + name);// + bind.getName());// + //.getDeclaringClass().getQualifiedName());
+        emitter.tab();
+
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(name, this);
+        for (BodyDeclaration body : (List<BodyDeclaration>)node.bodyDeclarations())
         {
-            PsiForeachStatement psiForeachStatement = (PsiForeachStatement) expression;
-            PsiParameter psiParameter = psiForeachStatement
-                    .getIterationParameter();
-            int index = assignLocalVariableIndex(psiParameter);
-            emitter.emitLocalVariableRange(className, methodName,
-                    methodSignature, psiParameter, index);
-        }
+            if (body instanceof FieldDeclaration)
+            {
+                FieldDeclaration field = (FieldDeclaration)body;
+                emitter.emitTypeRange(field.getType());
 
-        // Variable reference
-        if (expression instanceof PsiJavaCodeReferenceElement)
-        {
-            PsiJavaCodeReferenceElement psiJavaCodeReferenceElement = (PsiJavaCodeReferenceElement) expression;
-
-            // Identifier token naming this reference without qualification
-            PsiElement nameElement = psiJavaCodeReferenceElement
-                    .getReferenceNameElement();
-
-            // What this reference expression actually refers to
-            PsiElement referentElement = psiJavaCodeReferenceElement.resolve();
-
-            if (referentElement == null)
-            {
-                // Element references something that doesn't exist! This shows
-                // in red in the IDE, as unresolved symbols.
-                // Fail hard
-                emitter.log("FAILURE: unresolved symbol: null referent "
-                        + expression + " in " + className + " " + methodName
-                        + "," + methodSignature + "," + nameElement.getText()
-                        + "," + nameElement.getTextRange());
-                /*
-                 * if (methodSignature.contains("<")) { // for some reason -
-                 * MCPC fails to remap, with this and only this one broken
-                 * reference: // FAILURE: unresolved symbol: null referent null
-                 * in cpw.mods.fml.common.event.FMLFingerprintViolationEvent
-                 * FMLFingerprintViolationEvent
-                 * ,(ZLjava/io/File;Lcom/google/common
-                 * /collect/ImmutableSet<java/lang/String>;)V // just ignore it
-                 * emitter.log("TODO: support templated method parameter here");
-                 * } else { return false; }
-                 * /
-            }
-            else if (referentElement instanceof PsiPackage)
-            {
-                // Not logging package since includes net, net.minecraft,
-                // net.minecraft.server.. all components
-                // TODO: log reference for rename
-                // emitter.log("PKGREF"+referentElement+" name="+nameElement);
-            }
-            else if (referentElement instanceof PsiClass)
-            {
-                emitter.emitReferencedClass(nameElement,
-                        (PsiClass) referentElement);
-                // TODO
-                // emitter.emitTypeQualifierRangeIfQualified((psiJavaCodeReferenceElement));
-            }
-            else if (referentElement instanceof PsiField)
-            {
-                emitter.emitReferencedField(nameElement,
-                        (PsiField) referentElement);
-                // TODO
-                // emitter.emitTypeQualifierRangeIfQualified((psiJavaCodeReferenceElement));
-            }
-            else if (referentElement instanceof PsiMethod)
-            {
-                emitter.emitReferencedMethod(nameElement,
-                        (PsiMethod) referentElement);
-                // TODO
-                // emitter.emitTypeQualifierRangeIfQualified((psiJavaCodeReferenceElement));
-            }
-            else if (referentElement instanceof PsiLocalVariable)
-            {
-                PsiLocalVariable psiLocalVariable = (PsiLocalVariable) referentElement;
-
-                // Index of local variable as declared in method
-                int index;
-                if (!localVariableIndices.containsKey(psiLocalVariable))
+                for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>)field.fragments())
                 {
-                    index = -1;
-                    emitter.log("couldn't find local variable index for "
-                            + psiLocalVariable + " in " + localVariableIndices);
-                }
-                else
-                {
-                    index = localVariableIndices.get(psiLocalVariable);
-                }
-
-                emitter.emitReferencedLocalVariable(nameElement, className,
-                        methodName, methodSignature, psiLocalVariable, index);
-            }
-            else if (referentElement instanceof PsiParameter)
-            {
-                PsiParameter psiParameter = (PsiParameter) referentElement;
-
-                PsiElement declarationScope = psiParameter
-                        .getDeclarationScope();
-
-                if (declarationScope instanceof PsiMethod)
-                {
-                    // Method parameter
-
-                    int index;
-                    if (!paramIndices.containsKey(psiParameter))
-                    {
-                        index = -1;
-                        // TODO: properly handle parameters in inner classes..
-                        // currently we always look at the outer method,
-                        // but there could be parameters in a method in an inner
-                        // class. This currently causes four errors in CB,
-                        // CraftTask and CraftScheduler, since it makes heavy
-                        // use of anonymous inner classes.
-                        emitter.log("WARNING: couldn't find method parameter index for "
-                                + psiParameter
-                                + " in "
-                                + paramIndices);
-                    }
-                    else
-                    {
-                        index = paramIndices.get(psiParameter);
-                    }
-
-                    emitter.emitReferencedMethodParameter(nameElement,
-                            className, methodName, methodSignature,
-                            psiParameter, index);
-                }
-                else if (declarationScope instanceof PsiForeachStatement
-                        || declarationScope instanceof PsiCatchSection)
-                {
-                    // New variable declared with for(type var:...) and
-                    // try{}catch(type var){}
-                    // For some reason, PSI calls these "parameters", but
-                    // they're more like local variable declarations
-                    // Treat them as such
-
-                    int index;
-                    if (!localVariableIndices.containsKey(psiParameter))
-                    {
-                        index = -1;
-                        emitter.log("WARNING: couldn't find non-method parameter index for "
-                                + psiParameter + " in " + localVariableIndices);
-                    }
-                    else
-                    {
-                        index = localVariableIndices.get(psiParameter);
-                    }
-                    emitter.emitTypeRange(psiParameter.getTypeElement());
-                    emitter.emitReferencedLocalVariable(nameElement, className,
-                            methodName, methodSignature, psiParameter, index);
-                }
-                else
-                {
-                    emitter.log("WARNING: parameter " + psiParameter
-                            + " in unknown declaration scope "
-                            + declarationScope);
+                    emitter.emitFieldRange(frag, name);
+                    // Initializer can refer to other symbols, so walk it, too
+                    SymbolReferenceWalker init = new SymbolReferenceWalker(name, walker);
+                    init.anonCount = walker.anonCount;
+                    init.walk(frag.getInitializer());
+                    walker.anonCount = init.anonCount;
                 }
             }
             else
             {
-                emitter.log("WARNING: ignoring unknown referent "
-                        + referentElement + " in " + className + " "
-                        + methodName + "," + methodSignature);
+                walker.walk(body);
             }
-
-            /*
-             * emitter.log("   ref "+psiReferenceExpression+
-             * " nameElement="+nameElement+
-             * " name="+psiReferenceExpression.getReferenceName()+
-             * " resolve="+psiReferenceExpression.resolve()+
-             * " text="+psiReferenceExpression.getText()+
-             * " qualifiedName="+psiReferenceExpression.getQualifiedName()+
-             * " qualifierExpr="+psiReferenceExpression.getQualifierExpression()
-             * );
-             * /
         }
 
-        PsiElement[] children = expression.getChildren();
-        if (children != null)
+        emitter.untab();
+        emitter.log("Anon Class End: " + name);
+        return false;
+    }
+
+    public boolean visit(AnnotationTypeMemberDeclaration node) { return true; }
+    public boolean visit(ArrayAccess             node) { return true; }
+    public boolean visit(ArrayCreation           node) { return true; }
+    public boolean visit(ArrayInitializer        node) { return true; }
+    public boolean visit(ArrayType               node) { return true; }
+    public boolean visit(AssertStatement         node) { return true; }
+    public boolean visit(Assignment              node) { return true; }
+    public boolean visit(CastExpression          node) { return true; }
+    public boolean visit(CatchClause             node) { return true; }
+    public boolean visit(ClassInstanceCreation   node) { return true; }
+    public boolean visit(CompilationUnit         node) { return true; }
+    public boolean visit(ConstructorInvocation   node) { return true; }
+    public boolean visit(EnumConstantDeclaration node) { return true; }
+    public boolean visit(ExpressionStatement     node) { return true; }
+    public boolean visit(FieldAccess             node) { return true; }
+    public boolean visit(ForStatement            node) { return true; }
+    public boolean visit(IfStatement             node) { return true; }
+    public boolean visit(LabeledStatement        node) { return true; }
+    public boolean visit(TypeLiteral             node) { return true; }
+    public boolean visit(TypeParameter           node) { return true; }
+    public boolean visit(MethodInvocation        node) { return true; }
+    public boolean visit(ParameterizedType       node) { return true; }
+    public boolean visit(QualifiedName           node) { return true; }
+    public boolean visit(QualifiedType           node) { return true; }
+
+    public boolean visit(FieldDeclaration node) { 
+        emitter.emitTypeRange(node.getType());
+
+        for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>)node.fragments())
         {
-            for (PsiElement child : children)
-            {
-                if (!walk(child, depth + 1)) { return false; // fail
-                }
-            }
+            emitter.emitFieldRange(frag, className);
+            // Initializer can refer to other symbols, so walk it, too
+            SymbolReferenceWalker walker = new SymbolReferenceWalker(className, this);
+            walker.anonCount = this.anonCount;
+            walker.walk(frag.getInitializer());
+            this.anonCount = walker.anonCount;
         }
+        return false;
+    }
+    public boolean visit(EnumDeclaration node) {
+        emitter.log("Enum Start: " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
+        emitter.tab();
         return true;
     }
-    */
-    public boolean visit(AnnotationTypeDeclaration node)
-    {
-        //emitter.log("Annotation: " + node.getName().getIdentifier());
-        return true;
-    }
-    public boolean visit(AnnotationTypeMemberDeclaration node)
-    {
-        //emitter.log("AnnotationTypeMember: " + node.getName().getIdentifier());
-        return true;
-    }
-
-    public boolean visit(AnonymousClassDeclaration node)
-    {
-        emitter.log("AnonymousClassDeclaration: " + node.getStartPosition() + '|' + (node.getStartPosition() + node.getLength()));
-        return true;
-    }
-
-    public boolean visit(ArrayAccess node)
-    {
-        //emitter.log("ArrayAccess: " + node);
-        return true;
-    }
-
-    public boolean visit(ArrayCreation node)
-    {
-        //emitter.log("ArrayCreation: " + node);
-        return true;
-    }
-
-    public boolean visit(ArrayInitializer node)
-    {
-        //emitter.log("ArrayIntializer: " + node);
-        return true;
-    }
-
-    public boolean visit(ArrayType node)
-    {
-        //emitter.log("ArrayType: " + node);
-        return true;
-    }
-
-    public boolean visit(AssertStatement node)
-    {
-        //emitter.log("AssertStatement: " + node);
-        return true;
-    }
-
-    public boolean visit(Assignment node)
-    {
-        //emitter.log("Assignment: " + node);
-        return true;
-    }
-    public boolean visit(CastExpression node)
-    {
-        //emitter.log("CastExpression: " + node);
-        return true;
-    }
-    
-    public boolean visit(CatchClause node)
-    {
-        //emitter.log("CatchClause: " + node);
-        return true;
-    }
-
-    public boolean visit(ClassInstanceCreation node)
-    {
-        //emitter.log("ClassInstanceCreation: " + node);
-        return true;
-    }
-
-    public boolean visit(CompilationUnit node)
-    {
-        //emitter.log("CompilationUnit: " + node);
-        return true;
-    }
-
-    public boolean visit(ConstructorInvocation node)
-    {
-        //emitter.log("ConstructorInvocation: " + node);
-        return true;
-    }
-    public boolean visit(EnumConstantDeclaration node)
-    {
-        //emitter.log("EnumConstantDeclaration: " + node);
-        return true;
-    }
-    public boolean visit(EnumDeclaration node)
-    {
-        //emitter.log("EnumDeclaration: " + node);
-        return true;
-    }
-    public boolean visit(ExpressionStatement node)
-    {
-        //emitter.log("ExpressionStatement: " + node);
-        return true;
-    }
-    public boolean visit(FieldAccess node)
-    {
-        //emitter.log("FieldAccess: " + node);
-        return true;
-    }
-    public boolean visit(FieldDeclaration node) {
-        return true;
-    }
-    public boolean visit(ForStatement node) {
-        return true;
-    }
-    public boolean visit(IfStatement node) {
-        return true;
-    }
-    public boolean visit(LabeledStatement node) {
-        return true;
+    public void endVisit(EnumDeclaration node) {
+        emitter.log("Enum End  : " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
+        emitter.untab();
     }
     public boolean visit(MethodDeclaration node) {
-        return true;
-    }
-    public boolean visit(MethodInvocation node) {
-        return true;
-    }
-    public boolean visit(ParameterizedType node) {
-        return true;
-    }
-    public boolean visit(QualifiedName node)
-    {
-        //emitter.log("QualifiedName: " + node);
-        return true;
-    }
-    public boolean visit(QualifiedType node)
-    {
-        //emitter.log("QualifiedType: " + node);
-        return true;
+        String signature = emitter.getMethodSignature(node);
+        String name = node.getName().toString();
+                
+        emitter.log("Method Start: " + name + signature);
+        emitter.tab();
+
+        emitter.emitMethodRange(node);
+
+        // Return type and throws list
+        emitter.emitTypeRange(node.getReturnType2());
+        for (Name exc : (List<Name>) node.thrownExceptions())
+        {
+            emitter.emitThrowRange(exc, (ITypeBinding) exc.resolveBinding());
+        }
+
+        List<SingleVariableDeclaration> params = (List<SingleVariableDeclaration>) node.parameters();
+        HashMap<String, Integer> paramIds = new HashMap<String, Integer>();
+
+        for (int x = 0; x < params.size(); x++)
+        {
+            SingleVariableDeclaration param = params.get(x);
+            emitter.emitTypeRange(param.getType());
+            emitter.emitParameterRange(node, signature, param, x);
+            paramIds.put(param.getName().getIdentifier(), x);
+        }
+
+        // Method body
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, newCodeRanges, node.getName().getIdentifier(), signature);
+
+        walker.anonCount = this.anonCount;
+        walker.setParams(paramIds);
+        walker.walk(node.getBody());
+        this.anonCount = walker.anonCount;
+
+        emitter.untab();
+        emitter.log("Method End: " + name + signature);
+
+        return false;
     }
     public boolean visit(SimpleName node)
     {
@@ -502,13 +325,13 @@ public class SymbolReferenceWalker extends ASTVisitor
         return false;
     }
     public boolean visit(TypeDeclaration node) {
+        emitter.log("Class Start: " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
+        emitter.tab();
         return true;
     }
-    public boolean visit(TypeLiteral node) {
-        return true;
-    }
-    public boolean visit(TypeParameter node) {
-        return true;
+    public void endVisit(TypeDeclaration node) {
+        emitter.untab();
+        emitter.log("Class End  : " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
     }
     public boolean visit(VariableDeclarationFragment node)
     {
