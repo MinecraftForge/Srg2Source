@@ -117,10 +117,14 @@ public class SymbolRangeEmitter
     {
         IVariableBinding var = field.resolveBinding();
         String name = var.getName();
-        String cls = var.getDeclaringClass().getQualifiedName(); 
+        String cls = var.getDeclaringClass().getQualifiedName();
+        String init = "";
+
 
         //server|field|net.minecraft.server.WorldManager|server
-        log(commonFields(name, field.getName()) + "field" + FS + cls + FS + name);
+        if (name.equals("__OBFID"))
+            init = ((StringLiteral)field.getInitializer()).getLiteralValue();
+        log(commonFields(name, field.getName()) + "field" + FS + cls + FS + name + FS + init);
     }
     
     private IMethodBinding resolveOverrides(IMethodBinding bind)

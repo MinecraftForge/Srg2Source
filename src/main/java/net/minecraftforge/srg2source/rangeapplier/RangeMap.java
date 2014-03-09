@@ -13,6 +13,7 @@ import net.minecraftforge.srg2source.util.Util;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.io.Files;
@@ -20,6 +21,7 @@ import com.google.common.io.Files;
 class RangeMap
 {
     private final Multimap<String, RangeEntry> rangeMap;
+    private final HashMap<String, String> obfids = Maps.newHashMap();
 
     public RangeMap()
     {
@@ -83,6 +85,8 @@ class RangeMap
                 else if (kind.equals("field"))
                 {
                     key = "field " + Util.sourceName2Internal(info.get(0)) + "/" + info.get(1);
+                    if (info.get(2).equals("__OBFID"))
+                        obfids.put(info.get(0), info.get(2));
                 }
                 else if (kind.equals("method"))
                 {
