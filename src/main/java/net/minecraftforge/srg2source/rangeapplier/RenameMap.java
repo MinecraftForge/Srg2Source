@@ -128,11 +128,9 @@ class RenameMap
                 paramKey = methodMap.get(paramKey); // get info from the methodMap
 
             // Parameters by number, p_XXXXX_X.. to par1. descriptions
-            int i = 0;
-            for (String val : line.params)
+            for (int i = 0; i < line.params.size(); i++)
             {
-                maps.put("param " + paramKey + " " + i, val);
-                i++;
+                maps.put("param " + paramKey + " " + i, line.params.get(i));                 
             }
         }
         // do secondary EXC

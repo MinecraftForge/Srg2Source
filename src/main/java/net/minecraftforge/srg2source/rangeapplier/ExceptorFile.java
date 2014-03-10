@@ -1,6 +1,7 @@
 package net.minecraftforge.srg2source.rangeapplier;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +28,26 @@ class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
 
         if (match.find())
         {
+            // check if its an inner or not..
+            String className = match.group(1);
+            String methodSig = match.group(3);
+            List<String> params = SPLIT.splitToList(match.group(5));
+            int index = className.lastIndexOf('$');
+            if (index >= 0)
+            {
+                String parent = className.substring(0, index);
+                if (methodSig.startsWith("(L" + parent) && !params.isEmpty())
+                {
+                    // ! non-static inner class!
+                    methodSig = methodSig.replace("L"+parent + ";", "");
+                    params = new ArrayList<String>(params);
+                    params.remove(0);
+                    
+                    // return the modified one.
+                    super.add(new ExcLine(className, match.group(2), methodSig, SPLIT.splitToList(match.group(4)), params));
+                }
+            }
+            
             return new ExcLine(
                     match.group(1), match.group(2), match.group(3),
                     SPLIT.splitToList(match.group(4)),
