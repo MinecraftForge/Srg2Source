@@ -99,7 +99,16 @@ public class Util
         {
             className = matcher.group(1);
             String repl = "L" + (classMap.containsKey(className) ? classMap.get(className) : className) + ";";
-            repl = repl.replace("$", "\\$");
+
+            int idx = repl.lastIndexOf('$');
+            if (repl.indexOf('$') != -1)
+            {
+                String ending = repl.substring(idx + 1, repl.length() - 1);
+                if (ending.matches("\\d+"))
+                    repl = "Ljava/lang/Object;";
+                else
+                    repl = repl.replace("$", "\\$");
+            }
             matcher.appendReplacement(buffer, repl);
         }
 
