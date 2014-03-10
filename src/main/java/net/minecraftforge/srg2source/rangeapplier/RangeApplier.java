@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -170,7 +173,17 @@ public class RangeApplier extends ConfLogger<RangeApplier>
      */
     public void dumpRenameMap()
     {
-        for (Entry<String, String> e : map.maps.entrySet())
+        List<Entry<String, String>> entries = new ArrayList<Entry<String, String>>(map.maps.entrySet());
+        Collections.sort(entries, new Comparator<Entry<String, String>>()
+        {
+            @Override
+            public int compare(Entry<String, String> o1, Entry<String, String> o2)
+            {
+                return o1.getKey().compareTo(o2.getKey());
+            }
+        });
+
+        for (Entry<String, String> e : entries)
         {
             log("RENAME MAP: " + e.getKey() + " -> " + e.getValue());
         }
@@ -188,8 +201,12 @@ public class RangeApplier extends ConfLogger<RangeApplier>
     {
         RangeMap range = new RangeMap().read(rangeMap);
 
-        for (String filePath : range.keySet())
+        List<String> paths = new ArrayList<String>(range.keySet());
+        Collections.sort(paths);
+
+        for (String filePath : paths)
         {
+            log("Start Processing: " + filePath);
             InputStream stream = inSupp.getInput(filePath);
             String data = new String(ByteStreams.toByteArray(stream), Charset.forName("UTF-8"));
             stream.close();
@@ -210,6 +227,9 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             OutputStream outStream = outSupp.getOutput(filePath);
             outStream.write(data.getBytes(Charset.forName("UTF-8")));
             outStream.close();
+
+            log("End  Processing: " + filePath);
+            log("");
         }
     }
 
