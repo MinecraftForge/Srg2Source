@@ -87,11 +87,20 @@ class RenameMap
         BiMap<String, String> classMap = srg.classMap.inverse();
         BiMap<MethodData, MethodData> methodMap = srg.methodMap.inverse();
 
-        BiMap<String, String> tmp = HashBiMap.create(classMap.size());
+        BiMap<String, String> tmpClass = HashBiMap.create(classMap.size());
         for (Entry<String, String> e : classMap.entrySet())
         {
-            tmp.put(e.getKey().replace('$', '/'), e.getValue().replace('$', '/'));
+            tmpClass.put(e.getKey().replace('$', '/'), e.getValue().replace('$', '/'));
         }
+        BiMap<MethodData, MethodData> tmpMethod = HashBiMap.create(methodMap.size());
+        for (Entry<MethodData, MethodData> e : methodMap.entrySet())
+        {
+            tmpMethod.put(
+                new MethodData(e.getKey().name.replace('$', '/'),   e.getKey().sig),
+                new MethodData(e.getValue().name.replace('$', '/'), e.getValue().sig)
+            );
+        }
+        methodMap = tmpMethod;
 
         // temp vars
         MethodData paramKey;
@@ -106,10 +115,10 @@ class RenameMap
                 // constructor - remap to new name through class map, not method map
                 String newClassName = line.className;
 
-                if (!tmp.containsKey(line.className))
+                if (!tmpClass.containsKey(line.className))
                     continue; // no mapping? ignore....
                 else
-                    newClassName = tmp.get(line.className);
+                    newClassName = tmpClass.get(line.className);
 
                 paramKey = new MethodData(newClassName + "/" + Util.splitBaseName(newClassName), Util.remapSig(line.methodSig, classMap));
             }

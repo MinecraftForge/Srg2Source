@@ -231,7 +231,7 @@ public class Util
         if (sourceName == null)
             return null;
         else
-            return sourceName.replace('.', '/');
+            return sourceName.replace('.', '/').replace('$', '/');
     }
 
     /**
