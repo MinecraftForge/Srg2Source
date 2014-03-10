@@ -83,6 +83,13 @@ class RenameMap
 
     public RenameMap readParamMap(SrgContainer srg, ExceptorFile primaryExc, ExceptorFile secondaryExc)
     {
+        readParamMap(srg, primaryExc);
+        if (secondaryExc != null) readParamMap(srg, secondaryExc);
+        return this;
+    }
+
+    private void readParamMap(SrgContainer srg, ExceptorFile exc)
+    {
         //inverted stuff
         BiMap<String, String> classMap = srg.classMap.inverse();
         BiMap<MethodData, MethodData> methodMap = srg.methodMap.inverse();
@@ -106,7 +113,7 @@ class RenameMap
         MethodData paramKey;
 
         // do primary unmapped EXC
-        for (ExcLine line : primaryExc)
+        for (ExcLine line : exc)
         {
             paramKey = line.getMethodData();
 
@@ -122,9 +129,7 @@ class RenameMap
 
                 paramKey = new MethodData(newClassName + "/" + Util.splitBaseName(newClassName), Util.remapSig(line.methodSig, classMap));
             }
-            else if (!methodMap.containsKey(paramKey))
-                continue; // ignore if it has no mappigs..
-            else
+            else if (methodMap.containsKey(paramKey))
                 paramKey = methodMap.get(paramKey); // get info from the methodMap
 
             // Parameters by number, p_XXXXX_X.. to par1. descriptions
@@ -133,46 +138,6 @@ class RenameMap
                 maps.put("param " + paramKey + " " + i, line.params.get(i));                 
             }
         }
-        // do secondary EXC
-        if (secondaryExc == null)
-            return this;
-        for (ExcLine line : primaryExc)
-        {
-            paramKey = line.getMethodData();
-
-            if (line.methodName.equals("<init>"))
-            {
-                // constructor - remap to new name through class map, not method map
-                String newClassName = line.className;
-
-                if (!classMap.containsKey(line.className))
-                    continue; // no mapping? ignore....
-                else
-                    newClassName = classMap.get(line.className);
-
-                paramKey = new MethodData(newClassName + "/" + Util.splitBaseName(newClassName), Util.remapSig(line.methodSig, classMap));
-            }
-            else if (!methodMap.containsKey(paramKey))
-            {
-                //                    String[] split = e.getKey().split(" "); // 0 = fullMethodName, 1 = methodSig
-                //                    String className = splitPackageName(split[0]);
-                //                    newFullMethodName = className + "/" + splitBaseName(split[0]);
-                //                    newMethodSig = remapSig(split[1], classMap);
-                paramKey = new MethodData(paramKey.name, Util.remapSig(line.methodSig, classMap));
-            }
-            else
-                paramKey = methodMap.get(paramKey); // get info from the methodMap
-
-            // Parameters by number, p_XXXXX_X.. to par1. descriptions
-            int i = 0;
-            for (String val : line.params)
-            {
-                maps.put("param " + paramKey + " " + i, val);
-                i++;
-            }
-        }
-        
-        return this;
     }
 
     /**
