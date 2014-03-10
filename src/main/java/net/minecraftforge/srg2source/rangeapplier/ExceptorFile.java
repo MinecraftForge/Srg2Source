@@ -30,24 +30,30 @@ class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
         {
             // check if its an inner or not..
             String className = match.group(1);
+            String methodName = match.group(2);
             String methodSig = match.group(3);
-            List<String> params = SPLIT.splitToList(match.group(5));
             int index = className.lastIndexOf('$');
+
             if (index >= 0)
             {
-                String parent = className.substring(0, index);
-                if (methodSig.startsWith("(L" + parent) && !params.isEmpty())
+                String parent = "L" + className.substring(0, index) + ";";
+                if (methodName.equals("<init>") && methodSig.startsWith("(" + parent)) // ! non-static inner class!
                 {
-                    // ! non-static inner class!
-                    methodSig = methodSig.replace("L"+parent + ";", "");
-                    params = new ArrayList<String>(params);
+                    List<String> params = new ArrayList<String>(SPLIT.splitToList(match.group(5)));
                     params.remove(0);
                     
-                    // return the modified one.
-                    super.add(new ExcLine(className, match.group(2), methodSig, SPLIT.splitToList(match.group(4)), params));
+                    super.add(new ExcLine(className, methodName, methodSig.replace("(" + parent, "("), SPLIT.splitToList(match.group(4)), params));
                 }
             }
-            
+
+            if (methodName.equals("<init>") && methodSig.startsWith("(Ljava/lang/String;I")) // Enums
+            {
+                List<String> params = new ArrayList<String>(SPLIT.splitToList(match.group(5)));
+                params.remove(0);
+                params.remove(0);
+                super.add(new ExcLine(className, methodName, methodSig.replace("(Ljava/lang/String;I", "("), SPLIT.splitToList(match.group(4)), params));
+            }
+
             return new ExcLine(
                     match.group(1), match.group(2), match.group(3),
                     SPLIT.splitToList(match.group(4)),
