@@ -227,7 +227,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         emitter.log("Method Start: " + name + signature);
         emitter.tab();
 
-        emitter.emitMethodRange(node);
+        emitter.emitMethodRange(node, className);
 
         // Return type and throws list
         emitter.emitTypeRange(node.getReturnType2());
@@ -243,7 +243,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         {
             SingleVariableDeclaration param = params.get(x);
             emitter.emitTypeRange(param.getType());
-            emitter.emitParameterRange(node, signature, param, x);
+            emitter.emitParameterRange(node, signature, param, x, className);
             paramIds.put(param.getName().getIdentifier(), x);
         }
 
@@ -278,7 +278,7 @@ public class SymbolReferenceWalker extends ASTVisitor
             {
                 String id = node.getIdentifier();
                 Integer i = (paramIndices.containsKey(id) ? paramIndices.get(id) : -1);
-                emitter.emitReferencedMethodParameter(node, var, i);
+                emitter.emitReferencedMethodParameter(node, var, i, className);
             }
             else if (var.isField())
             {

@@ -118,7 +118,6 @@ public class SymbolRangeEmitter
         }
     }
 
-    public void emitFieldRange(VariableDeclarationFragment field) { emitFieldRange(field, null); }
     public void emitFieldRange(VariableDeclarationFragment field, String parent)
     {
         IVariableBinding var = field.resolveBinding();
@@ -193,7 +192,7 @@ public class SymbolRangeEmitter
         }
     }
     
-    public String emitMethodRange(MethodDeclaration method)
+    public String emitMethodRange(MethodDeclaration method, String className)
     {
         IMethodBinding bind = resolveOverrides(method.resolveBinding());
         if (bind == null)
@@ -204,6 +203,7 @@ public class SymbolRangeEmitter
         String signature = MethodSignatureHelper.getSignature(bind);
         String name = method.getName().toString();
         String owner = bind.getDeclaringClass().getQualifiedName();
+        if (owner.isEmpty()) owner = className;
         //WorldManager|method|net.minecraft.server.WorldManager|WorldManager|(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/server/WorldServer;)V
         log(commonFields(name, method.getName()) + "method" + FS + owner + FS + name + FS + signature);
 
@@ -220,8 +220,8 @@ public class SymbolRangeEmitter
         }
         return MethodSignatureHelper.getSignature(bind);
     }
-    
-    public void emitParameterRange(MethodDeclaration method, String signature, SingleVariableDeclaration param, int index)
+
+    public void emitParameterRange(MethodDeclaration method, String signature, SingleVariableDeclaration param, int index, String className)
     {
         if (param == null || param.getName() == null)
         {
@@ -241,6 +241,9 @@ public class SymbolRangeEmitter
         
         String owner = bind.getDeclaringClass().getQualifiedName();
         String mName = bind.getName();
+
+        if (owner.isEmpty())
+            owner = className;
 
         //entity|param|net.minecraft.server.WorldManager|a|(Lnet/minecraft/server/Entity;)V|entity|0
         log(commonFields(name, param.getName()) + "param" + FS + owner + FS + mName + FS + signature + FS + name + FS + index);
@@ -264,7 +267,7 @@ public class SymbolRangeEmitter
             FS + MethodSignatureHelper.getSignature(method));
     }
 
-    public void emitReferencedMethodParameter(Name name, IVariableBinding var, int index)
+    public void emitReferencedMethodParameter(Name name, IVariableBinding var, int index, String className)
     {
         IMethodBinding method = var.getDeclaringMethod();
 
@@ -275,10 +278,11 @@ public class SymbolRangeEmitter
         {
             method = top;
         }
-        
+        String owner = method.getDeclaringClass().getQualifiedName();
+        if (owner.isEmpty()) owner = className;
         //out|param|jline.AnsiWindowsTerminal|wrapOutIfNeeded|(Ljava/io/OutputStream;)Ljava/io/OutputStream;|out|0
         log(commonFields(name.toString(), name) + "param" + 
-            FS + method.getDeclaringClass().getQualifiedName() + 
+            FS + owner + 
             FS + method.getName() + 
             FS + MethodSignatureHelper.getSignature(method) + 
             FS + name + 
