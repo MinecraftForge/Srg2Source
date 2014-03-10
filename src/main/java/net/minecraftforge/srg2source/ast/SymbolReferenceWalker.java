@@ -292,7 +292,7 @@ public class SymbolReferenceWalker extends ASTVisitor
             }
             else if (var.isField())
             {
-                emitter.emitReferencedField(node, var.getVariableDeclaration());
+                emitter.emitReferencedField(node, var.getVariableDeclaration(), className);
             }
             else
             {

@@ -311,7 +311,7 @@ public class SymbolRangeEmitter
     }
     
 
-    public void emitReferencedField(Name name, IVariableBinding field)
+    public void emitReferencedField(Name name, IVariableBinding field, String className)
     {
         ITypeBinding type = field.getDeclaringClass();
         if (type == null && name.toString().equals("length"))
@@ -319,9 +319,16 @@ public class SymbolRangeEmitter
             log("Field: Array Length, skipping");
             return;
         }
+
+        String owner = field.getDeclaringClass().getQualifiedName();
+        if (owner.isEmpty())
+        {
+            owner = className;
+        }
+
         //ansiSupported|field|jline.AnsiWindowsTerminal|ansiSupported
         log(commonFields(name.toString(), name) + "field" + 
-            FS + field.getDeclaringClass().getQualifiedName() + 
+            FS + owner + 
             FS + field.getName());
     }
     
