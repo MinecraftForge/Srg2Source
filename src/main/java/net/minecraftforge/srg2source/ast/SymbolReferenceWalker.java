@@ -325,13 +325,38 @@ public class SymbolReferenceWalker extends ASTVisitor
         return false;
     }
     public boolean visit(TypeDeclaration node) {
-        emitter.log("Class Start: " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
+        String name = ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName();
+
+        emitter.log("Class Start: " + name);
         emitter.tab();
-        return true;
-    }
-    public void endVisit(TypeDeclaration node) {
+
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(name, this);
+        for (BodyDeclaration body : (List<BodyDeclaration>)node.bodyDeclarations())
+        {
+            if (body instanceof FieldDeclaration)
+            {
+                FieldDeclaration field = (FieldDeclaration)body;
+                emitter.emitTypeRange(field.getType());
+
+                for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>)field.fragments())
+                {
+                    emitter.emitFieldRange(frag, name);
+                    // Initializer can refer to other symbols, so walk it, too
+                    SymbolReferenceWalker init = new SymbolReferenceWalker(name, walker);
+                    init.anonCount = walker.anonCount;
+                    init.walk(frag.getInitializer());
+                    walker.anonCount = init.anonCount;
+                }
+            }
+            else
+            {
+                walker.walk(body);
+            }
+        }
+
         emitter.untab();
-        emitter.log("Class End  : " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
+        emitter.log("Class End  : " + name);
+        return false;
     }
     public boolean visit(VariableDeclarationFragment node)
     {
