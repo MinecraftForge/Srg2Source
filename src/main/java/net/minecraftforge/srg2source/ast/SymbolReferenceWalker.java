@@ -49,12 +49,13 @@ public class SymbolReferenceWalker extends ASTVisitor
         this.parent = parent;
     }
 
-    private SymbolReferenceWalker(SymbolRangeEmitter emitter, String className, int[] newCode, String methodName, String methodSignature)
+    private SymbolReferenceWalker(SymbolRangeEmitter emitter, String className, int[] newCode, String methodName, String methodSignature, SymbolReferenceWalker parent)
     {
         this(emitter, className, newCode);
         this.methodName = methodName;
         this.methodSignature = methodSignature;
         this.newCodeRanges = newCode;
+        this.parent = parent;
     }
 
     /**
@@ -248,7 +249,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
 
         // Method body
-        SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, newCodeRanges, node.getName().getIdentifier(), signature);
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, newCodeRanges, node.getName().getIdentifier(), signature, this);
 
         walker.anonCount = this.anonCount;
         walker.setParams(paramIds);
@@ -277,8 +278,17 @@ public class SymbolReferenceWalker extends ASTVisitor
             if (var.isParameter())
             {
                 String id = node.getIdentifier();
+                String owner = className;
+                SymbolReferenceWalker walker = this;
+
                 Integer i = (paramIndices.containsKey(id) ? paramIndices.get(id) : -1);
-                emitter.emitReferencedMethodParameter(node, var, i, className);
+                while (i == -1 && walker.parent != null)
+                {
+                    walker = walker.parent;
+                    owner = walker.className;
+                    i = (walker.paramIndices.containsKey(id) ? walker.paramIndices.get(id) : -1);   
+                }
+                emitter.emitReferencedMethodParameter(node, var, i, owner);
             }
             else if (var.isField())
             {
