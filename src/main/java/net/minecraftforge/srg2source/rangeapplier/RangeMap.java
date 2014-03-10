@@ -86,7 +86,7 @@ class RangeMap
                 else if (kind.equals("field"))
                 {
                     key = "field " + Util.sourceName2Internal(info.get(0)) + "/" + info.get(1);
-                    if (info.get(2).equals("__OBFID"))
+                    if (info.get(1).equals("__OBFID"))
                         obfids.put(info.get(0), info.get(2));
                 }
                 else if (kind.equals("method"))

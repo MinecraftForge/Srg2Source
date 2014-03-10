@@ -11,6 +11,7 @@ import net.minecraftforge.srg2source.rangeapplier.LocalVarFile.LocalVar;
 import net.minecraftforge.srg2source.util.Util;
 
 import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 
 class RenameMap
 {
@@ -86,6 +87,12 @@ class RenameMap
         BiMap<String, String> classMap = srg.classMap.inverse();
         BiMap<MethodData, MethodData> methodMap = srg.methodMap.inverse();
 
+        BiMap<String, String> tmp = HashBiMap.create(classMap.size());
+        for (Entry<String, String> e : classMap.entrySet())
+        {
+            tmp.put(e.getKey().replace('$', '/'), e.getValue().replace('$', '/'));
+        }
+
         // temp vars
         MethodData paramKey;
 
@@ -99,10 +106,10 @@ class RenameMap
                 // constructor - remap to new name through class map, not method map
                 String newClassName = line.className;
 
-                if (!classMap.containsKey(line.className))
+                if (!tmp.containsKey(line.className))
                     continue; // no mapping? ignore....
                 else
-                    newClassName = classMap.get(line.className);
+                    newClassName = tmp.get(line.className);
 
                 paramKey = new MethodData(newClassName + "/" + Util.splitBaseName(newClassName), Util.remapSig(line.methodSig, classMap));
             }
