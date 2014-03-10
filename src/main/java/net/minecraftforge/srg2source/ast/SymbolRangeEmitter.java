@@ -192,9 +192,14 @@ public class SymbolRangeEmitter
         }
     }
     
-    public String emitMethodRange(MethodDeclaration method, String className)
+    public String emitMethodRange(MethodDeclaration method, String className, boolean resolve)
     {
-        IMethodBinding bind = resolveOverrides(method.resolveBinding());
+        IMethodBinding bind = method.resolveBinding();
+        if (resolve)
+        {
+            resolveOverrides(bind);
+        }
+
         if (bind == null)
         {
             log("Null method binding! " + method);
@@ -210,9 +215,14 @@ public class SymbolRangeEmitter
         return signature;
     }
 
-    public String getMethodSignature(MethodDeclaration method)
+    public String getMethodSignature(MethodDeclaration method, boolean resolve)
     {
-        IMethodBinding bind = resolveOverrides(method.resolveBinding());
+        IMethodBinding bind = method.resolveBinding();
+        if (resolve)
+        {
+            resolveOverrides(bind);
+        }
+
         if (bind == null)
         {
             log("Null method binding! " + method);

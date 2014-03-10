@@ -221,13 +221,13 @@ public class SymbolReferenceWalker extends ASTVisitor
         emitter.untab();
     }
     public boolean visit(MethodDeclaration node) {
-        String signature = emitter.getMethodSignature(node);
+        String signature = emitter.getMethodSignature(node, false);
         String name = node.getName().toString();
                 
         emitter.log("Method Start: " + name + signature);
         emitter.tab();
 
-        emitter.emitMethodRange(node, className);
+        emitter.emitMethodRange(node, className, false);
 
         // Return type and throws list
         emitter.emitTypeRange(node.getReturnType2());

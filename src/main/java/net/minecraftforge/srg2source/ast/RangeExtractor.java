@@ -120,9 +120,9 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                     SymbolRangeEmitter emitter = new SymbolRangeEmitter(path, outFile);
                     String data = new String(ByteStreams.toByteArray(stream), Charset.forName("UTF-8")).replaceAll("\r", "");
 
-                    CompilationUnit cu = Util.createUnit(path, data, src.getRoot(path), libArray);
-
                     log("processing " + path);
+
+                    CompilationUnit cu = Util.createUnit(path, data, src.getRoot(path), libArray);
 
                     int[] newCode = getNewCodeRanges(cu, data);
 
