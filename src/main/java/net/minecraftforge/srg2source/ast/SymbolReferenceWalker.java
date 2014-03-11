@@ -82,6 +82,29 @@ public class SymbolReferenceWalker extends ASTVisitor
             return false;
         }
     }
+
+    public boolean walk(List<ASTNode> elements)
+    {
+        if (elements == null)
+        {
+            return true;
+        }
+
+        boolean ret = true;
+        for (ASTNode node : elements)
+        {
+            try
+            {
+                node.accept(this);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+                ret = false;
+            }
+        }
+        return ret;
+    }
     
     public void setParams(HashMap<String, Integer> indices)
     {
@@ -213,13 +236,44 @@ public class SymbolReferenceWalker extends ASTVisitor
         return false;
     }
     public boolean visit(EnumDeclaration node) {
-        emitter.log("Enum Start: " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
+        String name = ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName();
+
+        emitter.log("Enum Start: " + name);
         emitter.tab();
-        return true;
-    }
-    public void endVisit(EnumDeclaration node) {
-        emitter.log("Enum End  : " + ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName());
+
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(name, this);
+
+        walker.walk(node.getJavadoc());
+        walker.walk((List<ASTNode>)node.modifiers());
+        walker.walk(node.getName());
+        walker.walk((List<ASTNode>)node.superInterfaceTypes());
+        walker.walk((List<ASTNode>)node.enumConstants());
+
+        for (BodyDeclaration body : (List<BodyDeclaration>)node.bodyDeclarations())
+        {
+            if (body instanceof FieldDeclaration)
+            {
+                FieldDeclaration field = (FieldDeclaration)body;
+                emitter.emitTypeRange(field.getType());
+
+                for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>)field.fragments())
+                {
+                    emitter.emitFieldRange(frag, name);
+                    SymbolReferenceWalker init = new SymbolReferenceWalker(name, walker);
+                    init.anonCount = walker.anonCount;
+                    init.walk(frag.getInitializer());
+                    walker.anonCount = init.anonCount;
+                }
+            }
+            else
+            {
+                walker.walk(body);
+            }
+        }
+
         emitter.untab();
+        emitter.log("Enum End  : " + name);
+        return false;
     }
     public boolean visit(MethodDeclaration node) {
         String signature = emitter.getMethodSignature(node, false);
