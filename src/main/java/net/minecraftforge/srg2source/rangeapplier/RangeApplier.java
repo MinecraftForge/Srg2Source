@@ -130,7 +130,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         return this;
     }
 
-    public RangeApplier readSrg(List<File> srgs)
+    public RangeApplier readSrg(Iterable<File> srgs)
     {
         srg.readSrgs(srgs);
         map.readSrg(this.srg);
