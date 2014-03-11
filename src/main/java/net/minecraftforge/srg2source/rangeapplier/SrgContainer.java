@@ -3,7 +3,6 @@ package net.minecraftforge.srg2source.rangeapplier;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.List;
 
 import joptsimple.internal.Strings;
 
@@ -61,7 +60,7 @@ public class SrgContainer
         return this;
     }
 
-    public SrgContainer readSrgs(List<File> srgs)
+    public SrgContainer readSrgs(Iterable<File> srgs)
     {
         for (File file : srgs)
         {

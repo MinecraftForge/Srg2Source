@@ -85,15 +85,17 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         {
             File conf = (File) options.valueOf("mcpConfDir");
             File primary = new File(conf, "joined.exc");
-            List<File> secondaries = null;
+            List<File> excs = new LinkedList<File>();
 
             if (!primary.exists())
                 primary = new File(conf, "packaged.exc");
+            
+            excs.add(primary);
 
             if (options.has("excFiles") && options.hasArgument("excFiles"))
-                secondaries = (List<File>) options.valuesOf("excFiles");
+                excs.addAll((List<File>) options.valuesOf("excFiles"));
 
-            app.readParamMap(primary, secondaries);
+            app.readParamMap(excs);
         }
 
         // read local varaible map
@@ -143,11 +145,10 @@ public class RangeApplier extends ConfLogger<RangeApplier>
     }
 
     // excptors
-    public RangeApplier readParamMap(File primaryExceptor, List<File> secondaryExceptors)
+    public RangeApplier readParamMap(Iterable<File> exceptors)
     {
-        ExceptorFile prim = new ExceptorFile().read(primaryExceptor);
-        ExceptorFile secondary = secondaryExceptors == null || secondaryExceptors.isEmpty() ? null : new ExceptorFile().read(secondaryExceptors);
-        map.readParamMap(srg, prim, secondary);
+        ExceptorFile exc = new ExceptorFile().read(exceptors);
+        map.readParamMap(srg, exc);
 
         return this;
     }

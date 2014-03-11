@@ -95,7 +95,7 @@ public abstract class ListFile<T, ME extends ListFile> implements Iterable<T>
     }
 
     @SuppressWarnings("unchecked")
-    public ME read(List<File> files)
+    public ME read(Iterable<File> files)
     {
         for (File f : files)
             read(f);

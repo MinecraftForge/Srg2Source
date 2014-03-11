@@ -81,14 +81,7 @@ class RenameMap
         return out;
     }
 
-    public RenameMap readParamMap(SrgContainer srg, ExceptorFile primaryExc, ExceptorFile secondaryExc)
-    {
-        readParamMap(srg, primaryExc);
-        if (secondaryExc != null) readParamMap(srg, secondaryExc);
-        return this;
-    }
-
-    private void readParamMap(SrgContainer srg, ExceptorFile exc)
+    public RenameMap readParamMap(SrgContainer srg, ExceptorFile exc)
     {
         //inverted stuff
         BiMap<String, String> classMap = srg.classMap.inverse();
@@ -138,6 +131,8 @@ class RenameMap
                 maps.put("param " + paramKey + " " + i, line.params.get(i));                 
             }
         }
+        
+        return this;
     }
 
     /**
