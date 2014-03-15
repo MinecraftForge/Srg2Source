@@ -209,6 +209,15 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         {
             log("Start Processing: " + filePath);
             InputStream stream = inSupp.getInput(filePath);
+            
+            //no stream? what?
+            if (stream == null)
+            {
+                // yeah.. nope.
+                log("Data not found: " + filePath);
+                return;
+            }
+            
             String data = new String(ByteStreams.toByteArray(stream), Charset.forName("UTF-8"));
             stream.close();
 
