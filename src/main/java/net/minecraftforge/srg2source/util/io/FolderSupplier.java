@@ -16,6 +16,10 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
 
     public FolderSupplier(File root)
     {
+        if (!root.exists())
+        {
+            root.mkdirs();
+        }
         this.root = root;
     }
 
