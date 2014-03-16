@@ -215,7 +215,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             {
                 // yeah.. nope.
                 log("Data not found: " + filePath);
-                return;
+                continue;
             }
             
             String data = new String(ByteStreams.toByteArray(stream), Charset.forName("UTF-8"));
