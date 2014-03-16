@@ -109,8 +109,9 @@ public class SymbolRangeEmitter
         {
             
             SimpleType stype = (SimpleType)type;
-            ITypeBinding bind = stype.getName().resolveTypeBinding().getErasure();
-            log(commonFields(stype.getName().toString(), stype.getName()) + "class" + FS + bind.getQualifiedName());
+            ITypeBinding bind = stype.getName().resolveTypeBinding();
+            if (bind.isTypeVariable()) return; // Don't spit out generic identifier.
+            log(commonFields(stype.getName().toString(), stype.getName()) + "class" + FS + bind.getErasure().getQualifiedName());
         }
         else
         {
