@@ -18,8 +18,6 @@ public class SymbolReferenceWalker extends ASTVisitor
 
     // Where we're at
     private String className;
-    private String methodName = "(outside-method)";
-    private String methodSignature = "";
     private SymbolReferenceWalker parent = null;
 
     private int[] newCodeRanges = new int[0];
@@ -46,15 +44,6 @@ public class SymbolReferenceWalker extends ASTVisitor
     private SymbolReferenceWalker(String className, SymbolReferenceWalker parent)
     {
         this(parent.emitter, className, parent.newCodeRanges);
-        this.parent = parent;
-    }
-
-    private SymbolReferenceWalker(SymbolRangeEmitter emitter, String className, int[] newCode, String methodName, String methodSignature, SymbolReferenceWalker parent)
-    {
-        this(emitter, className, newCode);
-        this.methodName = methodName;
-        this.methodSignature = methodSignature;
-        this.newCodeRanges = newCode;
         this.parent = parent;
     }
 
@@ -278,11 +267,11 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(MethodDeclaration node) {
         String signature = emitter.getMethodSignature(node, false);
         String name = node.getName().toString();
-                
+
         emitter.log("Method Start: " + name + signature);
         emitter.tab();
 
-        emitter.emitMethodRange(node, className, false);
+        emitter.emitMethodRange(node, className, true);
 
         // Return type and throws list
         emitter.emitTypeRange(node.getReturnType2());
@@ -303,7 +292,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
 
         // Method body
-        SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, className, newCodeRanges, node.getName().getIdentifier(), signature, this);
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(className, this);
 
         walker.anonCount = this.anonCount;
         walker.setParams(paramIds);
