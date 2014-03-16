@@ -151,10 +151,13 @@ public class SymbolRangeEmitter
         {
             return bind;
         }
-        bind = resolveOverrides(bind, clazz.getSuperclass());
+
+        IMethodBinding tmp = resolveOverrides(bind, clazz.getSuperclass());
+        if (tmp != null) bind = tmp;;
         for (ITypeBinding intf : clazz.getInterfaces())
         {
-            bind = resolveOverrides(bind, intf);
+            tmp = resolveOverrides(bind, intf);
+            if (tmp != null) bind = tmp;
         }
         return bind;
     }
@@ -179,7 +182,7 @@ public class SymbolRangeEmitter
             for (ITypeBinding intf : type.getInterfaces())
             {
                 tmp = resolveOverrides(bind, intf);
-                if (tmp != bind)
+                if (tmp != null && tmp != bind)
                 {
                     return tmp;
                 }
@@ -195,9 +198,10 @@ public class SymbolRangeEmitter
     public String emitMethodRange(MethodDeclaration method, String className, boolean resolve)
     {
         IMethodBinding bind = method.resolveBinding();
+        
         if (resolve)
         {
-            resolveOverrides(bind);
+            bind = resolveOverrides(bind);
         }
 
         if (bind == null)
@@ -218,9 +222,10 @@ public class SymbolRangeEmitter
     public String getMethodSignature(MethodDeclaration method, boolean resolve)
     {
         IMethodBinding bind = method.resolveBinding();
+
         if (resolve)
         {
-            resolveOverrides(bind);
+            bind = resolveOverrides(bind);
         }
 
         if (bind == null)
