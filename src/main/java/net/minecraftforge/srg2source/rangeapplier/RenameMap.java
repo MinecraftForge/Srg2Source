@@ -37,11 +37,11 @@ class RenameMap
             
             // when renaming class, need to import it, too.
             // ensure that it doesnt include the full refernce to the inner class...
-            int index = e.getValue().indexOf('$');
-            if (index > 0)
-                imports.put("class " + replacedKey, Util.internalName2Source(e.getValue().substring(0, index)));
-            else
-                imports.put("class " + replacedKey, Util.internalName2Source(e.getValue()));
+//            int index = e.getValue().indexOf('$');
+//            if (index > 0)
+//                imports.put("class " + replacedKey, Util.internalName2Source(e.getValue().substring(0, index)));
+//            else
+                imports.put("class " + replacedKey, Util.internalName2Source(e.getValue()).replace('$', '.'));
 
             // and dont forget packages
             maps.put("package " + Util.splitPackageName(e.getKey()), Util.internalName2Source(Util.splitPackageName(e.getValue())));

@@ -312,12 +312,14 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 // split as many times as its qualified.
                 for (int i = 0; i < Util.countChar(newName, '.'); i++)
                     key = Util.splitPackageName(key);
+                
+                log("New Key: "+key);
             }
 
             if (map.imports.containsKey(key))
             {
                 // This rename requires adding an import, if it crosses packages
-                String importPackage = Util.splitPackageName(Util.sourceName2Internal(map.imports.get(info.key)));
+                String importPackage = Util.splitPackageName(Util.sourceName2Internal(map.imports.get(key)));
                 if (!importPackage.equals(newTopLevelClassPackage))
                     importsToAdd.add(map.imports.get(key));
             }
