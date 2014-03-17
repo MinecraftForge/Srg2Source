@@ -304,13 +304,22 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             }
 
             log("Rename " + info.key + "[" + (info.start + shift) + "," + (end + shift) + "]" + "::" + oldName + "->" + newName);
+            
+            // do importing.
+            String key = info.key;
+            if (newName.indexOf('.') > 0) // contains a .
+            {
+                // split as many times as its qualified.
+                for (int i = 0; i < Util.countChar(newName, '.'); i++)
+                    key = Util.splitPackageName(key);
+            }
 
-            if (map.imports.containsKey(info.key))
+            if (map.imports.containsKey(key))
             {
                 // This rename requires adding an import, if it crosses packages
                 String importPackage = Util.splitPackageName(Util.sourceName2Internal(map.imports.get(info.key)));
                 if (!importPackage.equals(newTopLevelClassPackage))
-                    importsToAdd.add(map.imports.get(info.key));
+                    importsToAdd.add(map.imports.get(key));
             }
             // Rename algorithm: 
             // 1. textually replace text at specified range with new text
