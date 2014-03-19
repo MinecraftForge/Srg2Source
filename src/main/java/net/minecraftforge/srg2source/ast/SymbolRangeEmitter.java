@@ -422,50 +422,9 @@ public class SymbolRangeEmitter
                    + FS + (textRange.getStartPosition() + textRange.getLength())
                    + FS + oldText + FS;
     }
+
     // Methods to actually write the output
     // Everything goes through these methods
-/*
-    private void internalEmitPackageRange(String oldText, ASTNode textRange,
-            String packageName, String typeUsedBy)
-    {
-        log(commonFields(oldText, textRange) + "package" + FS + packageName
-                + FS + typeUsedBy);
-    }
-
-    private void internalEmitClassRange(String oldText, ASTNode textRange, String className)
-    {
-        log(commonFields(oldText, textRange) + "class" + FS + className);
-    }
-
-    private void internalEmitFieldRange(String oldText, ASTNode textRange, String className, String fieldName)
-    {
-        log(commonFields(oldText, textRange) + "field" + FS + className + FS + fieldName);
-    }
-
-    private void internalEmitMethodRange(String oldText, ASTNode textRange,
-            String className, String methodName, String methodSignature)
-    {
-        log(commonFields(oldText, textRange) + "method" + FS + className + FS
-                + methodName + FS + methodSignature);
-    }
-
-    private void internalEmitParameterRange(String oldText,
-            ASTNode textRange, String className, String methodName,
-            String methodSignature, String parameterName, int parameterIndex)
-    {
-        log(commonFields(oldText, textRange) + "param" + FS + className + FS
-                + methodName + FS + methodSignature + FS + parameterName + FS
-                + parameterIndex);
-    }
-
-    private void internalEmitLocalVariable(String oldText, ASTNode textRange,
-            String className, String methodName, String methodSignature,
-            String variableName, int variableIndex)
-    {
-        log(commonFields(oldText, textRange) + "localvar" + FS + className + FS
-                + methodName + FS + methodSignature + FS + variableName + FS
-                + variableIndex);
-    }*/
 
     private String tab = "";
     public void tab(){ tab += "   "; }
