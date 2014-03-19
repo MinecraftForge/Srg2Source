@@ -207,7 +207,6 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(TypeParameter           node) { return true; }
     public boolean visit(MethodInvocation        node) { return true; }
     public boolean visit(ParameterizedType       node) { return true; }
-    public boolean visit(QualifiedName           node) { return true; }
     public boolean visit(QualifiedType           node) { return true; }
 
     public boolean visit(FieldDeclaration node) { 
@@ -352,6 +351,18 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
         return true;
     }
+
+    public boolean visit(QualifiedName node)
+    {
+        IBinding bind = node.resolveBinding();
+        if (bind instanceof ITypeBinding)
+        {
+            emitter.emitReferencedClass(node, (ITypeBinding)bind);
+            return false;
+        }
+        return true;
+    }
+
     public boolean visit(SimpleType node)
     {
         IBinding bind = node.resolveBinding();
