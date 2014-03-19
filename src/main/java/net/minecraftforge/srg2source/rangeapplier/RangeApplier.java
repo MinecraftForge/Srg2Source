@@ -273,6 +273,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             throw new RuntimeException("filename " + fileName + " found package " + oldTopLevelClassPackage + "->" + newTopLevelClassPackage + " but no class map for " + newTopLevelClassName);
         if (newTopLevelClassPackage == null && newTopLevelClassName != null)
             throw new RuntimeException("filename " + fileName + " found class map " + oldTopLevelClassName + "->" + newTopLevelClassName + " but no package map for " + oldTopLevelClassPackage);
+        String newInternalClassName = newTopLevelClassPackage + "/" + newTopLevelClassName;
 
         // start,end,expectedOldText,key
         for (RangeEntry info : rangeList)
@@ -319,7 +320,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             if (map.imports.containsKey(key))
             {
                 // This rename requires adding an import, if it crosses packages
-                String importPackage = Util.splitPackageName(Util.sourceName2Internal(map.imports.get(key)));
+                String importPackage = Util.splitPackageName(map.imports.get(key).replace('.', '/'));
                 if (!importPackage.equals(newTopLevelClassPackage))
                     importsToAdd.add(map.imports.get(key));
             }
@@ -416,7 +417,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                         continue;
                     }
                     else if (importMap.containsKey("class " + Util.sourceName2Internal(oldClass)))
-                        newClass = importMap.get("class " + Util.sourceName2Internal(oldClass));
+                        newClass = importMap.get("class " + Util.sourceName2Internal(oldClass).replace('$', '.'));
 
                     if (newImports.contains(newClass))  // if not already added & its changed
                     {
@@ -452,7 +453,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 data.setLength(lastIndex); // cut off the build there
 
                 for (String imp : newImports)
-                    data.append("import ").append(imp).append(";\n");
+                    data.append("import ").append(imp.replace('$', '.')).append(";\n");
 
                 int change = data.length() - lastIndex; // get changed size
                 lastIndex = data.length(); // reset the end to the actual end..

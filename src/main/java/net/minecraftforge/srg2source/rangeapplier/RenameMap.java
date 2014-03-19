@@ -34,7 +34,7 @@ class RenameMap
         {
             String replacedKey = e.getKey().replace('$', '/');
             maps.put("class " + replacedKey, e.getValue().replace('$', '.').replace('/', '.'));
-            imports.put("class " + replacedKey, Util.internalName2Source(e.getValue()).replace('$', '.'));
+            imports.put("class " + replacedKey, Util.internalName2Source(e.getValue()));
 
             // and dont forget packages
             maps.put("package " + Util.splitPackageName(e.getKey()), Util.internalName2Source(Util.splitPackageName(e.getValue())));
@@ -61,7 +61,7 @@ class RenameMap
             if (e.getKey().startsWith("class"))
             {
                 // Replace with fully-qualified class name (usually imported, but now insert directly when referenced in source)
-                out.put(e.getKey(), imports.get(e.getKey()));
+                out.put(e.getKey(), imports.get(e.getKey().replace('$', '.')));
             }
             else if (e.getKey().startsWith("package"))
             {
