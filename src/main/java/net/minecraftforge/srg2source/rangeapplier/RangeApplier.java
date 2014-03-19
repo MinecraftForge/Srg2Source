@@ -268,7 +268,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
         // New package/class name through mapping
         String newTopLevelClassPackage = Util.sourceName2Internal(map.maps.get("package " + oldTopLevelClassPackage));
-        String newTopLevelClassName = map.maps.get("class " + oldTopLevelClassFullName);
+        String newTopLevelClassName = Util.splitBaseName(map.maps.get("class " + oldTopLevelClassFullName).replace('.', '/'));
         if (newTopLevelClassPackage != null && newTopLevelClassName == null)
             throw new RuntimeException("filename " + fileName + " found package " + oldTopLevelClassPackage + "->" + newTopLevelClassPackage + " but no class map for " + newTopLevelClassName);
         if (newTopLevelClassPackage == null && newTopLevelClassName != null)
@@ -522,7 +522,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 log("FOUND CONSTR " + key + " " + constructorClassName);
                 if (renameMap.containsKey("class " + constructorClassName))
                     // Rename constructor to new class name
-                    newName = Util.splitBaseName(renameMap.get("class " + constructorClassName));
+                    newName = Util.splitBaseName(renameMap.get("class " + constructorClassName).replace('.', '/'));
                 else
                     return null;
             }
