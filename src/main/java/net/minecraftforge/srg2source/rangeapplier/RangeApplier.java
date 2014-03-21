@@ -273,7 +273,6 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             throw new RuntimeException("filename " + fileName + " found package " + oldTopLevelClassPackage + "->" + newTopLevelClassPackage + " but no class map for " + newTopLevelClassName);
         if (newTopLevelClassPackage == null && newTopLevelClassName != null)
             throw new RuntimeException("filename " + fileName + " found class map " + oldTopLevelClassName + "->" + newTopLevelClassName + " but no package map for " + oldTopLevelClassPackage);
-        String newInternalClassName = newTopLevelClassPackage + "/" + newTopLevelClassName;
 
         // start,end,expectedOldText,key
         for (RangeEntry info : rangeList)
@@ -417,7 +416,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                         continue;
                     }
                     else if (importMap.containsKey("class " + Util.sourceName2Internal(oldClass)))
-                        newClass = importMap.get("class " + Util.sourceName2Internal(oldClass).replace('$', '.'));
+                        newClass = importMap.get("class " + Util.sourceName2Internal(oldClass).replace('$', '.')).replace('$', '.');
 
                     if (newImports.contains(newClass))  // if not already added & its changed
                     {
