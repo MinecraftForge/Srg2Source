@@ -416,7 +416,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                         continue;
                     }
                     else if (importMap.containsKey("class " + Util.sourceName2Internal(oldClass)))
-                        newClass = importMap.get("class " + Util.sourceName2Internal(oldClass).replace('$', '.')).replace('$', '.');
+                        newClass = importMap.get("class " + Util.sourceName2Internal(oldClass)).replace('$', '.');
 
                     if (newImports.contains(newClass))  // if not already added & its changed
                     {
