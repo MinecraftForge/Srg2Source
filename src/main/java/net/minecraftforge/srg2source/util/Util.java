@@ -174,7 +174,10 @@ public class Util
      */
     public static String splitBaseName(String className)
     {
-        return className.substring(className.lastIndexOf('/') + 1);
+        if (className == null)
+            return null;
+        else
+            return className.substring(className.lastIndexOf('/') + 1);
     }
     
     /**
@@ -204,7 +207,14 @@ public class Util
      */
     public static String splitPackageName(String className)
     {
-        return className.substring(0, className.lastIndexOf('/'));
+        if(className == null)
+            return null;
+        
+        int index = className.lastIndexOf('/');
+        if (index == -1)
+            return null;
+        else
+            return className.substring(0, index);
     }
 
     /**
@@ -237,10 +247,20 @@ public class Util
      */
     public static String sourceName2Internal(String sourceName)
     {
+        return sourceName2Internal(sourceName, true);
+    }
+    
+    /**
+     * Converts names seperated with '.' to seperated with '/'
+     */
+    public static String sourceName2Internal(String sourceName, boolean inner)
+    {
         if (sourceName == null)
             return null;
-        else
+        else if (inner)
             return sourceName.replace('.', '/').replace('$', '/');
+        else
+            return sourceName.replace('.', '/');
     }
 
     /**

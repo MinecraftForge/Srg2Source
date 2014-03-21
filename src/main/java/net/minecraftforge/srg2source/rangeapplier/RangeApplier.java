@@ -268,7 +268,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
         // New package/class name through mapping
         String newTopLevelClassPackage = Util.sourceName2Internal(map.maps.get("package " + oldTopLevelClassPackage));
-        String newTopLevelClassName = Util.splitBaseName(map.maps.get("class " + oldTopLevelClassFullName).replace('.', '/'));
+        String newTopLevelClassName = Util.splitBaseName(Util.sourceName2Internal(map.maps.get("class " + oldTopLevelClassFullName), false));
         if (newTopLevelClassPackage != null && newTopLevelClassName == null)
             throw new RuntimeException("filename " + fileName + " found package " + oldTopLevelClassPackage + "->" + newTopLevelClassPackage + " but no class map for " + newTopLevelClassName);
         if (newTopLevelClassPackage == null && newTopLevelClassName != null)
@@ -320,7 +320,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             if (map.imports.containsKey(key))
             {
                 // This rename requires adding an import, if it crosses packages
-                String importPackage = Util.splitPackageName(map.imports.get(key).replace('.', '/'));
+                String importPackage = Util.splitPackageName(Util.sourceName2Internal(map.imports.get(key), false));
                 if (!importPackage.equals(newTopLevelClassPackage))
                     importsToAdd.add(map.imports.get(key));
             }
@@ -523,7 +523,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 log("FOUND CONSTR " + key + " " + constructorClassName);
                 if (renameMap.containsKey("class " + constructorClassName))
                     // Rename constructor to new class name
-                    newName = Util.splitBaseName(renameMap.get("class " + constructorClassName).replace('.', '/'));
+                    newName = Util.splitBaseName(Util.sourceName2Internal(renameMap.get("class " + constructorClassName), false));
                 else
                     return null;
             }

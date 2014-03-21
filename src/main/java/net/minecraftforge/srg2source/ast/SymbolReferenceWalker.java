@@ -102,7 +102,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     
     private boolean withinNewCode(int index)
     {
-        for (int x = 0; x < newCodeRanges.length; x += 2)
+        for (int x = 0; x < newCodeRanges.length - 1; x += 2)
         {
             int start = newCodeRanges[x];
             int end = newCodeRanges[x+1];
