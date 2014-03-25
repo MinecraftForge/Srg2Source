@@ -13,12 +13,13 @@ import com.google.common.io.Files;
 
 public class SrgContainer
 {
-    public final BiMap<String, String>   classMap, fieldMap;
+    public final BiMap<String, String>   classMap, fieldMap, packageMap;
     public final BiMap<MethodData, MethodData> methodMap;
 
     public SrgContainer()
     {
         classMap = HashBiMap.create();
+        packageMap = HashBiMap.create();
         fieldMap = HashBiMap.create();
         methodMap = HashBiMap.create();
     }
@@ -36,20 +37,26 @@ public class SrgContainer
                 line = line.substring(4);
                 String[] args = line.split(" ");
 
-                if (type.equals("PK")) // unreliable..
-                    continue;
+                if (type.equals("PK"))
+                {
+                    packageMap.put(args[0], args[1]);
+                }
                 else if (type.equals("CL"))
                 {
                     classMap.put(args[0], args[1]);
                 }
                 else if (type.equals("FD"))
+                {
                     fieldMap.put(args[0], args[1]);
+                }
                 else if (type.equals("MD"))
                 {
                     methodMap.put(new MethodData(args[0], args[1]), new MethodData(args[2], args[3]));
                 }
                 else
+                {
                     throw new RuntimeException("Invalid SRG file: " + srg);
+                }
             }
         }
         catch (IOException e)
