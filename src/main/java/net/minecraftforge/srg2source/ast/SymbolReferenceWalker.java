@@ -49,7 +49,7 @@ public class SymbolReferenceWalker extends ASTVisitor
 
     /**
      * Recursively walk starting from given element
-     * 
+     *
      * @param startElement
      * @return true if successful, or false if failed due to unresolved symbols
      */
@@ -59,7 +59,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         {
             return true;
         }
-        
+
         try
         {
             startElement.accept(this);
@@ -94,12 +94,12 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
         return ret;
     }
-    
+
     public void setParams(HashMap<String, Integer> indices)
     {
         this.paramIndices.putAll(indices);
     }
-    
+
     private boolean withinNewCode(int index)
     {
         for (int x = 0; x < newCodeRanges.length - 1; x += 2)
@@ -116,7 +116,7 @@ public class SymbolReferenceWalker extends ASTVisitor
 
     /**
      * Record the positional index of a local variable declaration
-     * 
+     *
      * @param binding
      *            The newly-declared variable
      * @return The new index, unique per method
@@ -209,7 +209,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(ParameterizedType       node) { return true; }
     public boolean visit(QualifiedType           node) { return true; }
 
-    public boolean visit(FieldDeclaration node) { 
+    public boolean visit(FieldDeclaration node) {
         emitter.emitTypeRange(node.getType());
 
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>)node.fragments())
@@ -308,7 +308,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         IBinding bind = node.resolveBinding();
         if (bind instanceof IMethodBinding)
         {
-            emitter.emitReferencedMethod(node, (IMethodBinding)bind);
+            emitter.emitReferencedMethod(node, (IMethodBinding)bind, this.className);
         }
         else if (bind instanceof ITypeBinding)
         {
@@ -328,7 +328,7 @@ public class SymbolReferenceWalker extends ASTVisitor
                 {
                     walker = walker.parent;
                     owner = walker.className;
-                    i = (walker.paramIndices.containsKey(id) ? walker.paramIndices.get(id) : -1);   
+                    i = (walker.paramIndices.containsKey(id) ? walker.paramIndices.get(id) : -1);
                 }
                 emitter.emitReferencedMethodParameter(node, var, i, owner);
             }
@@ -380,7 +380,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     {
         int index = this.assignLocalVariableIndex(node.getName(), node.resolveBinding());
         //emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
-        
+
         node.getType().accept(this);
         if (node.getInitializer() != null)
         {
@@ -426,7 +426,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     {
         int index = assignLocalVariableIndex(node.getName(), node.resolveBinding());
         //emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
-        
+
         if (node.getInitializer() != null)
         {
             node.getInitializer().accept(this);

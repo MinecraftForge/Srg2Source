@@ -42,7 +42,7 @@ public class SymbolRangeEmitter
         /*
          * PsiJavaCodeReferenceElement psiJavaCodeReferenceElement =
          * psiImportStatement.getImportReference();
-         * 
+         *
          * String qualifiedName =
          * psiJavaCodeReferenceElement.getQualifiedName(); // note, may be
          * package.*?
@@ -53,7 +53,7 @@ public class SymbolRangeEmitter
 
     /**
      * Emit class name declaration
-     * 
+     *
      * @return Qualified class name, for referencing class members
      */
     public String emitClassRange(TypeDeclaration clazz)
@@ -83,12 +83,12 @@ public class SymbolRangeEmitter
         {
             type = ((ArrayType)type).getElementType();
         }
-        
+
         if (type.isPrimitiveType())
         {
             return; // skip int, etc. - they're never going to be renamed
         }
-    
+
         if (type.isParameterizedType())
         {
             ParameterizedType p = (ParameterizedType)type;
@@ -98,16 +98,16 @@ public class SymbolRangeEmitter
             }
             type = p.getType();
         }
-        
+
         if (type.isWildcardType())
         {
             emitTypeRange(((WildcardType)type).getBound());
             return;
         }
-        
+
         if (type.isSimpleType())
         {
-            
+
             SimpleType stype = (SimpleType)type;
             ITypeBinding bind = stype.getName().resolveTypeBinding();
             if (bind.isTypeVariable()) return; // Don't spit out generic identifier.
@@ -134,14 +134,14 @@ public class SymbolRangeEmitter
             init = ((StringLiteral)field.getInitializer()).getLiteralValue();
         log(commonFields(name, field.getName()) + "field" + FS + cls + FS + name + FS + init);
     }
-    
+
     private IMethodBinding resolveOverrides(IMethodBinding bind)
     {
         if (bind == null)
         {
             return null;
         }
-        
+
         ITypeBinding clazz = bind.getDeclaringClass();
         if (clazz == null)
         {
@@ -162,14 +162,14 @@ public class SymbolRangeEmitter
         }
         return bind;
     }
-    
+
     private IMethodBinding resolveOverrides(IMethodBinding bind, ITypeBinding type)
     {
         if (type == null || bind.isConstructor())
         {
             return bind;
         }
-        
+
         for (IMethodBinding sup : type.getDeclaredMethods())
         {
             if (bind.overrides(sup))
@@ -195,11 +195,11 @@ public class SymbolRangeEmitter
             return tmp;
         }
     }
-    
+
     public String emitMethodRange(MethodDeclaration method, String className, boolean resolve)
     {
         IMethodBinding bind = method.resolveBinding();
-        
+
         if (resolve)
         {
             bind = resolveOverrides(bind);
@@ -249,12 +249,12 @@ public class SymbolRangeEmitter
 
         //special case this shit cuz it annoys me
         IMethodBinding top = resolveOverrides(bind);
-        if (top.getDeclaringClass().getQualifiedName().equals("net.minecraft.server.BlockSapling.TreeGenerator") 
+        if (top.getDeclaringClass().getQualifiedName().equals("net.minecraft.server.BlockSapling.TreeGenerator")
             && top.getName().toString().equals("generate"))
         {
             bind = top;
         }
-        
+
         String owner = bind.getDeclaringClass().getQualifiedName();
         String mName = bind.getName();
 
@@ -264,22 +264,25 @@ public class SymbolRangeEmitter
         //entity|param|net.minecraft.server.WorldManager|a|(Lnet/minecraft/server/Entity;)V|entity|0
         log(commonFields(name, param.getName()) + "param" + FS + owner + FS + mName + FS + signature + FS + name + FS + index);
     }
-    
+
 
     public void emitReferencedClass(Name name, ITypeBinding clazz)
     {
         //String|class|java.lang.String
         log(commonFields(name.toString(), name) + "class" + FS + clazz.getErasure().getQualifiedName());
     }
-    
 
-    public void emitReferencedMethod(Name name, IMethodBinding method)
+
+    public void emitReferencedMethod(Name name, IMethodBinding method, String parent)
     {
         method = resolveOverrides(method);
+        String cls = method.getDeclaringClass().getErasure().getQualifiedName();
+        if (cls.isEmpty())
+            cls = parent;
         //systemInstall|method|org.fusesource.jansi.AnsiConsole|systemInstall|()V
-        log(commonFields(name.toString(), name) + "method" + 
-            FS + method.getDeclaringClass().getErasure().getQualifiedName() + 
-            FS + method.getName() + 
+        log(commonFields(name.toString(), name) + "method" +
+            FS + cls +
+            FS + method.getName() +
             FS + MethodSignatureHelper.getSignature(method));
     }
 
@@ -289,7 +292,7 @@ public class SymbolRangeEmitter
 
         //special case this shit cuz it annoys me
         IMethodBinding top = resolveOverrides(method);
-        if (top.getDeclaringClass().getQualifiedName().equals("net.minecraft.server.BlockSapling.TreeGenerator") 
+        if (top.getDeclaringClass().getQualifiedName().equals("net.minecraft.server.BlockSapling.TreeGenerator")
             && top.getName().toString().equals("generate"))
         {
             method = top;
@@ -297,25 +300,25 @@ public class SymbolRangeEmitter
         String owner = method.getDeclaringClass().getQualifiedName();
         if (owner.isEmpty()) owner = className;
         //out|param|jline.AnsiWindowsTerminal|wrapOutIfNeeded|(Ljava/io/OutputStream;)Ljava/io/OutputStream;|out|0
-        log(commonFields(name.toString(), name) + "param" + 
-            FS + owner + 
-            FS + method.getName() + 
-            FS + MethodSignatureHelper.getSignature(method) + 
-            FS + name + 
+        log(commonFields(name.toString(), name) + "param" +
+            FS + owner +
+            FS + method.getName() +
+            FS + MethodSignatureHelper.getSignature(method) +
+            FS + name +
             FS + index);
     }
 
     public void emitLocalVariableRange(Name name, String className, String methodName, String methodSignature, int index)
     {
         //os|localvar|jline.AnsiWindowsTerminal|wrapOutputStream|(Ljava/io/OutputStream;)Ljava/io/OutputStream;|os|0
-        log(commonFields(name.toString(), name) + "localvar" + 
-            FS + className + 
-            FS + methodName + 
-            FS + methodSignature + 
-            FS + name + 
+        log(commonFields(name.toString(), name) + "localvar" +
+            FS + className +
+            FS + methodName +
+            FS + methodSignature +
+            FS + name +
             FS + index);
     }
-    
+
 
     public void emitReferencedField(Name name, IVariableBinding field, String className)
     {
@@ -333,11 +336,11 @@ public class SymbolRangeEmitter
         }
 
         //ansiSupported|field|jline.AnsiWindowsTerminal|ansiSupported
-        log(commonFields(name.toString(), name) + "field" + 
-            FS + owner + 
+        log(commonFields(name.toString(), name) + "field" +
+            FS + owner +
             FS + field.getName());
     }
-    
+
 /*
     /**
      * Emit type range given a PsiJavaCodeReferenceElement
@@ -417,8 +420,8 @@ public class SymbolRangeEmitter
     {
         // Include source filename for opening, textual range start/end, and old
         // text for sanity check
-        return "@" + FS + sourceFilePath 
-                   + FS + textRange.getStartPosition() 
+        return "@" + FS + sourceFilePath
+                   + FS + textRange.getStartPosition()
                    + FS + (textRange.getStartPosition() + textRange.getLength())
                    + FS + oldText + FS;
     }
@@ -436,6 +439,8 @@ public class SymbolRangeEmitter
         {
             logFile.println(tab + s);
         }
+        if (s.contains("||"))
+            System.exit(1);
     }
 
     public void emitThrowRange(Name exc, ITypeBinding type)

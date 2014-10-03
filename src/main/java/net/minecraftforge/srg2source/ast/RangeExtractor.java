@@ -46,21 +46,21 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         }
 
         File src = new File(args[0]);
-        
+
         RangeExtractor extractor = new RangeExtractor();
         extractor.setSrcRoot(new File(args[0]));
-        
+
         if (args[1].equals("none") || args[1].isEmpty())
             extractor.addLibs(src);
         else
             extractor.addLibs(args[1]);
-        
+
         boolean worked = extractor.generateRangeMap(new File(args[2]));
-        
+
         System.out.println("Srg2source batch mode finished - now exiting " + (worked ? 0 : 1));
         System.exit(worked ? 0 : 1);
     }
-    
+
     /**
      * Generates the rangemap.
      * @param out The file where the RangeMap will be put out.
@@ -99,7 +99,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
             cleanup();
             return true;
         }
-        
+
         // convert libs list
         String[] libArray = new String[libs.size()];
         {
@@ -110,11 +110,13 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
 
         try
         {
-            
+
             for (String path : files)
             {
+                //path = path.replace('\\',  '/');
+                //if (!path.equals("net/minecraft/block/BlockHopper.java")) continue;
                 InputStream stream = src.getInput(path);
-                
+
                 // do stuff
                 {
                     SymbolRangeEmitter emitter = new SymbolRangeEmitter(path, outFile);
@@ -149,7 +151,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                     emitter.log("endProcessing " + path);
                     emitter.log("");
                 }
-                
+
                 stream.close();
             }
         }
@@ -161,7 +163,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         cleanup();
         return true;
     }
-    
+
     private void cleanup()
     {
         outFile.close();
@@ -307,8 +309,8 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                 String[] words = comment.split(" ");
                 if (words.length >= 3)
                 {
-                    // First word is "//", 
-                    // Second is "CraftBukkit", "Spigot", "Forge".., 
+                    // First word is "//",
+                    // Second is "CraftBukkit", "Spigot", "Forge"..,
                     // Third is "start"/"end"
                     //Sometimes they miss spaces, so check if the beginning is smoshed
                     int idx = ((words[0].startsWith("//") && words[0].length() != 2) ? 1 : 2);
@@ -337,8 +339,8 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                     String[] words = line.trim().split(" ");
                     if (words.length >= 3)
                     {
-                        // First word is "/*", 
-                        // Second is "CraftBukkit", "Spigot", "Forge".., 
+                        // First word is "/*",
+                        // Second is "CraftBukkit", "Spigot", "Forge"..,
                         // Third is "start"/"end"
                         String command = words[2];
                         if (command.equalsIgnoreCase("start"))
@@ -378,16 +380,16 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
     {
         if (srcRoot.isDirectory())
             src = new FolderSupplier(srcRoot);
-        
+
         return this;
     }
-    
+
     public RangeExtractor setSrc(InputSupplier supplier)
     {
         src = supplier;
         return this;
     }
-    
+
     /**
      * @param lib Either a directory or a file
      */
@@ -396,12 +398,12 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         if (lib.isDirectory())
             for (File f : lib.listFiles())
                 addLibs(f);
-        else if (lib.getPath().endsWith("jar")) // to be sure its 
+        else if (lib.getPath().endsWith("jar")) // to be sure its
             libs.add(lib);
 
         return this;
     }
-    
+
     /**
      * @param lib Either a directory or a file
      */
