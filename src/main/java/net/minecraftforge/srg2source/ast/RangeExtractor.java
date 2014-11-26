@@ -141,12 +141,19 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                     }
 
                     List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>)cu.types();
-                    AbstractTypeDeclaration type = types.get(0);
+                    if (types.size() > 0)
+                    {
+                        AbstractTypeDeclaration type = types.get(0);
 
-                    String qualified = ((ITypeBinding)type.getName().resolveBinding()).getQualifiedName();
-                    SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, qualified, newCode);
+                        String qualified = ((ITypeBinding)type.getName().resolveBinding()).getQualifiedName();
+                        SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, qualified, newCode);
 
-                    walker.walk(type);
+                        walker.walk(type);
+                    }
+                    else
+                    {
+                        emitter.log("  File had no contents.");
+                    }
 
                     emitter.log("endProcessing " + path);
                     emitter.log("");
