@@ -16,16 +16,7 @@ MCP/MCP.iws
 MCP/MCP.rangemap
 *.srg
 patches/
-bin
-build
-.gradle
-run
-.settings
-.classpath
-.project
 .pydevproject
-lib
-eclipse
 .idea
 *.iml
 *.ipr

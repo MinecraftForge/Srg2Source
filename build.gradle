@@ -27,7 +27,7 @@ configurations {
 }
 
 dependencies {
-    compile 'org.ow2.asm:asm-debug-all:4.1' // Debug version, so we can have generics!
+    compile 'org.ow2.asm:asm-debug-all:5.0.3' // Debug version, so we can have generics!
     compile 'com.google.guava:guava:18.0'
     compile 'net.sf.opencsv:opencsv:2.3' // reading CSVs.. also used by SpecialSource
     compile 'net.sf.jopt-simple:jopt-simple:4.6' // easy CLI parsing

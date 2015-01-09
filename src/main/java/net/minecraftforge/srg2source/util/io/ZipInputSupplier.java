@@ -12,7 +12,6 @@ import java.util.zip.ZipInputStream;
 
 import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 
 public class ZipInputSupplier implements InputSupplier
 {
