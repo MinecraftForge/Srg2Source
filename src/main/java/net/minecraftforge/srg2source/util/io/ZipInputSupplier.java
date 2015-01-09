@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 
 public class ZipInputSupplier implements InputSupplier
 {
@@ -20,7 +22,7 @@ public class ZipInputSupplier implements InputSupplier
     public void readZip(File zip) throws IOException
     {
         root = zip.getCanonicalPath();
-        
+
         // begin reading jar
         final ZipInputStream zin = new ZipInputStream(new FileInputStream(zip));
         ZipEntry entry;
@@ -43,7 +45,7 @@ public class ZipInputSupplier implements InputSupplier
     {
         try
         {
-            return ByteStreams.newInputStreamSupplier(data.get(relPath)).getInput();
+            return ByteSource.wrap(data.get(relPath)).openStream();
         }
         catch (Exception e)
         {
@@ -55,11 +57,11 @@ public class ZipInputSupplier implements InputSupplier
     public List<String> gatherAll(String endFilter)
     {
         LinkedList<String> out = new LinkedList<String>();
-        
+
         for (String key : data.keySet())
             if (key.endsWith(endFilter))
                 out.add(key);
-            
+
         return out;
     }
 

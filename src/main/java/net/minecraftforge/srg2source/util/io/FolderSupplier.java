@@ -34,7 +34,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
                 out.getParentFile().mkdirs();
                 out.createNewFile();
             }
-            return Files.newOutputStreamSupplier(new File(root, relPath)).getOutput();
+            return Files.asByteSink(new File(root, relPath)).openStream();
         }
         catch (IOException e)
         {
@@ -47,7 +47,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
     {
         try
         {
-            return Files.newInputStreamSupplier(new File(root, relPath)).getInput();
+            return Files.asByteSource(new File(root, relPath)).openStream();
         }
         catch (IOException e)
         {
@@ -61,7 +61,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
         LinkedList<String> out = new LinkedList<String>();
         Stack<File> dirStack = new Stack<File>();
         dirStack.push(root);
-        
+
         int rootCut = root.getAbsolutePath().length() + 1; // +1 for the slash
 
         while(dirStack.size() > 0)
@@ -74,7 +74,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
                     out.add(f.getAbsolutePath().substring(rootCut));
             }
         }
-        
+
         return out;
     }
 
