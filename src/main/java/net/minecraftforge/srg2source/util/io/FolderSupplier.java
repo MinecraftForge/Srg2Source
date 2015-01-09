@@ -34,7 +34,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
                 out.getParentFile().mkdirs();
                 out.createNewFile();
             }
-            return Files.newOutputStreamSupplier(new File(root, relPath)).getOutput();
+            return Files.asByteSink(new File(root, relPath)).openBufferedStream();
         }
         catch (IOException e)
         {
@@ -47,7 +47,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
     {
         try
         {
-            return Files.newInputStreamSupplier(new File(root, relPath)).getInput();
+            return Files.asByteSource(new File(root, relPath)).openBufferedStream();
         }
         catch (IOException e)
         {

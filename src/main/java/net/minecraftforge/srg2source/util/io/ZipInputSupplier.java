@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 
 public class ZipInputSupplier implements InputSupplier
@@ -43,7 +44,7 @@ public class ZipInputSupplier implements InputSupplier
     {
         try
         {
-            return ByteStreams.newInputStreamSupplier(data.get(relPath)).getInput();
+            return ByteSource.wrap(data.get(relPath)).openBufferedStream();
         }
         catch (Exception e)
         {
