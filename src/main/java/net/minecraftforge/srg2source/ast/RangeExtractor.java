@@ -64,7 +64,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
     /**
      * Generates the rangemap.
      * @param out The file where the RangeMap will be put out.
-     * @return FALSE if it failed for some reason, TRUE otehrwise.
+     * @return FALSE if it failed for some reason, TRUE otherwise.
      */
     public boolean generateRangeMap(File out)
     {
@@ -85,6 +85,17 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
             Throwables.propagate(e);
             return false;
         }
+        return generateRangeMap(outFile);
+    }
+
+    /**
+     * Generates the rangemap.
+     * @param writer The write to print the RangeMap to.
+     * @return FALSE if it failed for some reason, TRUE otherwise.
+     */
+    public boolean generateRangeMap(PrintWriter writer)
+    {
+        this.outFile = writer;
 
         log("Symbol range map extraction starting");
 

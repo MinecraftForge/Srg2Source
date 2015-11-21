@@ -1,0 +1,20 @@
+public class GenericClasses
+{
+    private static interface IFoo<V>
+    {
+        V bar(V arg);
+    }
+
+    public static void main()
+    {
+        IFoo<String> fizz = new IFoo<String>()
+        {
+            public String bar(String arg)
+            {
+                return null;
+            }
+        };
+        fizz.bar();
+        ((IFoo)fizz).bar();
+    }
+}

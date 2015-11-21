@@ -1,0 +1,31 @@
+Symbol range map extraction starting
+Processing 1 files
+processing /GenericClasses.txt
+Class Start: GenericClasses
+   Class Start: GenericClasses.IFoo
+      Method Start: bar(Ljava/lang/Object;)Ljava/lang/Object;
+         @|/GenericClasses.txt|83|86|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
+         @|/GenericClasses.txt|89|92|arg|param|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;|arg|0
+      Method End: bar(Ljava/lang/Object;)Ljava/lang/Object;
+   Class End  : GenericClasses.IFoo
+   Method Start: main()V
+      @|/GenericClasses.txt|125|129|main|method|GenericClasses|main|()V
+      @|/GenericClasses.txt|146|150|IFoo|class|GenericClasses.IFoo
+      @|/GenericClasses.txt|151|157|String|class|java.lang.String
+      @|/GenericClasses.txt|170|174|IFoo|class|GenericClasses.IFoo
+      @|/GenericClasses.txt|175|181|String|class|java.lang.String
+      Anon Class Start: GenericClasses$1
+         Method Start: bar(Ljava/lang/String;)Ljava/lang/String;
+            @|/GenericClasses.txt|221|224|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
+            @|/GenericClasses.txt|214|220|String|class|java.lang.String
+            @|/GenericClasses.txt|225|231|String|class|java.lang.String
+            @|/GenericClasses.txt|232|235|arg|param|GenericClasses$1|bar|(Ljava/lang/String;)Ljava/lang/String;|arg|0
+         Method End: bar(Ljava/lang/String;)Ljava/lang/String;
+      Anon Class End: GenericClasses$1
+      @|/GenericClasses.txt|318|321|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
+      @|/GenericClasses.txt|335|339|IFoo|class|GenericClasses.IFoo
+      @|/GenericClasses.txt|346|349|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
+   Method End: main()V
+Class End  : GenericClasses
+endProcessing /GenericClasses.txt
+
