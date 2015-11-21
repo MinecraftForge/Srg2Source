@@ -160,7 +160,7 @@ public class SymbolRangeEmitter
             tmp = resolveOverrides(bind, intf);
             if (tmp != null) bind = tmp;
         }
-        return bind;
+        return bind.getMethodDeclaration();
     }
 
     private IMethodBinding resolveOverrides(IMethodBinding bind, ITypeBinding type)
