@@ -269,6 +269,7 @@ public class SymbolRangeEmitter
     public void emitReferencedClass(Name name, ITypeBinding clazz)
     {
         //String|class|java.lang.String
+        if (clazz.isTypeVariable()) return;
         log(commonFields(name.toString(), name) + "class" + FS + clazz.getErasure().getQualifiedName());
     }
 

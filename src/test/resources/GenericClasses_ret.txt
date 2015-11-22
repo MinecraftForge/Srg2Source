@@ -8,23 +8,29 @@ Class Start: GenericClasses
          @|/GenericClasses.txt|89|92|arg|param|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;|arg|0
       Method End: bar(Ljava/lang/Object;)Ljava/lang/Object;
    Class End  : GenericClasses.IFoo
+   Method Start: func(Collection)Callable
+      @|/GenericClasses.txt|140|144|func|method|GenericClasses|func|(Collection)Callable
+      @|/GenericClasses.txt|145|155|Collection|class|Collection
+      @|/GenericClasses.txt|159|162|par|param|GenericClasses|func|(Collection)Callable|par|0
+      @|/GenericClasses.txt|176|179|par|param|GenericClasses|func|(Collection)Callable|par|0
+   Method End: func(Collection)Callable
    Method Start: main()V
-      @|/GenericClasses.txt|125|129|main|method|GenericClasses|main|()V
-      @|/GenericClasses.txt|146|150|IFoo|class|GenericClasses.IFoo
-      @|/GenericClasses.txt|151|157|String|class|java.lang.String
-      @|/GenericClasses.txt|170|174|IFoo|class|GenericClasses.IFoo
-      @|/GenericClasses.txt|175|181|String|class|java.lang.String
+      @|/GenericClasses.txt|220|224|main|method|GenericClasses|main|()V
+      @|/GenericClasses.txt|241|245|IFoo|class|GenericClasses.IFoo
+      @|/GenericClasses.txt|246|252|String|class|java.lang.String
+      @|/GenericClasses.txt|265|269|IFoo|class|GenericClasses.IFoo
+      @|/GenericClasses.txt|270|276|String|class|java.lang.String
       Anon Class Start: GenericClasses$1
          Method Start: bar(Ljava/lang/String;)Ljava/lang/String;
-            @|/GenericClasses.txt|221|224|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
-            @|/GenericClasses.txt|214|220|String|class|java.lang.String
-            @|/GenericClasses.txt|225|231|String|class|java.lang.String
-            @|/GenericClasses.txt|232|235|arg|param|GenericClasses$1|bar|(Ljava/lang/String;)Ljava/lang/String;|arg|0
+            @|/GenericClasses.txt|316|319|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
+            @|/GenericClasses.txt|309|315|String|class|java.lang.String
+            @|/GenericClasses.txt|320|326|String|class|java.lang.String
+            @|/GenericClasses.txt|327|330|arg|param|GenericClasses$1|bar|(Ljava/lang/String;)Ljava/lang/String;|arg|0
          Method End: bar(Ljava/lang/String;)Ljava/lang/String;
       Anon Class End: GenericClasses$1
-      @|/GenericClasses.txt|318|321|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
-      @|/GenericClasses.txt|335|339|IFoo|class|GenericClasses.IFoo
-      @|/GenericClasses.txt|346|349|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
+      @|/GenericClasses.txt|413|416|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
+      @|/GenericClasses.txt|430|434|IFoo|class|GenericClasses.IFoo
+      @|/GenericClasses.txt|441|444|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
    Method End: main()V
 Class End  : GenericClasses
 endProcessing /GenericClasses.txt

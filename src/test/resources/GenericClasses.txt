@@ -5,6 +5,9 @@ public class GenericClasses
         V bar(V arg);
     }
 
+
+    public <T extends Callable<T>> T func(Collection<T> par){ for (T t : par); return null;}
+
     public static void main()
     {
         IFoo<String> fizz = new IFoo<String>()

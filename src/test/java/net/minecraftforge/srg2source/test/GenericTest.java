@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import net.minecraftforge.srg2source.ast.RangeExtractor;
 import net.minecraftforge.srg2source.util.io.InputSupplier;
@@ -52,5 +54,6 @@ public class GenericTest
         boolean worked = extractor.generateRangeMap(writer);
         Assert.assertTrue("Failed to do work!" , worked);
         Assert.assertEquals(Files.toString(new File(getClass().getResource("/GenericClasses_ret.txt").getFile()), Charsets.UTF_8), bos.toString());
+
     }
 }
