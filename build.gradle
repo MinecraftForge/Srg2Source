@@ -91,70 +91,69 @@ artifacts {
 }
 
 uploadArchives {
-    repositories {
-        if (project.hasProperty("filesmaven")) {
-            logger.info('Publishing to files server')
+    repositories.mavenDeployer {
 
-            mavenDeployer {
-                configuration = configurations.deployerJars
+        dependsOn 'build'
 
-                repository(url: project.filesmaven.url) {
-                    authentication(userName: project.filesmaven.username, privateKey: project.filesmaven.key)
-                }
-
-                pom {
-                    groupId = project.group
-                    version = project.version
-                    artifactId = project.archivesBaseName
-                    project {
-                        name project.archivesBaseName
-                        packaging 'jar'
-                        description 'Srg2Source library for ForgeGradle'
-                        url 'https://github.com/MinecraftForge/Srg2Source'
-
-                        scm {
-                            url 'https://github.com/MinecraftForge/Srg2Source'
-                            connection 'scm:git:git://github.com/MinecraftForge/Srg2Source.git'
-                            developerConnection 'scm:git:git@github.com:MinecraftForge/Srg2Source.git'
-                        }
-
-                        issueManagement {
-                            system 'github'
-                            url 'https://github.com/MinecraftForge/Srg2Source/issues'
-                        }
-
-                        licenses {
-                            license {
-                                name 'The BSD 3-Clause License'
-                                url 'http://opensource.org/licenses/BSD-3-Clause'
-                                distribution 'repo'
-                            }
-                        }
-
-                        developers {
-                            developer {
-                                id 'agaricusb'
-                                name 'Agaricusb'
-                                roles { role 'developer' }
-                            }
-                            developer {
-                                id 'LexManos'
-                                name 'Lex Manos'
-                                roles { role 'developer' }
-                            }
-                            developer {
-                                id 'AbrarSyed'
-                                name 'Abrar Syed'
-                                roles { role 'developer' }
-                            }
-                        }
-                    }
-                }
+        if (project.hasProperty('forgeMavenPass'))
+        {
+            repository(url: "http://files.minecraftforge.net/maven/manage/upload") {
+                authentication(userName: "forge", password: project.getProperty('forgeMavenPass'))
             }
         }
         else
         {
-            add project.repositories.mavenLocal()
+            // local repo folder. Might wanna juset use  gradle install   if you wanans end it to maven-local
+            repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
+        }
+
+        pom {
+            groupId = project.group
+            version = project.version
+            artifactId = project.archivesBaseName
+            project {
+                name project.archivesBaseName
+                packaging 'jar'
+                description 'Srg2Source library for ForgeGradle'
+                url 'https://github.com/MinecraftForge/Srg2Source'
+
+                scm {
+                    url 'https://github.com/MinecraftForge/Srg2Source'
+                    connection 'scm:git:git://github.com/MinecraftForge/Srg2Source.git'
+                    developerConnection 'scm:git:git@github.com:MinecraftForge/Srg2Source.git'
+                }
+
+                issueManagement {
+                    system 'github'
+                    url 'https://github.com/MinecraftForge/Srg2Source/issues'
+                }
+
+                licenses {
+                    license {
+                        name 'The BSD 3-Clause License'
+                        url 'http://opensource.org/licenses/BSD-3-Clause'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'agaricusb'
+                        name 'Agaricusb'
+                        roles { role 'developer' }
+                    }
+                    developer {
+                        id 'LexManos'
+                        name 'Lex Manos'
+                        roles { role 'developer' }
+                    }
+                    developer {
+                        id 'AbrarSyed'
+                        name 'Abrar Syed'
+                        roles { role 'developer' }
+                    }
+                }
+            }
         }
     }
 }
