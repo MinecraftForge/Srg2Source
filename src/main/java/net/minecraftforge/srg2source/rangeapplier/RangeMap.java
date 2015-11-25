@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.google.common.base.Strings;
 import net.minecraftforge.srg2source.util.Util;
 
 import com.google.common.base.Splitter;
@@ -81,7 +82,14 @@ class RangeMap
                 }
                 else if (kind.equals("class"))
                 {
-                    key = "class " + Util.sourceName2Internal(info.get(0));
+                    String className = Util.sourceName2Internal(info.get(0));
+
+                    // no valid classname? must be anonymous or something stupid like that... no rename.
+                    if (Strings.isNullOrEmpty(className))
+                    {
+                        continue;
+                    }
+                    key = "class " + className;
                 }
                 else if (kind.equals("field"))
                 {
