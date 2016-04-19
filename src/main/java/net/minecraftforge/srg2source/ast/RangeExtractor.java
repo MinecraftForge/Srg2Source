@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.hash.Hashing;
@@ -143,8 +144,8 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                 {
                     SymbolRangeEmitter emitter = new SymbolRangeEmitter(path, outFile);
                     byte[] bytes = ByteStreams.toByteArray(stream);
-                    String md5 = Hashing.md5().hashBytes(bytes).toString();
-                    String data = new String(bytes, Charset.forName("UTF-8")).replaceAll("\r", "");
+                    String data = new String(bytes, Charsets.UTF_8).replaceAll("\r", "");
+                    String md5 = Hashing.md5().hashString(data, Charsets.UTF_8).toString();
 
                     log("startProcessing \"" + path + "\" md5: " + md5);
 
