@@ -17,7 +17,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 
 group = 'net.minecraftforge.srg2source'
-version = '3.3-SNAPSHOT'
+version = '4.0-SNAPSHOT'
 archivesBaseName = 'Srg2Source'
 targetCompatibility = '1.6'
 sourceCompatibility = '1.6'
@@ -45,7 +45,10 @@ dependencies {
     compile 'org.eclipse.equinox:common:3.6.200-v20130402-1505'
     compile 'org.eclipse.equinox:preferences:3.5.100-v20130422-1538'
     
-    compile 'org.eclipse.jdt:org.eclipse.jdt.core:3.10.0.v20131029-1755'
+    compile 'org.eclipse.jdt:org.eclipse.jdt.core:3.12.0.v20160315-2126'
+    
+    // Potential Eclipse AST replacement
+    compile 'fr.inria.gforge.spoon:spoon-core:5.1.0'
     
     // maven deployer jar
     deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"

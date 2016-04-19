@@ -6,12 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Callable;
-
-import net.minecraftforge.srg2source.ast.RangeExtractor;
-import net.minecraftforge.srg2source.util.io.InputSupplier;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,12 +14,25 @@ import org.junit.Test;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
-public class GenericTest
+import net.minecraftforge.srg2source.ast.RangeExtractor;
+import net.minecraftforge.srg2source.util.io.InputSupplier;
+
+public class SingleTests
 {
     @Test
     public void testGenerics() throws IOException
     {
-        RangeExtractor extractor = new RangeExtractor();
+        testClass("GenericClasses");
+    }
+    @Test
+    public void testLambda() throws IOException
+    {
+        testClass("Lambda");
+    }
+
+    public void testClass(final String clsName) throws IOException
+    {
+        RangeExtractor extractor = new RangeExtractor(RangeExtractor.JAVA_1_6);
         extractor.setSrc(new InputSupplier(){
             @Override public void close() throws IOException{}
             @Override public String getRoot(String resource) { return ""; }
@@ -44,7 +52,7 @@ public class GenericTest
             @Override
             public List<String> gatherAll(String endFilter)
             {
-                return Arrays.asList("/GenericClasses.txt");
+                return Arrays.asList("/" + clsName + ".txt");
             }
         });
 
@@ -53,7 +61,7 @@ public class GenericTest
 
         boolean worked = extractor.generateRangeMap(writer);
         Assert.assertTrue("Failed to do work!" , worked);
-        Assert.assertEquals(Files.toString(new File(getClass().getResource("/GenericClasses_ret.txt").getFile()), Charsets.UTF_8), bos.toString());
+        Assert.assertEquals(Files.toString(new File(getClass().getResource("/" + clsName + "_ret.txt").getFile()), Charsets.UTF_8), bos.toString());
 
     }
 }

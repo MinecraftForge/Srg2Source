@@ -179,7 +179,7 @@ public class Util
         else
             return className.substring(className.lastIndexOf('/') + 1);
     }
-    
+
     /**
      * Returns the last few names in the string.
      * @param num the number of extra names to include
@@ -189,16 +189,16 @@ public class Util
     {
         char c = '.';
         int index = qualName.lastIndexOf(c);
-        
+
         while (index >= 0 && num > 0)
         {
             index = qualName.lastIndexOf(c, index-1);
             num--;
         }
-        
+
         if (index < 0)
             return qualName;
-        
+
         return qualName.substring(index+1);
     }
 
@@ -209,7 +209,7 @@ public class Util
     {
         if(className == null)
             return null;
-        
+
         int index = className.lastIndexOf('/');
         if (index == -1)
             return null;
@@ -227,18 +227,18 @@ public class Util
         else
             return internalName.replace('/', '.');
     }
-    
+
     public static int countChar(String str, char c)
     {
         int index = str.indexOf(c);
         int num = 0;
-        
+
         while (index >= 0)
         {
             num++;
             index = str.indexOf(c, index+1);
         }
-        
+
         return num;
     }
 
@@ -249,7 +249,7 @@ public class Util
     {
         return sourceName2Internal(sourceName, true);
     }
-    
+
     /**
      * Converts names seperated with '.' to seperated with '/'
      */
@@ -285,9 +285,9 @@ public class Util
 
         return filename.replace("." + Files.getFileExtension(filename), "").replace('\\', '/');
     }
-    
+
     /**
-     * 
+     *
      * @param path Absolute directory path
      * @param filter *.java or some similair filter
      * @param relative whether or not the output paths should be relative
@@ -315,7 +315,7 @@ public class Util
         }
         return names.toArray(new String[names.size()]);
     }
-    
+
     private static List<String> gatherFiles(String path, int cut, String filter)
     {
         ArrayList<String> names = new ArrayList<String>();
@@ -333,19 +333,23 @@ public class Util
         return names;
     }
 
-    private static ASTParser parser = ASTParser.newParser(AST.JLS4);
-    @SuppressWarnings("unchecked")
-    public static CompilationUnit createUnit(String name, String data, String srcRoot, String[] libs) throws Exception
+    public static ASTParser createParser(String javaVersion, String srcRoot, String[] libs)
     {
+        ASTParser parser = ASTParser.newParser(AST.JLS8);
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
         parser.setResolveBindings(true);
         parser.setBindingsRecovery(true);
         Hashtable<String, String> options = JavaCore.getDefaultOptions();
-        options.put(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_1_6);
+        options.put(JavaCore.COMPILER_SOURCE, javaVersion);
         parser.setCompilerOptions(options);
-        parser.setUnitName(name);
         parser.setEnvironment(libs, new String[] {srcRoot}, null, true);
+        return parser;
+    }
 
+
+    public static CompilationUnit createUnit(ASTParser parser, String name, String data) throws Exception
+    {
+        parser.setUnitName(name);
         parser.setSource(data.toCharArray());
         return (CompilationUnit) parser.createAST(null);
     }

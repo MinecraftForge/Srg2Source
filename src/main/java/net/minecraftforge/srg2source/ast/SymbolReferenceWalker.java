@@ -274,7 +274,7 @@ public class SymbolReferenceWalker extends ASTVisitor
 
         // Return type and throws list
         emitter.emitTypeRange(node.getReturnType2());
-        for (Name exc : (List<Name>) node.thrownExceptions())
+        for (Name exc : (List<Name>) node.thrownExceptionTypes())
         {
             emitter.emitThrowRange(exc, (ITypeBinding) exc.resolveBinding());
         }

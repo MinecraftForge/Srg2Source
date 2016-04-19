@@ -18,7 +18,9 @@ import java.util.Properties;
 
 import net.minecraftforge.srg2source.util.Util;
 
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
@@ -40,14 +42,15 @@ public class CodeFixer
     private static boolean FATAL = true;
     private static Properties FIXES = new Properties();
     private static boolean DRYRUN = false;
-    
+    private static ASTParser parser = null;
+
     private static class SourceKey
     {
         String name;
         CompilationUnit cu;
         String data;
         ArrayList<TypeDeclaration> classes;
-        
+
         SourceKey(String name, CompilationUnit cu, String data, ArrayList<TypeDeclaration> classes)
         {
             this.name = name;
@@ -56,7 +59,7 @@ public class CodeFixer
             this.classes = classes;
         }
     }
-    
+
     private static Method addURL;
 
     private static boolean argExists(String arg, String[] args)
@@ -83,7 +86,7 @@ public class CodeFixer
     }
 
     public static void main(String[] args) throws Exception
-    {        
+    {
         SRC = new File(args[0]).getAbsolutePath();
         SRG = new SrgFile(new File(args[2])).read();
         if  (!args[1].equalsIgnoreCase("none") && args[1].length() != 0)
@@ -120,23 +123,25 @@ public class CodeFixer
                 FIXES.load(new FileInputStream(f));
             }
         }
-        
+
+        parser = Util.createParser(JavaCore.VERSION_1_6, SRC, libs);
+
         String[] files = Util.gatherFiles(SRC, ".java", false);
         try
         {
             ArrayList<SourceKey> srcClasses = createTree(files);
-            
+
             log("Gathering Fixes:");
             HashMap<String, ArrayList<FixTypes>> classFixes = findFixes(srcClasses);
-            
+
             log("Applying Fixes:");
             for (String key : classFixes.keySet())
             {
                 ArrayList<FixTypes> fixes = classFixes.get(key);
                 Collections.sort(fixes);
-                
+
                 log("  " + key);
-                
+
                 SourceKey data = null;
                 for (SourceKey s : srcClasses)
                 {
@@ -146,27 +151,27 @@ public class CodeFixer
                         break;
                     }
                 }
-                
+
                 if (data == null)
                 {
                     log("    Could not find sourcekey for fixes: " + key);
                     System.exit(1);
                 }
-                
+
                 int offset = 0;
                 String src = data.data;
-                
+
                 for (FixTypes fix : fixes)
                 {
                     log("    Fix: " + fix + " " + offset);
-                    
+
                     String pre = src.substring(0, fix.getStart() + offset);
                     String post = src.substring(fix.getStart() + fix.getLength() + offset);
-                    
-                    src = pre + fix.newText + post; 
+
+                    src = pre + fix.newText + post;
                     offset += (fix.newText.length() - fix.getLength());
                 }
-                
+
                 String outFile = SRC + "/" + key + ".java";
                 try
                 {
@@ -189,19 +194,19 @@ public class CodeFixer
             e.printStackTrace();
         }
     }
-    
+
     private static ArrayList<SourceKey> createTree(String[] files)
     {
         ArrayList<SourceKey> ret = new ArrayList<SourceKey>();
         try
-        {            
+        {
             log("Processing Source Tree:");
             for (String file : files)
             {
                 String data = Files.toString(new File(file), Charset.forName("UTF-8")).replaceAll("\r", "");
                 String name = file.replace('\\', '/').substring(SRC.length() + 1);
                 log("    " + name);
-                CompilationUnit cu = Util.createUnit(name, data, SRC, libs);
+                CompilationUnit cu = Util.createUnit(parser, name, data);
 
                 ArrayList<TypeDeclaration> classes = new ArrayList<TypeDeclaration>();
                 List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>)cu.types();
@@ -215,7 +220,7 @@ public class CodeFixer
                 }
                 ret.add(new SourceKey(name.substring(0, name.length() - 5), cu, data.trim(), classes));
             }
-            
+
             for (String lib : libs)
             {
                 //log("Processing Tree: " + lib);
@@ -226,10 +231,10 @@ public class CodeFixer
         {
             e.printStackTrace();
         }
-        
+
         return ret;
     }
-    
+
     @SuppressWarnings("rawtypes")
     private static HashMap<String, ArrayList<FixTypes>> findFixes(ArrayList<SourceKey> files) throws ClassNotFoundException
     {
@@ -240,14 +245,14 @@ public class CodeFixer
             log("    " + src.name);
             ArrayList<IProblem> errors = new ArrayList<IProblem>();
             HashMap<String, ArrayList<IProblem>> duplicates = new HashMap<String, ArrayList<IProblem>>();
-            
+
             for (IProblem p : src.cu.getProblems())
             {
                 if (p.isError())
                 {
                     int id = (p.getID() & IProblem.IgnoreCategoriesMask);
                     if (id == 169) continue; //Screw you switch errors that arnt errrors
-                    
+
                     if (id == 355) //Duplicate methods
                     {
                         String name = p.getArguments()[0];
@@ -259,13 +264,13 @@ public class CodeFixer
                         String name = p.getArguments()[1];
                         String args = p.getArguments()[2];
                         String clsName = p.getArguments()[0];
-                        
+
                         int start = p.getSourceStart();
                         int length = p.getSourceEnd() - p.getSourceStart() + 1;
                         String newName = name + "_CodeFix_Public";
                         if (name.endsWith("_"))
                             newName = name + "CodeFix_Public";
-                        
+
                         if (!gatherMethod(ret, getClass(clsName, files), name, args, newName))
                         {
                             log("      Could not find class: " + clsName);
@@ -324,8 +329,8 @@ public class CodeFixer
                         String[] args = (tmp.length() == 0 ? new String[0] : tmp.split(", "));
                         Class cls = Class.forName(owner, false, CodeFixer.class.getClassLoader());
                         String signature = null;
-                        Class<?> returnType = null; 
-                        
+                        Class<?> returnType = null;
+
                         for (Method m : cls.getMethods())
                         {
                             if (m.getName().equals(name))
@@ -347,20 +352,20 @@ public class CodeFixer
                                         signature = MethodSignatureHelper.getSignature(m);
                                         returnType = m.getReturnType();
                                     }
-                                }   
+                                }
                             }
                             if (signature != null) break;
                         }
-                        
+
                         SrgFile.Class icls = SRG.getClass2(impl.replace('.', '/'));
                         if (icls == null)
                         {
                             log("      Could not find class in SRG " + impl);
                             if (FATAL) System.exit(1); else continue;
                         }
-                        
+
                         SrgFile.Node mtd = icls.methods1.get(name + signature);
-                        
+
                         ClassTree.Class treeNode = TREE.getClass(impl);
                         treeNode = treeNode.getParent();
                         if (treeNode == null)
@@ -368,7 +373,7 @@ public class CodeFixer
                             log("    Could not find missing method, and parent was null: " + impl + "." + name + signature);
                             if (FATAL) System.exit(1); else continue;
                         }
-                        
+
                         while(mtd == null && treeNode != null)
                         {
                             icls = SRG.getClass2(treeNode.name);
@@ -402,7 +407,7 @@ public class CodeFixer
                         {
                             rename = mtd.rename;
                         }
-                        
+
                         if (rename != null && !added.contains(key))
                         {
                             String clsName = impl.replace('.', '/');
@@ -423,9 +428,9 @@ public class CodeFixer
                     }
                 }
             }
-            
+
             gatherDuplicateFixes(duplicates, ret, src);
-            
+
             if (errors.size() > 0)
             {
                 log("      " + src.name);
@@ -435,11 +440,11 @@ public class CodeFixer
                     //for (String s : p.getArguments()) System.out.println("        " + s);
                 }
             }
-            
+
         }
         return ret;
     }
-    
+
     private static TypeDeclaration getClass(String name, ArrayList<SourceKey> keys)
     {
         for (SourceKey src : keys)
@@ -454,7 +459,7 @@ public class CodeFixer
         }
         return null;
     }
-    
+
     private static void gatherDuplicateFixes(HashMap<String, ArrayList<IProblem>> duplicates, HashMap<String, ArrayList<FixTypes>> ret, SourceKey src)
     {
         for (Map.Entry<String, ArrayList<IProblem>> ent : duplicates.entrySet())
@@ -474,15 +479,15 @@ public class CodeFixer
                 System.out.println("WTF! COULD NOT FIND DUPLICATE CLASS");
                 System.exit(1);
             }
-            
+
             for (MethodDeclaration mtd : cls.getMethods())
             {
                 if (mtd.getName().toString().equals(ent.getKey()))
                 {
-                    //Resolving will fail on duplicate methods.. HOPE that the real 
-                    //one is the first one, only real case is the synthetic method 
+                    //Resolving will fail on duplicate methods.. HOPE that the real
+                    //one is the first one, only real case is the synthetic method
                     //in Mooshroom, which this works
-                    if (mtd.resolveBinding() == null) 
+                    if (mtd.resolveBinding() == null)
                     {
                         String clsName = cls.resolveBinding().getQualifiedName().replace('.', '/');
                         if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
@@ -492,7 +497,7 @@ public class CodeFixer
             }
         }
     }
-    
+
     private static boolean gatherMethod(HashMap<String, ArrayList<FixTypes>> ret, TypeDeclaration cls, String name, String args, String newName)
     {
         if (cls == null)
@@ -520,10 +525,10 @@ public class CodeFixer
                     if (same)
                     {
                         Type retType = mtd.getReturnType2();
-                        
+
                         String clsName = cls.resolveBinding().getQualifiedName().replace('.', '/');
                         if (!ret.containsKey(clsName)) ret.put(clsName, new ArrayList<FixTypes>());
-                        
+
                         ret.get(clsName).add(new FixTypes.BounceMethod(cls, newName, name, pts, retType.toString()));
                         return true;
                     }
@@ -532,7 +537,7 @@ public class CodeFixer
         }
         return false;
     }
-    
+
     public static void log(String s)
     {
         System.out.println(s);

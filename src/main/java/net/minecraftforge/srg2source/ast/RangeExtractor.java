@@ -18,6 +18,8 @@ import net.minecraftforge.srg2source.util.io.ConfLogger;
 import net.minecraftforge.srg2source.util.io.FolderSupplier;
 import net.minecraftforge.srg2source.util.io.InputSupplier;
 
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.Comment;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -27,15 +29,32 @@ import org.eclipse.jdt.core.dom.PackageDeclaration;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 
 @SuppressWarnings("unchecked")
 public class RangeExtractor extends ConfLogger<RangeExtractor>
 {
+    public static final String JAVA_1_6 = JavaCore.VERSION_1_6;
+    public static final String JAVA_1_7 = JavaCore.VERSION_1_7;
+    public static final String JAVA_1_8 = JavaCore.VERSION_1_8;
+
     private PrintWriter outFile;
     private final Set<File> libs = new HashSet<File>();
     private InputSupplier src;
+    private ASTParser parser = null;
+    private String java_version = JAVA_1_6;
+
+    public RangeExtractor()
+    {
+        this(JAVA_1_6);
+    }
+
+    public RangeExtractor(String javaVersion)
+    {
+        this.java_version = javaVersion;
+    }
 
     public static void main(String[] args) throws IOException
     {
@@ -111,14 +130,6 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
             return true;
         }
 
-        // convert libs list
-        String[] libArray = new String[libs.size()];
-        {
-            int i = 0;
-            for (File f : libs)
-                libArray[i++] = f.getAbsolutePath();
-        }
-
         try
         {
 
@@ -131,11 +142,13 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                 // do stuff
                 {
                     SymbolRangeEmitter emitter = new SymbolRangeEmitter(path, outFile);
-                    String data = new String(ByteStreams.toByteArray(stream), Charset.forName("UTF-8")).replaceAll("\r", "");
+                    byte[] bytes = ByteStreams.toByteArray(stream);
+                    String md5 = Hashing.md5().hashBytes(bytes).toString();
+                    String data = new String(bytes, Charset.forName("UTF-8")).replaceAll("\r", "");
 
-                    log("processing " + path);
+                    log("startProcessing \"" + path + "\" md5: " + md5);
 
-                    CompilationUnit cu = Util.createUnit(path, data, src.getRoot(path), libArray);
+                    CompilationUnit cu = Util.createUnit(getParser(src.getRoot(path)), path, data);
 
                     int[] newCode = getNewCodeRanges(cu, data);
 
@@ -163,11 +176,11 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                     }
                     else
                     {
-                        emitter.log("  File had no contents.");
+                        log("  File had no contents.");
                     }
 
-                    emitter.log("endProcessing " + path);
-                    emitter.log("");
+                    log("endProcessing \"" + path + "\"");
+                    log("");
                 }
 
                 stream.close();
@@ -439,5 +452,24 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
     public Set<File> getLibs()
     {
         return libs;
+    }
+
+    private String src_root_cache = "";
+    private ASTParser getParser(String root)
+    {
+        if (parser != null && src_root_cache.equals(root))
+            return parser;
+
+        // convert libs list
+        String[] libArray = new String[libs.size()];
+        {
+            int i = 0;
+            for (File f : libs)
+                libArray[i++] = f.getAbsolutePath();
+        }
+
+        src_root_cache = root;
+        parser = Util.createParser(java_version, src_root_cache, libArray);
+        return parser;
     }
 }

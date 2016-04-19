@@ -1,6 +1,6 @@
 Symbol range map extraction starting
 Processing 1 files
-processing /GenericClasses.txt
+startProcessing "/GenericClasses.txt" md5: 07e3e3621ead8cb3b2896d12ae1af6a3
 Class Start: GenericClasses
    Class Start: GenericClasses.IFoo
       Method Start: bar(Ljava/lang/Object;)Ljava/lang/Object;
@@ -33,5 +33,5 @@ Class Start: GenericClasses
       @|/GenericClasses.txt|441|444|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
    Method End: main()V
 Class End  : GenericClasses
-endProcessing /GenericClasses.txt
+endProcessing "/GenericClasses.txt"
 

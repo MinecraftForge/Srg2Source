@@ -1,0 +1,18 @@
+public class Lambda
+{
+    private final Runnable workerTask = () ->
+    {
+        try
+        {
+            try
+            {
+            }
+            catch (Error ignored) //These two error handlers have to have the same name, AND be in a lambda
+            {
+            }
+        }
+        catch (InterruptedException ignored)
+        {
+        }
+    };
+}
