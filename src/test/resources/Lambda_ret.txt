@@ -1,11 +1,11 @@
 Symbol range map extraction starting
 Processing 1 files
-startProcessing "/Lambda.txt" md5: 6a80cd42d231791a6e368b075d23dec8
+startProcessing "/Lambda.java" md5: 6a80cd42d231791a6e368b075d23dec8
 Class Start: Lambda
-   @|/Lambda.txt|40|48|Runnable|class|java.lang.Runnable
-   @|/Lambda.txt|49|59|workerTask|field|Lambda|workerTask|
-   @|/Lambda.txt|159|164|Error|class|java.lang.Error
-   @|/Lambda.txt|301|321|InterruptedException|class|java.lang.InterruptedException
+   @|/Lambda.java|40|48|Runnable|class|java.lang.Runnable
+   @|/Lambda.java|49|59|workerTask|field|Lambda|workerTask|
+   @|/Lambda.java|159|164|Error|class|java.lang.Error
+   @|/Lambda.java|301|321|InterruptedException|class|java.lang.InterruptedException
 Class End  : Lambda
-endProcessing "/Lambda.txt"
+endProcessing "/Lambda.java"
 

@@ -29,8 +29,17 @@ public class SingleTests
     {
         testClass("Lambda");
     }
+    @Test
+    public void testPackageInfo() throws IOException
+    {
+        testClass("PackageInfo", "test.package-info");
+    }
 
-    public void testClass(final String clsName) throws IOException
+    public void testClass(final String resource) throws IOException
+    {
+        testClass(resource, resource);
+    }
+    public void testClass(final String resource, final String clsName) throws IOException
     {
         RangeExtractor extractor = new RangeExtractor(RangeExtractor.JAVA_1_6);
         extractor.setSrc(new InputSupplier(){
@@ -41,7 +50,7 @@ public class SingleTests
             {
                 try
                 {
-                    return getClass().getResourceAsStream(relPath);
+                    return getClass().getResourceAsStream("/" + resource + ".txt");
                 }
                 catch (Exception e)
                 {
@@ -52,7 +61,7 @@ public class SingleTests
             @Override
             public List<String> gatherAll(String endFilter)
             {
-                return Arrays.asList("/" + clsName + ".txt");
+                return Arrays.asList("/" + clsName.replace('.', '/') + ".java");
             }
         });
 
@@ -61,7 +70,7 @@ public class SingleTests
 
         boolean worked = extractor.generateRangeMap(writer);
         Assert.assertTrue("Failed to do work!" , worked);
-        Assert.assertEquals(Files.toString(new File(getClass().getResource("/" + clsName + "_ret.txt").getFile()), Charsets.UTF_8), bos.toString());
+        Assert.assertEquals(Files.toString(new File(getClass().getResource("/" + resource + "_ret.txt").getFile()), Charsets.UTF_8), bos.toString());
 
     }
 }

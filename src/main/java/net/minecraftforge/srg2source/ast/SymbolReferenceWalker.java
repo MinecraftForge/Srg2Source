@@ -44,7 +44,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     private SymbolReferenceWalker(String className, SymbolReferenceWalker parent)
     {
         this(parent.emitter, className, parent.newCodeRanges);
-        this.parent = parent;
+        this.parent = parent != null && parent.className != null ? parent : null;
     }
 
     /**
@@ -208,6 +208,9 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(MethodInvocation        node) { return true; }
     public boolean visit(ParameterizedType       node) { return true; }
     public boolean visit(QualifiedType           node) { return true; }
+    public boolean visit(MarkerAnnotation        node) { return true; }
+    public boolean visit(NormalAnnotation        node) { return true; }
+    public boolean visit(SingleMemberAnnotation  node) { return true; }
 
     public boolean visit(FieldDeclaration node) {
         emitter.emitTypeRange(node.getType());
@@ -347,7 +350,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
         else
         {
-            emitter.log("ERROR SimpleName: " + node + " " + node.resolveBinding());
+            emitter.log("ERROR SimpleName: " + node + " " + bind);
         }
         return true;
     }
@@ -376,6 +379,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
         return false;
     }
+
     public boolean visit(SingleVariableDeclaration node)
     {
         int index = this.assignLocalVariableIndex(node.getName(), node.resolveBinding());
@@ -388,6 +392,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
         return false;
     }
+
     public boolean visit(TypeDeclaration node) {
         String name = ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName();
 
@@ -432,5 +437,19 @@ public class SymbolReferenceWalker extends ASTVisitor
             node.getInitializer().accept(this);
         }
         return false;
+    }
+
+    @Override
+    public boolean visit(PackageDeclaration node)
+    {
+        emitter.emitPackageRange(node);
+        return true;
+    }
+
+    @Override
+    public boolean visit(ImportDeclaration node)
+    {
+        emitter.emitImportRange(node);
+        return false; // We don't emit anything because this is handled elsewhere in our import reorganizer.
     }
 }
