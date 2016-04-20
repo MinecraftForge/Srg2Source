@@ -206,7 +206,7 @@ public class CodeFixer
                 String data = Files.toString(new File(file), Charset.forName("UTF-8")).replaceAll("\r", "");
                 String name = file.replace('\\', '/').substring(SRC.length() + 1);
                 log("    " + name);
-                CompilationUnit cu = Util.createUnit(parser, name, data);
+                CompilationUnit cu = Util.createUnit(parser, "1.6", name, data);
 
                 ArrayList<TypeDeclaration> classes = new ArrayList<TypeDeclaration>();
                 List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>)cu.types();

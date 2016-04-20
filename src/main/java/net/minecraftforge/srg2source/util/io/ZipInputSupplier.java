@@ -15,8 +15,14 @@ import com.google.common.io.ByteStreams;
 
 public class ZipInputSupplier implements InputSupplier
 {
-    private final HashMap<String, byte[]> data = new HashMap<String, byte[]>();
-    private String root;
+    protected final HashMap<String, byte[]> data = new HashMap<String, byte[]>();
+    protected String root;
+
+    public ZipInputSupplier(){}
+    public ZipInputSupplier(File zip) throws IOException
+    {
+        readZip(zip);
+    }
 
     public void readZip(File zip) throws IOException
     {

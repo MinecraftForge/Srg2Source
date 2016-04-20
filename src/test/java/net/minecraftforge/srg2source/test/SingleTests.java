@@ -41,7 +41,7 @@ public class SingleTests
     }
     public void testClass(final String resource, final String clsName) throws IOException
     {
-        RangeExtractor extractor = new RangeExtractor(RangeExtractor.JAVA_1_6);
+        RangeExtractor extractor = new RangeExtractor(RangeExtractor.JAVA_1_8);
         extractor.setSrc(new InputSupplier(){
             @Override public void close() throws IOException{}
             @Override public String getRoot(String resource) { return ""; }

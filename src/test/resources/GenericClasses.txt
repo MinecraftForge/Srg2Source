@@ -1,3 +1,6 @@
+import java.util.Collection;
+import java.util.concurrent.Callable;
+
 public class GenericClasses
 {
     private static interface IFoo<V>
@@ -17,7 +20,7 @@ public class GenericClasses
                 return null;
             }
         };
-        fizz.bar();
-        ((IFoo)fizz).bar();
+        fizz.bar(null);
+        ((IFoo)fizz).bar(null);
     }
 }

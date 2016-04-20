@@ -11,7 +11,7 @@ public class Lambda
             {
             }
         }
-        catch (InterruptedException ignored)
+        catch (Throwable ignored)
         {
         }
     };

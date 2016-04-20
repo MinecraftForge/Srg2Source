@@ -336,19 +336,24 @@ public class Util
     public static ASTParser createParser(String javaVersion, String srcRoot, String[] libs)
     {
         ASTParser parser = ASTParser.newParser(AST.JLS8);
+        parser.setEnvironment(libs, new String[] {srcRoot}, null, true);
+        return setOptions(parser, javaVersion);
+    }
+    private static ASTParser setOptions(ASTParser parser, String javaVersion)
+    {
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
         parser.setResolveBindings(true);
         parser.setBindingsRecovery(true);
         Hashtable<String, String> options = JavaCore.getDefaultOptions();
-        options.put(JavaCore.COMPILER_SOURCE, javaVersion);
+        JavaCore.setComplianceOptions(javaVersion, options);
         parser.setCompilerOptions(options);
-        parser.setEnvironment(libs, new String[] {srcRoot}, null, true);
         return parser;
     }
 
 
-    public static CompilationUnit createUnit(ASTParser parser, String name, String data) throws Exception
+    public static CompilationUnit createUnit(ASTParser parser, String javaVersion, String name, String data) throws Exception
     {
+        //setOptions(parser, javaVersion);
         parser.setUnitName(name);
         parser.setSource(data.toCharArray());
         return (CompilationUnit) parser.createAST(null);

@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -19,13 +18,10 @@ import net.minecraftforge.srg2source.util.io.FolderSupplier;
 import net.minecraftforge.srg2source.util.io.InputSupplier;
 
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.Comment;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.ImportDeclaration;
-import org.eclipse.jdt.core.dom.PackageDeclaration;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
@@ -149,7 +145,17 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
 
                     log("startProcessing \"" + path + "\" md5: " + md5);
 
-                    CompilationUnit cu = Util.createUnit(getParser(src.getRoot(path)), path, data);
+                    CompilationUnit cu = Util.createUnit(getParser(src.getRoot(path)), java_version, path, data);
+
+                    if (cu.getProblems() != null && cu.getProblems().length > 0)
+                    {
+                        for (IProblem prob : cu.getProblems())
+                        {
+                            if (prob.isWarning())
+                                continue;
+                            log("    Compile Error! " + prob.toString());
+                        }
+                    }
 
                     int[] newCode = getNewCodeRanges(cu, data);
 
@@ -278,6 +284,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         return this;
     }
 
+    private String[] libArray = null;
     /**
      * @param lib Either a directory or a file
      */
@@ -287,7 +294,10 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
             for (File f : lib.listFiles())
                 addLibs(f);
         else if (lib.getPath().endsWith("jar")) // to be sure its
+        {
+            libArray = null;
             libs.add(lib);
+        }
 
         return this;
     }
@@ -314,12 +324,14 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
     private String src_root_cache = "";
     private ASTParser getParser(String root)
     {
-        if (parser != null && src_root_cache.equals(root))
-            return parser;
+        //Apparently this breaks shit, no clue why..
+        //if (parser != null && src_root_cache.equals(root))
+        //    return parser;
 
         // convert libs list
-        String[] libArray = new String[libs.size()];
+        if (libArray == null)
         {
+            libArray = new String[libs.size()];
             int i = 0;
             for (File f : libs)
                 libArray[i++] = f.getAbsolutePath();
