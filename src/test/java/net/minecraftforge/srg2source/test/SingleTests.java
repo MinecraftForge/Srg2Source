@@ -35,13 +35,27 @@ public class SingleTests
         testClass("PackageInfo", "test.package-info");
     }
 
+    @Test
+    public void testCache() throws IOException
+    {
+        testClass("GenericClasses", "GenericClasses", true);
+    }
+
     public void testClass(final String resource) throws IOException
     {
-        testClass(resource, resource);
+        testClass(resource, resource, false);
     }
     public void testClass(final String resource, final String clsName) throws IOException
     {
+        testClass(resource, clsName, false);
+    }
+    public void testClass(final String resource, final String clsName, boolean loadCache) throws IOException
+    {
         RangeExtractor extractor = new RangeExtractor(RangeExtractor.JAVA_1_8);
+        if (loadCache)
+        {
+            extractor.loadCache(getClass().getResourceAsStream("/" + resource + "_ret.txt"));
+        }
         extractor.setSrc(new InputSupplier(){
             @Override public void close() throws IOException{}
             @Override public String getRoot(String resource) { return ""; }
@@ -69,8 +83,10 @@ public class SingleTests
         PrintWriter writer = new PrintWriter(bos);
 
         boolean worked = extractor.generateRangeMap(writer);
-        Assert.assertTrue("Failed to do work!" , worked);
-        Assert.assertEquals(Files.toString(new File(getClass().getResource("/" + resource + "_ret.txt").getFile()), Charsets.UTF_8), bos.toString());
+        Assert.assertTrue("Failed to do work!", worked);
+        Assert.assertEquals(Files.toString(new File(getClass().getResource("/" + resource + "_ret.txt").getFile()), Charsets.UTF_8), bos.toString().replaceAll("Cache Hit!\r?\n", ""));
+        if (loadCache)
+            Assert.assertTrue("Cache Missed!", extractor.getCacheHits() == 1);
 
     }
 }

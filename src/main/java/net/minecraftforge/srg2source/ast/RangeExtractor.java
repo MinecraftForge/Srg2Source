@@ -5,11 +5,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import net.minecraftforge.srg2source.util.Util;
@@ -26,8 +28,11 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 
 @SuppressWarnings("unchecked")
@@ -42,6 +47,8 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
     private InputSupplier src;
     private ASTParser parser = null;
     private String java_version = JAVA_1_6;
+    private Map<String, FileCache> file_cache = Maps.newHashMap();
+    private int cache_hits =0;
 
     public RangeExtractor()
     {
@@ -145,22 +152,33 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
 
                     log("startProcessing \"" + path + "\" md5: " + md5);
 
-                    CompilationUnit cu = Util.createUnit(getParser(src.getRoot(path)), java_version, path, data);
-
-                    if (cu.getProblems() != null && cu.getProblems().length > 0)
+                    FileCache cache = this.file_cache.get(path);
+                    if (cache != null && cache.path.equals(path) && cache.md5.equals(md5))
                     {
-                        for (IProblem prob : cu.getProblems())
-                        {
-                            if (prob.isWarning())
-                                continue;
-                            log("    Compile Error! " + prob.toString());
-                        }
+                        log("Cache Hit!");
+                        this.cache_hits++;
+                        for (String line : cache.lines)
+                            emitter.log(line);
                     }
+                    else
+                    {
+                        CompilationUnit cu = Util.createUnit(getParser(src.getRoot(path)), java_version, path, data);
 
-                    int[] newCode = getNewCodeRanges(cu, data);
+                        if (cu.getProblems() != null && cu.getProblems().length > 0)
+                        {
+                            for (IProblem prob : cu.getProblems())
+                            {
+                                if (prob.isWarning())
+                                    continue;
+                                log("    Compile Error! " + prob.toString());
+                            }
+                        }
 
-                    SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, null, newCode);
-                    walker.walk(cu);
+                        int[] newCode = getNewCodeRanges(cu, data);
+
+                        SymbolReferenceWalker walker = new SymbolReferenceWalker(emitter, null, newCode);
+                        walker.walk(cu);
+                    }
 
                     log("endProcessing \"" + path + "\"");
                     log("");
@@ -340,5 +358,53 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         src_root_cache = root;
         parser = Util.createParser(java_version, src_root_cache, libArray);
         return parser;
+    }
+
+    public void loadCache(InputStream stream) throws IOException
+    {
+        FileCache file = null;
+        for (String line : CharStreams.readLines(new InputStreamReader(stream)))
+        {
+            if (line.startsWith("startProcessing"))
+            {
+                line = line.substring("startProcessing \"".length());
+                file = new FileCache();
+                file.path = line.substring(0, line.indexOf('"'));
+                file.md5 = line.substring(file.path.length() + 7);
+            }
+            else if (line.startsWith("endProcessing"))
+            {
+                if (file == null)
+                    continue; // End without start?
+
+                line = line.substring("endProcessing \"".length());
+                String path = line.substring(0, line.indexOf('"'));
+
+                if (path.equals(file.path))
+                    this.file_cache.put(path, file);
+
+                file = null;
+            }
+            else if ("Cache Hit!".equals(line))
+            {
+                // Nom this up so we dont get it repeating.
+            }
+            else if (file != null)
+            {
+                file.lines.add(line);
+            }
+        }
+    }
+
+    public int getCacheHits()
+    {
+        return this.cache_hits;
+    }
+
+    private static final class FileCache
+    {
+        private String path;
+        private String md5;
+        private List<String> lines = Lists.newArrayList();
     }
 }
