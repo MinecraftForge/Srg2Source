@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +90,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
             if (!primary.exists())
                 primary = new File(conf, "packaged.exc");
-            
+
             excs.add(primary);
 
             if (options.has("excFiles") && options.hasArgument("excFiles"))
@@ -110,9 +111,9 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         OutputSupplier outDir = (OutputSupplier) srcRoot;
         if (options.has("outDir"))
             outDir = new FolderSupplier((File) options.valueOf("outDir"));
-        
+
         app.remapSources(srcRoot, outDir, (File) options.valueOf("srcRangeMap"), false);
-        
+
         srcRoot.close();
         outDir.close();
 
@@ -167,7 +168,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
         return this;
     }
-    
+
     /**
      * Outputs the contents of the rename map.
      * Spits everything to the outLogger.
@@ -209,7 +210,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         {
             log("Start Processing: " + filePath);
             InputStream stream = inSupp.getInput(filePath);
-            
+
             //no stream? what?
             if (stream == null)
             {
@@ -217,7 +218,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 log("Data not found: " + filePath);
                 continue;
             }
-            
+
             String data = new String(ByteStreams.toByteArray(stream), Charset.forName("UTF-8"));
             stream.close();
 
@@ -270,9 +271,20 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         String newTopLevelClassPackage = Util.sourceName2Internal(map.maps.get("package " + oldTopLevelClassPackage));
         String newTopLevelClassName = Util.splitBaseName(Util.sourceName2Internal(map.maps.get("class " + oldTopLevelClassFullName), false));
         if (newTopLevelClassPackage != null && newTopLevelClassName == null)
-            throw new RuntimeException("filename " + fileName + " found package " + oldTopLevelClassPackage + "->" + newTopLevelClassPackage + " but no class map for " + newTopLevelClassName);
+        {
+            newTopLevelClassName = oldTopLevelClassName; // If the package changed, but we don't have a new name... assume we're keeping the name...
+            // Could cause conflicts if the new package has a class with the same name!
+            // We run into this for Minecraft's package-info.java's...
+            //throw new RuntimeException("filename " + fileName + " found package " + oldTopLevelClassPackage + "->" + newTopLevelClassPackage + " but no class map for " + newTopLevelClassName);
+        }
         if (newTopLevelClassPackage == null && newTopLevelClassName != null)
             throw new RuntimeException("filename " + fileName + " found class map " + oldTopLevelClassName + "->" + newTopLevelClassName + " but no package map for " + oldTopLevelClassPackage);
+
+        if (newTopLevelClassPackage == null) // If the package wasnt remapped, then we're keeping our name!
+        {
+            newTopLevelClassPackage = oldTopLevelClassPackage;
+            newTopLevelClassName = oldTopLevelClassName;
+        }
 
         // start,end,expectedOldText,key
         for (RangeEntry info : rangeList)
@@ -297,33 +309,55 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
             String newName = getNewName(info.key, oldName, map.maps, shouldAnnotate);
             if (newName == null)
+                newName = oldName;
+
+            if (info.key.startsWith("class "))
             {
-                if (info.key.split(" ")[1].contains("net/minecraft"))
-                    log("No rename for " + info.key);
-                continue;
+                // do importing.
+                String key = info.key;
+                if (key.equals("class " + newName.replace('.', '/')))
+                {
+                    key = null;
+                }
+                else if (newName.indexOf('.') > 0) // contains a .
+                {
+                    // split as many times as its qualified.
+                    for (int i = 0; i < Util.countChar(newName, '.'); i++)
+                        key = Util.splitPackageName(key);
+
+                    log("New Key: "+key);
+                }
+
+                if (key == null)
+                {
+                    // No import, fully qualified! TOD: make this logic a bit better....
+                }
+                else if (map.imports.containsKey(key))
+                {
+                    // This rename requires adding an import, if it crosses packages
+                    String importPackage = Util.splitPackageName(Util.sourceName2Internal(map.imports.get(key), false));
+                    if (!importPackage.equals(newTopLevelClassPackage))
+                    {
+                        importsToAdd.add(map.imports.get(key));
+                    }
+                }
+                else
+                {
+                    String className = key.substring(key.indexOf(' ') + 1);
+                    String importPackage = Util.splitPackageName(className);
+                    if (!importPackage.equals(newTopLevelClassPackage))
+                    {
+                        importsToAdd.add(className.replace('/', '.'));
+                    }
+                }
             }
+
+            if (oldName.equals(newName))
+                continue; //No rename? Skip the rest.
 
             log("Rename " + info.key + "[" + (info.start + shift) + "," + (end + shift) + "]" + "::" + oldName + "->" + newName);
-            
-            // do importing.
-            String key = info.key;
-            if (newName.indexOf('.') > 0) // contains a .
-            {
-                // split as many times as its qualified.
-                for (int i = 0; i < Util.countChar(newName, '.'); i++)
-                    key = Util.splitPackageName(key);
-                
-                log("New Key: "+key);
-            }
 
-            if (map.imports.containsKey(key))
-            {
-                // This rename requires adding an import, if it crosses packages
-                String importPackage = Util.splitPackageName(Util.sourceName2Internal(map.imports.get(key), false));
-                if (!importPackage.equals(newTopLevelClassPackage))
-                    importsToAdd.add(map.imports.get(key));
-            }
-            // Rename algorithm: 
+            // Rename algorithm:
             // 1. textually replace text at specified range with new text
             // 2. shift future ranges by difference in text length
             //data = data.substring(0, info.start + shift) + newName + data.substring(end + shift);
@@ -335,10 +369,10 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         String outString = updateImports(outData, importsToAdd, map.imports);
 
         // rename?
-        if (newTopLevelClassPackage != null) // rename if package changed
+        fileName = fileName.replace('\\', '/');
+        String newFileName = (newTopLevelClassPackage + "/" + newTopLevelClassName + ".java").replace('\\', '/');
+        if (!fileName.equals(newFileName))
         {
-            String newFileName = (newTopLevelClassPackage + "/" + newTopLevelClassName + ".java").replace('\\', '/');
-
             log("Rename file " + fileName + " -> " + newFileName);
 
             fileName = newFileName;
@@ -353,6 +387,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
     private String updateImports(StringBuilder data, Set<String> newImports, Map<String, String> importMap)
     {
         //String[] lines = data.split("\n");
+        if (data.charAt(data.length()-1) != '\n')
+            data.append('\n');
 
         int lastIndex = 0;
         int nextIndex = data.indexOf("\n");
@@ -360,6 +396,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         // This doesn't use Psi.. but the syntax is easy enough to parse here
         boolean addedNewImports = false;
         boolean sawImports = false;
+        int packageLine = -1;
 
         String line;
         while (nextIndex > -1)
@@ -369,13 +406,16 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             while (line.startsWith("\n"))
             {
                 lastIndex++;
-                line = data.substring(lastIndex, nextIndex);
+                line = data.substring(lastIndex, data.indexOf("\n", lastIndex + 1));
             }
+
+            if (line.startsWith("package "))
+                packageLine = lastIndex + 1;
 
             if (line.startsWith("import "))
             {
                 sawImports = true;
-                
+
                 // remove stuff thats already added by a wildcard
                 if (line.indexOf('*') > 0)
                 {
@@ -390,61 +430,36 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                     newImports.removeAll(remove);
                 }
 
-                if (line.startsWith("import net.minecraft."))
+                String oldClass = line.replace("import ", "").replace(";", "");
+                log("Import: " + oldClass);
+
+                String newClass = importMap.get("class " + Util.sourceName2Internal(oldClass));
+                if (newClass != null)
+                    newClass = newClass.replace('$', '.');
+                else
+                    newClass = oldClass;
+
+                if (!newImports.remove(newClass)) // New file doesn't need the import, do delete the line.
                 {
-                    // If no import map, *remove* NMS imports (OBC rewritten with fully-qualified names)
-                    if (importMap.isEmpty())
-                    {
-                        // next line.
-                        lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
-                        nextIndex = data.indexOf("\n", lastIndex + 1); // another +1 because otherwise it would just return lastIndex
-                        continue;
-                    }
+                    data.delete(lastIndex, nextIndex + 1);
+                    nextIndex = data.indexOf("\n", lastIndex);
+                    continue;
+                }
 
-                    // Rewrite NMS imports
-                    String oldClass = line.replace("import ", "").replace(";", "");
-                    log("Import: " + oldClass);
-
-                    String newClass = oldClass;
-                    if (oldClass.equals("net.minecraft.server.*"))
-                    {
-                        // wildcard NMS imports (CraftWorld, CraftEntity, CraftPlayer).. bad idea
-                        
-                        // next line.  Duplicated from the bottom of the loop.
-                        lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
-                        nextIndex = data.indexOf("\n", lastIndex + 1); // another +1 because otherwise it would just return lastIndex
-                        continue;
-                    }
-                    else if (importMap.containsKey("class " + Util.sourceName2Internal(oldClass)))
-                        newClass = importMap.get("class " + Util.sourceName2Internal(oldClass)).replace('$', '.');
-
-                    if (newImports.contains(newClass))  // if not already added & its changed
-                    {
-                        if (oldClass.equals(newClass))
-                        {
-                            newImports.remove(newClass);
-                        }
-                        else
-                        {
-                            // otherwise remove from the file... it will be added again later.
-                            data.delete(lastIndex, nextIndex + 1); // the newLine too
-                            nextIndex = data.indexOf("\n", lastIndex); // get from here to the end of the line.
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        int change = "import ".length();
-                        data.replace(lastIndex, nextIndex, "import ");
-                        data.insert(lastIndex + change, newClass);
-                        change += newClass.length();
-                        data.insert(lastIndex + change, ";");
-                        nextIndex = lastIndex + change + 1; // +1 for the semicolon
-                    }
+                if (!oldClass.equals(newClass)) // Got renamed
+                {
+                    int change = "import ".length();
+                    data.replace(lastIndex, nextIndex, "import ");
+                    data.insert(lastIndex + change, newClass);
+                    change += newClass.length();
+                    data.insert(lastIndex + change, ";");
+                    nextIndex = lastIndex + change + 1; // +1 for the semicolon
                 }
             }
             else if (sawImports && !addedNewImports)
             {
+                filterImports(newImports);
+
                 // Add our new imports right after the last import
                 log("Adding " + newImports.size() + " imports");
 
@@ -454,6 +469,9 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 for (String imp : newImports)
                     data.append("import ").append(imp.replace('$', '.')).append(";\n");
 
+                if (newImports.size() > 0)
+                    data.append('\n');
+
                 int change = data.length() - lastIndex; // get changed size
                 lastIndex = data.length(); // reset the end to the actual end..
                 nextIndex += change; // shift nextIndex accordingly..
@@ -461,6 +479,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 data.append(sub); // add on the rest if the string again
 
                 addedNewImports = true;
+                break; //We've added out imports lets exit.
             }
 
             // next line.
@@ -471,9 +490,11 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         // got through the whole file without seeing or adding any imports???
         if (!addedNewImports)
         {
-            // insert imports after the second line.
-            int index = data.indexOf("\n") + 1;
-            index = data.indexOf("\n", index) + 1; // search again from the second point, for 2 lines. +1 for after the \n
+            filterImports(newImports);
+
+            //If we saw the package line, add to it after that.
+            //If not prepend to the start of the file
+            int index = packageLine == -1 ? 0 : packageLine;
 
             CharSequence sub = data.subSequence(index, data.length()); // grab the rest of the string.
             data.setLength(index); // cut off the build there
@@ -481,31 +502,24 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             for (String imp : newImports)
                 data.append("import ").append(imp).append(";\n");
 
+            if (newImports.size() > 0)
+                data.append('\n');
+
             data.append(sub); // add on the rest if the string again
         }
 
-        String newData = data.toString();
+        return data.toString();
+    }
 
-        // Warning: ugly hack ahead
-        // The symbol range map extractor is supposed to emit package reference ranges, which we can 
-        // update with the correct new package names. However, it has a bug where the package ranges
-        // are not always emitted on fully-qualified names. For example: (net.minecraft.server.X)Y - a
-        // cast - will fail to recognize the net.minecraft.server package, so it won't be processed by us.
-        // This leads to some qualified names in the original source to becoming "overqualified", that is,
-        // net.minecraft.server.net.minecraft.X; the NMS class is replaced with its fully-qualified name
-        // (in non-NMS source, where we want it to always be fully-qualified): original package name isn't replaced.
-        // Occurs in OBC source which uses fully-qualified NMS names already, and NMS source which (unnecessarily)
-        // uses fully-qualified NMS names, too. Attempted to fix this problem for longer than I should.. 
-        // maybe someone smarter can figure it out -- but until then, in the interest of expediency, I present 
-        // this ugly workaround, replacing the overqualified names after-the-fact.
-        // Fortunately, this pattern is easy enough to reliably detect and replace textually!
-        newData = newData.replace("net.minecraft.server.net.minecraft", "net.minecraft");  // OBC overqualified symbols
-        newData = newData.replace("net.minecraft.server.Block", "Block"); // NMS overqualified symbols
-        // ..and qualified inner classes, only one.... last ugly hack, I promise :P
-        newData = newData.replace("net.minecraft.block.BlockSapling/*was:BlockSapling*/.net.minecraft.block.BlockSapling.TreeGenerator", "net.minecraft.block.BlockSapling.TreeGenerator");
-        newData = newData.replace("net.minecraft.block.BlockSapling.net.minecraft.block.BlockSapling.TreeGenerator", "net.minecraft.block.BlockSapling.TreeGenerator");
-
-        return newData;
+    private void filterImports(Set<String> newImports)
+    {
+        Iterator<String> itr  = newImports.iterator();
+        while (itr.hasNext())
+        {
+            if (itr.next().startsWith("java.lang.")) //java.lang classes can be referenced without imports
+                itr.remove();                        //We remove them here to allow for them to exist in src
+                                                     //But we will never ADD them
+        }
     }
 
     private String getNewName(String key, String oldName, Map<String, String> renameMap, boolean shouldAnnotate)
@@ -532,7 +546,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         }
         else
             newName = renameMap.get(key);
-        
+
         newName = Util.splitBaseName(newName, Util.countChar(oldName, '.'));
 
         if (shouldAnnotate)

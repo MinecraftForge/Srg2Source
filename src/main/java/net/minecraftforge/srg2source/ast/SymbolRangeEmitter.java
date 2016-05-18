@@ -247,14 +247,6 @@ public class SymbolRangeEmitter
         String name = param.getName().getIdentifier();
         IMethodBinding bind = method.resolveBinding();
 
-        //special case this shit cuz it annoys me
-        IMethodBinding top = resolveOverrides(bind);
-        if (top.getDeclaringClass().getQualifiedName().equals("net.minecraft.server.BlockSapling.TreeGenerator")
-            && top.getName().toString().equals("generate"))
-        {
-            bind = top;
-        }
-
         String owner = bind.getDeclaringClass().getQualifiedName();
         String mName = bind.getName();
 
@@ -444,9 +436,9 @@ public class SymbolRangeEmitter
             System.exit(1);
     }
 
-    public void emitThrowRange(Name exc, ITypeBinding type)
+    public void emitThrowRange(Type exc, ITypeBinding type)
     {
         //IOException|class|java.io.IOException
-        log(commonFields(exc.getFullyQualifiedName(), exc) + "class" + FS + type.getQualifiedName());
+        log(commonFields(exc.toString(), exc) + "class" + FS + type.getQualifiedName());
     }
 }

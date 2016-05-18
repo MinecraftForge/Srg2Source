@@ -215,6 +215,13 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(FieldDeclaration node) {
         emitter.emitTypeRange(node.getType());
 
+        this.walk(node.getJavadoc());
+
+        if (node.getAST().apiLevel() >= 3)
+            walk(node.modifiers());
+
+        walk(node.getType());
+
         for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>)node.fragments())
         {
             emitter.emitFieldRange(frag, className);
@@ -235,60 +242,35 @@ public class SymbolReferenceWalker extends ASTVisitor
         SymbolReferenceWalker walker = new SymbolReferenceWalker(name, this);
 
         walker.walk(node.getJavadoc());
-        walker.walk((List<ASTNode>)node.modifiers());
+        walker.walk(node.modifiers());
         walker.walk(node.getName());
-        walker.walk((List<ASTNode>)node.superInterfaceTypes());
-        walker.walk((List<ASTNode>)node.enumConstants());
-
-        for (BodyDeclaration body : (List<BodyDeclaration>)node.bodyDeclarations())
-        {
-            if (body instanceof FieldDeclaration)
-            {
-                FieldDeclaration field = (FieldDeclaration)body;
-                emitter.emitTypeRange(field.getType());
-
-                for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>)field.fragments())
-                {
-                    emitter.emitFieldRange(frag, name);
-                    SymbolReferenceWalker init = new SymbolReferenceWalker(name, walker);
-                    init.anonCount = walker.anonCount;
-                    init.walk(frag.getInitializer());
-                    walker.anonCount = init.anonCount;
-                }
-            }
-            else
-            {
-                walker.walk(body);
-            }
-        }
+        walker.walk(node.superInterfaceTypes());
+        walker.walk(node.enumConstants());
+        walker.walk(node.bodyDeclarations());
 
         emitter.untab();
         emitter.log("Enum End  : " + name);
         return false;
     }
+
+    @SuppressWarnings("deprecation")
+    @Override
     public boolean visit(MethodDeclaration node) {
         String signature = emitter.getMethodSignature(node, false);
         String name = node.getName().toString();
+        //emitter.emitMethodRange(node, className, true);
 
         emitter.log("Method Start: " + name + signature);
         emitter.tab();
 
-        emitter.emitMethodRange(node, className, true);
-
-        // Return type and throws list
-        emitter.emitTypeRange(node.getReturnType2());
-        for (Name exc : (List<Name>) node.thrownExceptionTypes())
-        {
-            emitter.emitThrowRange(exc, (ITypeBinding) exc.resolveBinding());
-        }
-
-        List<SingleVariableDeclaration> params = (List<SingleVariableDeclaration>) node.parameters();
+        List<SingleVariableDeclaration> params = (List<SingleVariableDeclaration>)node.parameters();
         HashMap<String, Integer> paramIds = new HashMap<String, Integer>();
 
         for (int x = 0; x < params.size(); x++)
         {
+            paramIds.put(params.get(x).getName().getIdentifier(), x);
+
             SingleVariableDeclaration param = params.get(x);
-            emitter.emitTypeRange(param.getType());
             emitter.emitParameterRange(node, signature, param, x, className);
             paramIds.put(param.getName().getIdentifier(), x);
         }
@@ -298,12 +280,37 @@ public class SymbolReferenceWalker extends ASTVisitor
 
         walker.anonCount = this.anonCount;
         walker.setParams(paramIds);
+
+        walker.walk(node.getJavadoc());
+        if(node.getAST().apiLevel() == 2) {
+           walker.walk(node.getReturnType());
+        } else {
+           walker.walk(node.modifiers());
+           walker.walk(node.typeParameters());
+           walker.walk(node.getReturnType2());
+        }
+
+        walker.walk(node.getName());
+        if(node.getAST().apiLevel() >= 8) {
+            walker.walk(node.getReceiverType());
+           walker.walk(node.getReceiverQualifier());
+        }
+
+        walker.walk(node.parameters());
+        if(node.getAST().apiLevel() >= 8) {
+            walker.walk(node.extraDimensions());
+           walker.walk(node.thrownExceptionTypes());
+        } else {
+            walker.walk(node.thrownExceptions());
+        }
+
         walker.walk(node.getBody());
+
         this.anonCount = walker.anonCount;
+
 
         emitter.untab();
         emitter.log("Method End: " + name + signature);
-
         return false;
     }
     public boolean visit(SimpleName node)
@@ -385,11 +392,21 @@ public class SymbolReferenceWalker extends ASTVisitor
         int index = this.assignLocalVariableIndex(node.getName(), node.resolveBinding());
         //emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
 
-        node.getType().accept(this);
-        if (node.getInitializer() != null)
-        {
-            node.getInitializer().accept(this);
-        }
+        if(node.getAST().apiLevel() >= 3)
+            walk(node.modifiers());
+
+        walk(node.getType());
+
+        if(node.getAST().apiLevel() >= 8 && node.isVarargs())
+            walk(node.varargsAnnotations());
+
+        //this.acceptChild(this, node.getName()); if we want to track local vars...?
+
+        if(node.getAST().apiLevel() >= 8)
+            walk(node.extraDimensions());
+
+        walk(node.getInitializer());
+
         return false;
     }
 
@@ -400,27 +417,25 @@ public class SymbolReferenceWalker extends ASTVisitor
         emitter.tab();
 
         SymbolReferenceWalker walker = new SymbolReferenceWalker(name, this);
-        for (BodyDeclaration body : (List<BodyDeclaration>)node.bodyDeclarations())
-        {
-            if (body instanceof FieldDeclaration)
-            {
-                FieldDeclaration field = (FieldDeclaration)body;
-                emitter.emitTypeRange(field.getType());
 
-                for (VariableDeclarationFragment frag : (List<VariableDeclarationFragment>)field.fragments())
-                {
-                    emitter.emitFieldRange(frag, name);
-                    // Initializer can refer to other symbols, so walk it, too
-                    SymbolReferenceWalker init = new SymbolReferenceWalker(name, walker);
-                    init.anonCount = walker.anonCount;
-                    init.walk(frag.getInitializer());
-                    walker.anonCount = init.anonCount;
-                }
-            }
-            else
-            {
-                walker.walk(body);
-            }
+        if (node.getAST().apiLevel() == 2)
+        {
+            walker.walk(node.getJavadoc());
+            walker.walk(node.getName());
+            walker.walk(node.getSuperclassType());
+            walker.walk(node.superInterfaceTypes());
+            walker.walk(node.bodyDeclarations());
+        }
+
+        if (node.getAST().apiLevel() >= 2)
+        {
+            walker.walk(node.getJavadoc());
+            walker.walk(node.modifiers());
+            walker.walk(node.getName());
+            walker.walk(node.typeParameters());
+            walker.walk(node.getSuperclassType());
+            walker.walk(node.superInterfaceTypes());
+            walker.walk(node.bodyDeclarations());
         }
 
         emitter.untab();
@@ -432,10 +447,12 @@ public class SymbolReferenceWalker extends ASTVisitor
         int index = assignLocalVariableIndex(node.getName(), node.resolveBinding());
         //emitter.emitLocalVariableRange(node.getName(), className, methodName, methodSignature, index);
 
-        if (node.getInitializer() != null)
-        {
-            node.getInitializer().accept(this);
-        }
+        //walk(node.getName());
+
+        if (node.getAST().apiLevel() >= 8)
+            walk(node.extraDimensions());
+        walk(node.getInitializer());
+
         return false;
     }
 

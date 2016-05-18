@@ -40,14 +40,12 @@ class RenameMap
             maps.put("package " + Util.splitPackageName(e.getKey()), Util.internalName2Source(Util.splitPackageName(e.getValue())));
         }
 
-        for (Entry<String, String> e : srgs.fieldMap.entrySet())
-            // fields map
+        for (Entry<String, String> e : srgs.fieldMap.entrySet()) // fields map
             maps.put("field " + e.getKey().replace('$', '/'), Util.splitBaseName(e.getValue()).replace('$', '/'));
 
-        for (Entry<MethodData, MethodData> e : srgs.methodMap.entrySet())
-            // methods map
+        for (Entry<MethodData, MethodData> e : srgs.methodMap.entrySet()) // methods map
             maps.put("method " + e.getKey().name.replace('$', '/') + " " + e.getKey().sig, Util.splitBaseName(e.getValue().name).replace('$', '.'));
-        
+
         return this;
     }
 
@@ -121,10 +119,10 @@ class RenameMap
             // Parameters by number, p_XXXXX_X.. to par1. descriptions
             for (int i = 0; i < line.params.size(); i++)
             {
-                maps.put("param " + paramKey + " " + i, line.params.get(i));                 
+                maps.put("param " + paramKey + " " + i, line.params.get(i));
             }
         }
-        
+
         return this;
     }
 
@@ -183,7 +181,7 @@ class RenameMap
             String key = "localvar " + val + " " + var.variableIndex;
             maps.put(key, var.expectedOldText); // existing name
         }
-        
+
         return this;
     }
 }

@@ -142,7 +142,7 @@ public class Util
     }
 
     /**
-     * Read MCP's comma-separated-values files into key->value map
+     * Read MCP's comma-separated-values files into key-value map
      */
     public static Map<String, String> readCSVMap(File file)
     {

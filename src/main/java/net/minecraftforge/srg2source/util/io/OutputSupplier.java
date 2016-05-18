@@ -8,7 +8,7 @@ public interface OutputSupplier extends Closeable
     /**
      * Opens an output stream to the specified resource. The resource will be created if it does not already exist. You are expected to close this stream yourself.
      * @param relPath Reative path seperated with '/' and having no preceding slash.
-     * @return
+     * @return An output we can stream data to
      */
     public OutputStream getOutput(String relPath);
 }
