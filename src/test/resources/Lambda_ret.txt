@@ -2,6 +2,8 @@ Symbol range map extraction starting
 Processing 1 files
 startProcessing "/Lambda.java" md5: 4c05901959835b10dc5618de02e3cd87
 Class Start: Lambda
+   @|/Lambda.java|13|19|Lambda|class|Lambda
+   @|/Lambda.java|40|48|Runnable|class|java.lang.Runnable
    @|/Lambda.java|40|48|Runnable|class|java.lang.Runnable
    @|/Lambda.java|49|59|workerTask|field|Lambda|workerTask|
    @|/Lambda.java|159|164|Error|class|java.lang.Error
