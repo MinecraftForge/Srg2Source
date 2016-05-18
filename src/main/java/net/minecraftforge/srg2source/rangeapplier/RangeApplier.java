@@ -122,6 +122,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
     private SrgContainer    srg = new SrgContainer();
     private final RenameMap map = new RenameMap();
+    private boolean keepImports = false; // Keep imports that are not referenced anywhere in code.
 
     // SRG stuff
     public RangeApplier readSrg(File srg)
@@ -441,7 +442,10 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
                 if (!newImports.remove(newClass)) // New file doesn't need the import, do delete the line.
                 {
-                    data.delete(lastIndex, nextIndex + 1);
+                    if (this.keepImports)
+                        lastIndex = nextIndex + 1;
+                    else
+                        data.delete(lastIndex, nextIndex + 1);
                     nextIndex = data.indexOf("\n", lastIndex);
                     continue;
                 }
@@ -578,4 +582,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             return null;
     }
 
+    public void setKeepImports(boolean value)
+    {
+        this.keepImports = value;
+    }
 }
