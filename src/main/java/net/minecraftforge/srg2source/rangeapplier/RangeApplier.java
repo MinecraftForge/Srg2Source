@@ -287,6 +287,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             newTopLevelClassName = oldTopLevelClassName;
         }
 
+        String newTopLevelQualifiedName = (newTopLevelClassPackage + "/" + newTopLevelClassName).replace('\\', '/');
+
         // start,end,expectedOldText,key
         for (RangeEntry info : rangeList)
         {
@@ -337,7 +339,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 {
                     // This rename requires adding an import, if it crosses packages
                     String importPackage = Util.splitPackageName(Util.sourceName2Internal(map.imports.get(key), false));
-                    if (!importPackage.equals(newTopLevelClassPackage))
+                    if (!importPackage.equals(newTopLevelClassPackage) && !importPackage.equals(newTopLevelQualifiedName))
                     {
                         importsToAdd.add(map.imports.get(key));
                     }
@@ -346,7 +348,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 {
                     String className = key.substring(key.indexOf(' ') + 1);
                     String importPackage = Util.splitPackageName(className);
-                    if (!importPackage.equals(newTopLevelClassPackage))
+                    if (!importPackage.equals(newTopLevelClassPackage) && !importPackage.equals(newTopLevelQualifiedName))
                     {
                         importsToAdd.add(className.replace('/', '.'));
                     }
@@ -371,7 +373,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
         // rename?
         fileName = fileName.replace('\\', '/');
-        String newFileName = (newTopLevelClassPackage + "/" + newTopLevelClassName + ".java").replace('\\', '/');
+        String newFileName = newTopLevelQualifiedName + ".java";
         if (!fileName.equals(newFileName))
         {
             log("Rename file " + fileName + " -> " + newFileName);
