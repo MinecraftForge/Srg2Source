@@ -29,6 +29,7 @@ import net.minecraftforge.srg2source.util.io.OutputSupplier;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.hash.HashCode;
 import com.google.common.io.ByteStreams;
 
 public class RangeApplier extends ConfLogger<RangeApplier>
@@ -335,23 +336,15 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 {
                     // No import, fully qualified! TOD: make this logic a bit better....
                 }
-                else if (map.imports.containsKey(key))
-                {
-                    // This rename requires adding an import, if it crosses packages
-                    String importPackage = Util.splitPackageName(Util.sourceName2Internal(map.imports.get(key), false));
-                    if (!importPackage.equals(newTopLevelClassPackage) && !importPackage.equals(newTopLevelQualifiedName))
-                    {
-                        importsToAdd.add(map.imports.get(key));
-                    }
-                }
                 else
                 {
-                    String className = key.substring(key.indexOf(' ') + 1);
-                    String importPackage = Util.splitPackageName(className);
-                    if (!importPackage.equals(newTopLevelClassPackage) && !importPackage.equals(newTopLevelQualifiedName))
-                    {
-                        importsToAdd.add(className.replace('/', '.'));
-                    }
+                    String impt = key.substring(key.indexOf(' ') + 1);
+
+                    if (map.imports.containsKey(key))
+                        impt = map.imports.get(key).replace('.', '/').replace('$', '/'); // TODO: make extractor print in internal names so we know about inner classes, for now, convert to the same format as the key
+
+                    if (needsImport(newTopLevelQualifiedName, impt))
+                        importsToAdd.add(impt.replace('/', '.').replace('$', '.'));
                 }
             }
 
@@ -384,6 +377,23 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         return ImmutableList.of(fileName, outString);
     }
 
+    private boolean needsImport(String topLevel, String reference)
+    {
+        if (reference.startsWith(topLevel)) //This is a inner class, nested unknown amounts deep.... Just assume it's qualified correctly in code.
+            return false;
+        if (Util.splitPackageName(topLevel).equals(Util.splitPackageName(reference))) // We are in the same package, no import needed
+            return false;
+        //Keep java/lang for now, to keep the imports in the source if they are explicitly imported.
+        //We remove the NEED for them before adding any.
+
+        //This needs to be made better by taking into account inheratance, but I don't know of a simple way to hack inheratance into this,
+        //so I think we're gunna have to live with some false positives. We just have to be careful when patching.
+
+        //log("CheckImport: " + topLevel);
+        //log("             " + reference);
+        return true;
+    }
+
     /**
      * Add new import statements to source
      */
@@ -406,14 +416,16 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         {
             line = data.substring(lastIndex, nextIndex);
 
-            while (line.startsWith("\n"))
+            while (line.isEmpty() || line.startsWith("\n"))
             {
                 lastIndex++;
-                line = data.substring(lastIndex, data.indexOf("\n", lastIndex + 1));
+                nextIndex = data.indexOf("\n", lastIndex + 1);
+                line = data.substring(lastIndex, nextIndex);
             }
+            //log("Line: " + line);
 
             if (line.startsWith("package "))
-                packageLine = lastIndex + 1;
+                packageLine = nextIndex + 1;
 
             if (line.startsWith("import "))
             {
@@ -423,7 +435,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 if (line.indexOf('*') > 0)
                 {
                     LinkedList<String> remove = new LinkedList<String>();
-                    String starter = line.replace("import ", "").replace(".*;", "");
+                    String starter = line.replace("import ", "").replace(".*;", "").trim();
                     for (String imp : newImports)
                     {
                         String impStart = imp.substring(0, imp.lastIndexOf('.'));
@@ -433,17 +445,18 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                     newImports.removeAll(remove);
                 }
 
-                String oldClass = line.replace("import ", "").replace(";", "");
-                log("Import: " + oldClass);
+                String oldClass = line.replace("import ", "").replace(";", "").trim();
 
                 String newClass = importMap.get("class " + Util.sourceName2Internal(oldClass));
-                if (newClass != null)
-                    newClass = newClass.replace('$', '.');
-                else
+                if (newClass == null)
                     newClass = oldClass;
+                newClass = newClass.replace('$', '.');
 
-                if (!newImports.remove(newClass)) // New file doesn't need the import, do delete the line.
+                log("Import: " + newClass);
+
+                if (!newImports.remove(newClass)) // New file doesn't need the import, so delete the line.
                 {
+                    //log("        " + HashCode.fromBytes(newClass.getBytes()).toString());
                     if (this.keepImports)
                         lastIndex = nextIndex + 1;
                     else
@@ -466,23 +479,24 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             {
                 filterImports(newImports);
 
-                // Add our new imports right after the last import
-                log("Adding " + newImports.size() + " imports");
-
-                CharSequence sub = data.subSequence(lastIndex, data.length()); // grab the rest of the string.
-                data.setLength(lastIndex); // cut off the build there
-
-                for (String imp : newImports)
-                    data.append("import ").append(imp.replace('$', '.')).append(";\n");
-
                 if (newImports.size() > 0)
-                    data.append('\n');
+                {
+                    // Add our new imports right after the last import
+                    CharSequence sub = data.subSequence(lastIndex, data.length()); // grab the rest of the string.
+                    data.setLength(lastIndex); // cut off the build there
 
-                int change = data.length() - lastIndex; // get changed size
-                lastIndex = data.length(); // reset the end to the actual end..
-                nextIndex += change; // shift nextIndex accordingly..
+                    for (String imp : newImports)
+                        data.append("import ").append(imp).append(";\n");
 
-                data.append(sub); // add on the rest if the string again
+                    if (newImports.size() > 0)
+                        data.append('\n');
+
+                    int change = data.length() - lastIndex; // get changed size
+                    lastIndex = data.length(); // reset the end to the actual end..
+                    nextIndex += change; // shift nextIndex accordingly..
+
+                    data.append(sub); // add on the rest if the string again
+                }
 
                 addedNewImports = true;
                 break; //We've added out imports lets exit.
@@ -498,20 +512,23 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         {
             filterImports(newImports);
 
-            //If we saw the package line, add to it after that.
-            //If not prepend to the start of the file
-            int index = packageLine == -1 ? 0 : packageLine;
-
-            CharSequence sub = data.subSequence(index, data.length()); // grab the rest of the string.
-            data.setLength(index); // cut off the build there
-
-            for (String imp : newImports)
-                data.append("import ").append(imp).append(";\n");
-
             if (newImports.size() > 0)
-                data.append('\n');
+            {
+                //If we saw the package line, add to it after that.
+                //If not prepend to the start of the file
+                int index = packageLine == -1 ? 0 : packageLine;
 
-            data.append(sub); // add on the rest if the string again
+                CharSequence sub = data.subSequence(index, data.length()); // grab the rest of the string.
+                data.setLength(index); // cut off the build there
+
+                for (String imp : newImports)
+                    data.append("import ").append(imp).append(";\n");
+
+                if (newImports.size() > 0)
+                    data.append('\n');
+
+                data.append(sub); // add on the rest if the string again
+            }
         }
 
         return data.toString();
@@ -525,6 +542,16 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             if (itr.next().startsWith("java.lang.")) //java.lang classes can be referenced without imports
                 itr.remove();                        //We remove them here to allow for them to exist in src
                                                      //But we will never ADD them
+        }
+
+        if (newImports.size() > 0)
+        {
+            log("Adding " + newImports.size() + " imports");
+            for (String imp : newImports)
+            {
+                log("        " + imp);
+                //log("        " + HashCode.fromBytes(imp.getBytes()).toString());
+            }
         }
     }
 
@@ -569,7 +596,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         String[] tokens = key.split(" ", 3);  // TODO: switch to non-conflicting separator..types can have spaces :(
         if (!tokens[0].equals("method"))
             return null;
-        log(Arrays.toString(tokens));
+        //log(Arrays.toString(tokens));
         //kind, fullMethodName, methodSig = tokens
         if (tokens[2].charAt(tokens[2].length() - 1) != 'V') // constructors marked with 'V' return type signature in ApplySrg2Source and MCP
             return null;
