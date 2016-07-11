@@ -156,6 +156,13 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         return this;
     }
 
+    public RangeApplier readParamMap(ExceptorFile exc)
+    {
+        map.readParamMap(srg, exc);
+
+        return this;
+    }
+
     // LV map
     public RangeApplier readLvRangeMap(File lvRangeMap)
     {

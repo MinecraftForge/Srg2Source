@@ -11,7 +11,7 @@ import net.minecraftforge.srg2source.util.ListFile;
 
 import com.google.common.base.Splitter;
 
-class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
+public class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
 {
     static final Pattern  EXC_REGEX = Pattern.compile("^([^.]+)\\.([^(]+)(\\([^=]+)=([^|]*)\\|(.*)");
     static final Splitter SPLIT     = Splitter.on(",").omitEmptyStrings().trimResults();
@@ -41,7 +41,7 @@ class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
                 {
                     List<String> params = new ArrayList<String>(SPLIT.splitToList(match.group(5)));
                     params.remove(0);
-                    
+
                     super.add(new ExcLine(className, methodName, methodSig.replace("(" + parent, "("), SPLIT.splitToList(match.group(4)), params));
                 }
             }
