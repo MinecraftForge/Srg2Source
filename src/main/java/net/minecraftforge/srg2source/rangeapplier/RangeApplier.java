@@ -29,7 +29,6 @@ import net.minecraftforge.srg2source.util.io.OutputSupplier;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.hash.HashCode;
 import com.google.common.io.ByteStreams;
 
 public class RangeApplier extends ConfLogger<RangeApplier>
@@ -200,20 +199,16 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         }
     }
 
-    /**
-     * Actually remaps stuff.
-     * @param inSupp
-     * @param outSupp
-     * @param rangeMap
-     * @param annotate Marks all renamed symbols with a comment and the old name.
-     * @throws IOException
-     */
     public void remapSources(InputSupplier inSupp, OutputSupplier outSupp, File rangeMap, boolean annotate) throws IOException
     {
-        RangeMap range = new RangeMap().read(rangeMap);
-
+        remapSources(inSupp, outSupp, new RangeMap().read(rangeMap), annotate);
+    }
+    public void remapSources(InputSupplier inSupp, OutputSupplier outSupp, RangeMap range, boolean annotate) throws IOException
+    {
         List<String> paths = new ArrayList<String>(range.keySet());
         Collections.sort(paths);
+
+        log("Processing " + paths.size() + " files");
 
         for (String filePath : paths)
         {

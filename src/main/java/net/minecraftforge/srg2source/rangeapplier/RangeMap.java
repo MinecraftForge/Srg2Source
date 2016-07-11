@@ -19,7 +19,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.io.Files;
 
-class RangeMap
+public class RangeMap
 {
     private final Multimap<String, RangeEntry> rangeMap;
     private final HashMap<String, String> obfids = Maps.newHashMap();
@@ -35,12 +35,12 @@ class RangeMap
             }
         });
     }
-    
+
     public Set<String> keySet()
     {
         return rangeMap.keySet();
     }
-    
+
     public Collection<RangeEntry> get(String key)
     {
        return rangeMap.get(key);
