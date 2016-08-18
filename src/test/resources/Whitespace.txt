@@ -1,0 +1,11 @@
+@Deprecated
+@Generated("TEST!")
+package core;
+
+import java.lang.Deprecated;
+import javax.annotation.Generated;
+
+
+
+
+

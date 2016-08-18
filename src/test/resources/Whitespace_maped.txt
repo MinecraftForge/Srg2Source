@@ -1,0 +1,11 @@
+@Deprecated/* was Deprecated*/
+@Generated/* was Generated*/("TEST!")
+package core;
+
+import moved.Deprecated;
+import moved.Generated;
+
+
+
+
+

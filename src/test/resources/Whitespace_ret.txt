@@ -1,0 +1,8 @@
+Symbol range map extraction starting
+Processing 1 files
+startProcessing "/core/package-info.java" md5: 7962bd9a7bb5458ad34e346b2328c280
+@|/core/package-info.java|40|44|core|package|core|(file)
+@|/core/package-info.java|1|11|Deprecated|class|java.lang.Deprecated
+@|/core/package-info.java|13|22|Generated|class|javax.annotation.Generated
+endProcessing "/core/package-info.java"
+
