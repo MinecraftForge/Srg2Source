@@ -273,16 +273,22 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
         // New package/class name through mapping
         String newTopLevelClassPackage = Util.sourceName2Internal(map.maps.get("package " + oldTopLevelClassPackage));
-        String newTopLevelClassName = Util.splitBaseName(Util.sourceName2Internal(map.maps.get("class " + oldTopLevelClassFullName), false));
-        if (newTopLevelClassPackage != null && newTopLevelClassName == null)
+        String newTopLevelClassFullName = Util.sourceName2Internal(map.maps.get("class " + oldTopLevelClassFullName), false);
+        String newTopLevelClassName = Util.splitBaseName(newTopLevelClassFullName);
+
+        if (newTopLevelClassName != null)
+        {
+            newTopLevelClassPackage = Util.splitPackageName(newTopLevelClassFullName); //Just trust the class name from the mappings!
+            //Note: this overrides the package wildcard. So CL: lines from SRG files take presidence over PK: lines.
+            //Pretty sure this is the accepted practice for the SRG format, but we may run into issues.
+        }
+        else if (newTopLevelClassPackage != null)
         {
             newTopLevelClassName = oldTopLevelClassName; // If the package changed, but we don't have a new name... assume we're keeping the name...
             // Could cause conflicts if the new package has a class with the same name!
             // We run into this for Minecraft's package-info.java's...
             //throw new RuntimeException("filename " + fileName + " found package " + oldTopLevelClassPackage + "->" + newTopLevelClassPackage + " but no class map for " + newTopLevelClassName);
         }
-        if (newTopLevelClassPackage == null && newTopLevelClassName != null)
-            throw new RuntimeException("filename " + fileName + " found class map " + oldTopLevelClassName + "->" + newTopLevelClassName + " but no package map for " + oldTopLevelClassPackage);
 
         if (newTopLevelClassPackage == null) // If the package wasnt remapped, then we're keeping our name!
         {
@@ -422,6 +428,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             {
                 lastIndex++;
                 nextIndex = data.indexOf("\n", lastIndex + 1);
+                if (nextIndex == -1) //EOF
+                    break;
                 line = data.substring(lastIndex, nextIndex);
             }
             //log("Line: " + line);

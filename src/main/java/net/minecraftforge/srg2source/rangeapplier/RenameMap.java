@@ -29,15 +29,14 @@ class RenameMap
      */
     public RenameMap readSrg(SrgContainer srgs)
     {
-        // CB -> packaged MCP class/field/method
+        for (Entry<String, String> e : srgs.packageMap.entrySet()) // Packages
+            maps.put("package " + e.getKey(), e.getValue());
+
         for (Entry<String, String> e : srgs.classMap.entrySet()) // classes map
         {
             String replacedKey = e.getKey().replace('$', '/');
             maps.put("class " + replacedKey, e.getValue().replace('$', '.').replace('/', '.'));
             imports.put("class " + replacedKey, Util.internalName2Source(e.getValue()));
-
-            // and dont forget packages
-            maps.put("package " + Util.splitPackageName(e.getKey()), Util.internalName2Source(Util.splitPackageName(e.getValue())));
         }
 
         for (Entry<String, String> e : srgs.fieldMap.entrySet()) // fields map
