@@ -282,6 +282,8 @@ public class Util
         // return "/".join(parts[0:])  # "internal" fully-qualified class name, separated by /
 
         //return noExt;
+        if (filename.startsWith("/") || filename.startsWith("\\"))
+            filename = filename.substring(1);
 
         return filename.replace("." + Files.getFileExtension(filename), "").replace('\\', '/');
     }
