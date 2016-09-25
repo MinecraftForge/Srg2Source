@@ -46,13 +46,13 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
     private final Set<File> libs = new HashSet<File>();
     private InputSupplier src;
     private ASTParser parser = null;
-    private String java_version = JAVA_1_6;
+    private String java_version = JAVA_1_8;
     private Map<String, FileCache> file_cache = Maps.newHashMap();
     private int cache_hits =0;
 
     public RangeExtractor()
     {
-        this(JAVA_1_6);
+        this(JAVA_1_8);
     }
 
     public RangeExtractor(String javaVersion)
