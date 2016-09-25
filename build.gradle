@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
         maven {
             name = "forge"
             url = "http://files.minecraftforge.net/maven"
@@ -10,7 +10,11 @@ buildscript {
             url = "https://repo.eclipse.org/content/groups/eclipse/"
         }
     }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+    }
 }
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
@@ -89,6 +93,7 @@ task sourcesJar(type: Jar) {
 
 artifacts {
     archives jar
+    archives shadowJar
     archives javadocJar
     archives sourcesJar
 }
