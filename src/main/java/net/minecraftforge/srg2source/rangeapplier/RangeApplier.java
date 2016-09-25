@@ -434,8 +434,10 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             }
             //log("Line: " + line);
 
-            if (line.startsWith("package "))
+            if (line.startsWith("package ")) {
+                pkg = line.replace("package ", "").replace(";", "").trim();
                 packageLine = nextIndex + 1;
+            }
 
             if (line.startsWith("import "))
             {
@@ -544,12 +546,15 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         return data.toString();
     }
 
+    private String pkg = null;
     private void filterImports(Set<String> newImports)
     {
         Iterator<String> itr  = newImports.iterator();
         while (itr.hasNext())
         {
-            if (itr.next().startsWith("java.lang.")) //java.lang classes can be referenced without imports
+            String next = itr.next();
+            if (next.startsWith("java.lang.") || //java.lang classes can be referenced without imports
+                next.startsWith(pkg)) //local package classes can be referenced without imports
                 itr.remove();                        //We remove them here to allow for them to exist in src
                                                      //But we will never ADD them
         }
