@@ -465,6 +465,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 newClass = newClass.replace('$', '.');
 
                 log("Import: " + newClass);
+                importCopy.add(newClass);
 
                 if (!newImports.remove(newClass)) // New file doesn't need the import, so delete the line.
                 {
@@ -547,6 +548,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
     }
 
     private String pkg = null;
+    private Set<String> importCopy = new TreeSet<String>();
     private void filterImports(Set<String> newImports)
     {
         Iterator<String> itr  = newImports.iterator();
@@ -554,7 +556,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         {
             String next = itr.next();
             if (next.startsWith("java.lang.") || //java.lang classes can be referenced without imports
-                next.startsWith(pkg)) //local package classes can be referenced without imports
+                next.startsWith(pkg) || //local package classes can be referenced without imports
+                importCopy.contains(Util.internalName2Source(Util.splitPackageName(Util.sourceName2Internal(next))))) //Don't add subclasses of already imported classes
                 itr.remove();                        //We remove them here to allow for them to exist in src
                                                      //But we will never ADD them
         }
