@@ -51,6 +51,12 @@ public class SingleTests
     }
 
     @Test
+    public void testLocalClass() throws IOException
+    {
+        testClass("LocalClass");
+    }
+
+    @Test
     public void testPackageInfo() throws IOException
     {
         testClass("PackageInfo", "test.package-info");
