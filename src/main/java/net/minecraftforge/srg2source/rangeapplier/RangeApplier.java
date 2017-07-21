@@ -420,7 +420,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         int packageLine = -1;
 
         String line;
-        while (nextIndex > -1)
+        outer: while (nextIndex > -1)
         {
             line = data.substring(lastIndex, nextIndex);
 
@@ -429,7 +429,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 lastIndex++;
                 nextIndex = data.indexOf("\n", lastIndex + 1);
                 if (nextIndex == -1) //EOF
-                    break;
+                    break outer;
                 line = data.substring(lastIndex, nextIndex);
             }
             //log("Line: " + line);
