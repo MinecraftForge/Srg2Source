@@ -1,0 +1,27 @@
+public class InnerClass
+{
+    private static class Inner
+    {
+        private static class Nested
+        {
+            private String value = "a";
+
+            public String getValue()
+            {
+                return value;
+            }
+        }
+
+        private String value = "b";
+
+        public String getValue()
+        {
+            return value;
+        }
+    }
+
+    public static void main(String[] args)
+    {
+        new Inner().getValue();
+    }
+}

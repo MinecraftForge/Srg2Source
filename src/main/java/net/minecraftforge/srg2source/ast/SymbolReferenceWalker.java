@@ -2,7 +2,6 @@ package net.minecraftforge.srg2source.ast;
 
 import java.util.HashMap;
 import java.util.List;
-
 import org.eclipse.jdt.core.dom.*;
 
 /**
@@ -411,7 +410,19 @@ public class SymbolReferenceWalker extends ASTVisitor
     }
 
     public boolean visit(TypeDeclaration node) {
-        String name = ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName();
+        final ITypeBinding binding = (ITypeBinding)node.getName().resolveBinding();
+        String name = binding.getQualifiedName();
+        if (name.isEmpty()) // local or anonymous type
+        {
+            String simpleName = binding.getName(); // may contain $
+            String binaryName = binding.getBinaryName();
+            if (!binaryName.endsWith(simpleName)) throw new AssertionError(binaryName + " does not end with " + simpleName);
+            // binary names look like 'pkgA.pkgB.Class$Inner$1Local'
+            // this tries to keep it similar to currently generated names for anonymous names (pkgA.pkgB.Class.Inner$1)
+            int simpleNameEndIndex = binaryName.length() - simpleName.length();
+            String binarySimpleName = binaryName.substring(binaryName.lastIndexOf("$", simpleNameEndIndex));
+            name = className + binarySimpleName;
+        }
 
         emitter.log("Class Start: " + name);
         emitter.tab();

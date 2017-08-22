@@ -1,0 +1,48 @@
+public class LocalClass
+{
+    public class Nested
+    {
+        private void test()
+        {
+            class Local
+            {
+                private String value = "b";
+
+                public String getValue()
+                {
+                    return value;
+                }
+            }
+        }
+    }
+
+    public void funA()
+    {
+        class Local
+        {
+            private String value = "a";
+
+            public String getValue()
+            {
+                return value;
+            }
+        }
+
+        new Local().getValue();
+    }
+
+    public void funB()
+    {
+        class Local
+        {
+            private String value = "a";
+
+            public String getValue()
+            {
+                return value;
+            }
+        }
+
+        new Local().getValue();
+    }
+}

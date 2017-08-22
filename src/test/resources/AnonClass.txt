@@ -1,0 +1,26 @@
+public class AnonClass
+{
+    public class Nested
+    {
+        private Object test = new Object()
+        {
+            private String value = "a";
+
+            private String getValue() {
+                return value;
+            }
+        };
+    }
+
+    public static void main(String[] args)
+    {
+        Object test = new Object()
+        {
+            private String value = "b";
+
+            private String getValue() {
+                return value;
+            }
+        };
+    }
+}

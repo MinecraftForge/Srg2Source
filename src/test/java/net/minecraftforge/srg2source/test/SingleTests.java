@@ -37,6 +37,25 @@ public class SingleTests
         if (java_version >= 8)
             testClass("Lambda");
     }
+
+    @Test
+    public void testAnonClass() throws IOException
+    {
+        testClass("AnonClass");
+    }
+
+    @Test
+    public void testInnerClass() throws IOException
+    {
+        testClass("InnerClass");
+    }
+
+    @Test
+    public void testLocalClass() throws IOException
+    {
+        testClass("LocalClass");
+    }
+
     @Test
     public void testPackageInfo() throws IOException
     {
