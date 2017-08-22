@@ -155,7 +155,7 @@ public class CodeFixer
                 if (data == null)
                 {
                     log("    Could not find sourcekey for fixes: " + key);
-                    System.exit(1);
+                    throw new AssertionError("Could not find sourcekey for fixes: " + key);
                 }
 
                 int offset = 0;
@@ -275,7 +275,7 @@ public class CodeFixer
                         {
                             log("      Could not find class: " + clsName);
                             log("      " + p.toString());
-                            if (FATAL) System.exit(1); else continue;
+                            if (FATAL) throw new AssertionError("Could not find class: " + clsName + "\n" + p); else continue;
                         }
                         else
                         {
@@ -295,7 +295,7 @@ public class CodeFixer
                         if (cls == null)
                         {
                             log("      Could not find class for field " + p.toString());
-                            if (FATAL) System.exit(1); else continue;
+                            if (FATAL) throw new AssertionError("Could not find class for field " + p); else continue;
                         }
                         boolean exit = false;
                         for (FieldDeclaration field : cls.getFields())
@@ -361,7 +361,7 @@ public class CodeFixer
                         if (icls == null)
                         {
                             log("      Could not find class in SRG " + impl);
-                            if (FATAL) System.exit(1); else continue;
+                            if (FATAL) throw new AssertionError("Could not find class in SRG " + impl); else continue;
                         }
 
                         SrgFile.Node mtd = icls.methods1.get(name + signature);
@@ -371,7 +371,7 @@ public class CodeFixer
                         if (treeNode == null)
                         {
                             log("    Could not find missing method, and parent was null: " + impl + "." + name + signature);
-                            if (FATAL) System.exit(1); else continue;
+                            if (FATAL) throw new AssertionError("Could not find missing method, and parent was null: " + impl + "." + name + signature); else continue;
                         }
 
                         while(mtd == null && treeNode != null)
@@ -392,7 +392,7 @@ public class CodeFixer
                             if (!FIXES.containsKey(key))
                             {
                                 log("      Could not find bounce rename " + key);
-                                if (FATAL) System.exit(1); else continue;
+                                if (FATAL) throw new AssertionError("Could not find bounce rename " + key); else continue;
                             }
                             else
                             {
@@ -477,7 +477,7 @@ public class CodeFixer
             if (cls == null)
             {
                 System.out.println("WTF! COULD NOT FIND DUPLICATE CLASS");
-                System.exit(1);
+                throw new AssertionError("WTF! COULD NOT FIND DUPLICATE CLASS");
             }
 
             for (MethodDeclaration mtd : cls.getMethods())

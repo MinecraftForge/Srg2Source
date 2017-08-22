@@ -433,7 +433,7 @@ public class SymbolRangeEmitter
             logFile.println(tab + s);
         }
         if (s.contains("||"))
-            System.exit(1);
+            throw new AssertionError("Empty field found in line: " + s);
     }
 
     public void emitThrowRange(Type exc, ITypeBinding type)
