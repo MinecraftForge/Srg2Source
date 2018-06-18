@@ -448,7 +448,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                     String starter = line.replace("import ", "").replace(".*;", "").trim();
                     for (String imp : newImports)
                     {
-                        String impStart = imp.substring(0, imp.lastIndexOf('.'));
+                        int index = imp.lastIndexOf('.');
+                        String impStart = imp.substring(0, index == -1 ? imp.length() : index);
                         if (impStart.equals(starter))
                             remove.add(imp);
                     }
