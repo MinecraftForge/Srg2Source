@@ -41,7 +41,7 @@ pipeline {
                 FORGE_MAVEN = credentials('forge-maven-forge-user')
             }
             steps {
-                sh './gradlew ${GRADLE_ARGS} uploadArchives -PmavenPassword=${FORGE_MAVEN_PSW}'
+                sh './gradlew ${GRADLE_ARGS} publish -PmavenUser=${FORGE_MAVEN_USR} -PmavenPassword=${FORGE_MAVEN_PSW}'
                 sh 'curl --user ${FORGE_MAVEN} http://files.minecraftforge.net/maven/manage/promote/latest/net.minecraftforge.srg2source/${BUILD_NUMBER}'
             }
         }
