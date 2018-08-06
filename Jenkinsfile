@@ -42,7 +42,7 @@ pipeline {
             }
             steps {
                 sh './gradlew ${GRADLE_ARGS} publish -PmavenUser=${FORGE_MAVEN_USR} -PmavenPassword=${FORGE_MAVEN_PSW}'
-                sh 'curl --user ${FORGE_MAVEN} http://files.minecraftforge.net/maven/manage/promote/latest/net.minecraftforge.srg2source/${BUILD_NUMBER}'
+                sh 'curl --user ${FORGE_MAVEN} http://files.minecraftforge.net/maven/manage/promote/latest/net.minecraftforge.Srg2Source/${BUILD_NUMBER}'
             }
         }
     }
