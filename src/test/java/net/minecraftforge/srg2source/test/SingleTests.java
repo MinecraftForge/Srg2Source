@@ -24,8 +24,6 @@ import net.minecraftforge.srg2source.util.io.InputSupplier;
 
 public class SingleTests
 {
-    private final int java_version = Integer.parseInt(System.getProperty("java.version").split("\\.")[1]);
-
     @Test
     public void testGenerics() throws IOException
     {
@@ -34,6 +32,8 @@ public class SingleTests
     @Test
     public void testLambda() throws IOException
     {
+        String version = System.getProperty("java.version");
+        int java_version = Integer.parseInt(version.split("\\.")[version.startsWith("1.") ? 1 : 0]);
         if (java_version >= 8)
             testClass("Lambda");
     }

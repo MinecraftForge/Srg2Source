@@ -57,7 +57,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         if (options.has("help"))
         {
             parser.printHelpOn(System.out);
-            System.exit(0);
+            return;
         }
 
         //boolean dumpRenameMap = !options.has("no-dumpRenameMap");

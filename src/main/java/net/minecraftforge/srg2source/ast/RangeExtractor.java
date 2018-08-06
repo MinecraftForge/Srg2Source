@@ -65,7 +65,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         if (args.length != 3)
         {
             System.out.println("Usage: RangeExtract [SourceDir] [LibDir] [OutFile]");
-            System.exit(1);
+            return;
         }
 
         File src = new File(args[0]);

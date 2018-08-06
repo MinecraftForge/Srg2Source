@@ -1,4 +1,4 @@
-Srg2Source v3.0
+Srg2Source v4.1
 
 A tool for renaming symbols (classes, methods, fields, parameters, and variables) in Java source code using .srg mappings.
 
@@ -6,10 +6,8 @@ For porting, Minecraft, CraftBukkit, mods, plugins, etc.
 
 ## Usage
 
-    cd python
-    python remap-craftbukkit.py --help
-
-The `mapbranch.py` script is used to automatically update https://github.com/MinecraftForge/MCPBukkit
+    java -jar Srg2Source-fatjar.jar --extract [SourceDir] [LibrariesDir] [RangeMapOutput]
+    java -jar Srg2Source-fatjar.jar --apply --srcRoot [SourceDir] --srcRangeMap [RangeMap] --srgFiles [SRGFile] --excFiles [ExcFile] --outDir [Output]
 
 ## See also
 

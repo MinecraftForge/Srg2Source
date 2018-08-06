@@ -11,16 +11,31 @@ buildscript {
         }
     }
 }
+
+plugins {
+  id 'org.ajoberstar.grgit' version '2.3.0'
+  id 'com.github.johnrengelman.shadow' version '2.0.4'
+}
+
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
-group = 'net.minecraftforge.srg2source'
-version = '4.0-SNAPSHOT'
-archivesBaseName = 'Srg2Source'
-targetCompatibility = '1.6'
-sourceCompatibility = '1.6'
+group = 'net.minecraftforge'
+archivesBaseName = 'srg2source'
+version = gitVersion()
+targetCompatibility = sourceCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.6'
+
+def gitVersion() {
+    def desc = grgit.describe(longDescr: true).split('-') as List
+    def hash = desc.remove(desc.size() - 1)
+    def offset = desc.remove(desc.size() - 1)
+    def tag = desc.join('-')
+    def branch = grgit.branch.current().name    
+    return "${tag}.${offset}${t -> if (branch != 'master') t << '-' + branch}"
+}
 
 configurations {
     deployerJars
@@ -49,9 +64,6 @@ dependencies {
     
     // Potential Eclipse AST replacement (not used yet)
     //compile 'fr.inria.gforge.spoon:spoon-core:5.1.0'
-    
-    // maven deployer jar
-    deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
 }
 
 repositories {
@@ -67,19 +79,17 @@ repositories {
 }
 
 jar {
+    exclude 'data/**'
     manifest {
-        attributes 'version':project.version, 'javaCompliance': project.targetCompatibility
-        attributes 'group':project.group
+        attributes 'version': project.version
+        attributes 'javaCompliance': project.targetCompatibility
+        attributes 'group': project.group
+        attributes 'Main-Class': 'net.minecraftforge.srg2source.ConsoleTool'
     }
 }
 
-jar {
-    exclude 'data/**'
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from 'build/docs/javadoc'
+shadowJar {
+    classifier 'fatjar'
 }
 
 task sourcesJar(type: Jar) {
@@ -89,73 +99,63 @@ task sourcesJar(type: Jar) {
 
 artifacts {
     archives jar
-    archives javadocJar
-    archives sourcesJar
+    archives shadowJar
 }
 
-uploadArchives {
-    repositories.mavenDeployer {
-
-        dependsOn 'build'
-
-        if (project.hasProperty('forgeMavenPass'))
-        {
-            repository(url: "http://files.minecraftforge.net/maven/manage/upload") {
-                authentication(userName: "forge", password: project.getProperty('forgeMavenPass'))
-            }
-        }
-        else
-        {
-            // local repo folder. Might wanna juset use  gradle install   if you wanans end it to maven-local
-            repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
-        }
-
-        pom {
-            groupId = project.group
-            version = project.version
-            artifactId = project.archivesBaseName
-            project {
-                name project.archivesBaseName
-                packaging 'jar'
-                description 'Srg2Source library for ForgeGradle'
-                url 'https://github.com/MinecraftForge/Srg2Source'
-
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            pom {
+                from components.java
+                artifact shadowJar
+                name = 'Srg2Source'
+                description = 'Srg2Source library for ForgeGradle'
+                url = 'https://github.com/MinecraftForge/Srg2Source'
                 scm {
-                    url 'https://github.com/MinecraftForge/Srg2Source'
-                    connection 'scm:git:git://github.com/MinecraftForge/Srg2Source.git'
-                    developerConnection 'scm:git:git@github.com:MinecraftForge/Srg2Source.git'
+                    url = 'https://github.com/MinecraftForge/Srg2Source'
+                    connection = 'scm:git:git://github.com/MinecraftForge/Srg2Source.git'
+                    developerConnection = 'scm:git:git@github.com:MinecraftForge/Srg2Source.git'
                 }
-
                 issueManagement {
-                    system 'github'
-                    url 'https://github.com/MinecraftForge/Srg2Source/issues'
+                    system = 'github'
+                    url = 'https://github.com/MinecraftForge/Srg2Source/issues'
                 }
 
                 licenses {
                     license {
-                        name 'The BSD 3-Clause License'
-                        url 'http://opensource.org/licenses/BSD-3-Clause'
-                        distribution 'repo'
+                        name = 'The BSD 3-Clause License'
+                        url = 'http://opensource.org/licenses/BSD-3-Clause'
+                        distribution = 'repo'
                     }
                 }
 
                 developers {
                     developer {
-                        id 'agaricusb'
-                        name 'Agaricusb'
-                        roles { role 'developer' }
+                        id = 'agaricusb'
+                        name = 'Agaricusb'
                     }
                     developer {
-                        id 'LexManos'
-                        name 'Lex Manos'
-                        roles { role 'developer' }
+                        id = 'LexManos'
+                        name = 'Lex Manos'
                     }
                     developer {
-                        id 'AbrarSyed'
-                        name 'Abrar Syed'
-                        roles { role 'developer' }
+                        id = 'AbrarSyed'
+                        name = 'Abrar Syed'
                     }
                 }
+            }
+        }
+    }
+    repositories {
+        maven {
+            if (project.hasProperty('mavenPassword')) {
+                credentials {
+                    username = project.properties.mavenUser
+                    password = project.properties.mavenPassword 
+                }
+                url 'http://files.minecraftforge.net/maven/manage/upload'
+            } else {
+                url 'file://' + rootProject.file('repo').getAbsolutePath()
             }
         }
     }
