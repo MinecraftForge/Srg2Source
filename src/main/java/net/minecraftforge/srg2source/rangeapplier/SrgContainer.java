@@ -132,7 +132,7 @@ public class SrgContainer
         StringBuffer buf = new StringBuffer();
         Matcher matcher = CLS_ENTRY.matcher(desc);
         while (matcher.find()) {
-            matcher.appendReplacement(buf, "L" + remapClass(matcher.group(1)) + ";");
+            matcher.appendReplacement(buf, "L" + Matcher.quoteReplacement(remapClass(matcher.group(1))) + ";");
         }
         matcher.appendTail(buf);
         return buf.toString();
