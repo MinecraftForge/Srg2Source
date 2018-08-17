@@ -103,7 +103,7 @@ public class MinecraftTest
         System.out.println("Creating compiled zip:");
         int rootLen = src.getAbsolutePath().length();
         ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(jar));
-        for (File f : Files.fileTreeTraverser().preOrderTraversal(src))
+        for (File f : Files.fileTraverser().depthFirstPreOrder(src))
         {
             if (f.isDirectory() || !f.getName().endsWith(".class"))
                 continue;

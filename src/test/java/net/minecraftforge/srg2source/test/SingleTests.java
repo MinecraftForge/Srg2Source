@@ -4,14 +4,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,7 +16,6 @@ import com.google.common.io.Files;
 
 import net.minecraftforge.srg2source.ast.RangeExtractor;
 import net.minecraftforge.srg2source.rangeapplier.RangeApplier;
-import net.minecraftforge.srg2source.util.io.InputSupplier;
 
 public class SingleTests
 {
@@ -97,7 +92,7 @@ public class SingleTests
 
         boolean worked = extractor.generateRangeMap(writer);
         Assert.assertTrue("Failed to do work!", worked);
-        Assert.assertEquals(Files.toString(new File(getClass().getResource("/" + resource + "_ret.txt").getFile()), Charsets.UTF_8), bos.toString().replaceAll("\r?\n", "\n").replaceAll("Cache Hit!\n", ""));
+        Assert.assertEquals(getFileContents(resource, "_ret.txt"), bos.toString().replaceAll("\r?\n", "\n").replaceAll("Cache Hit!\n", ""));
         if (loadCache)
             Assert.assertTrue("Cache Missed!", extractor.getCacheHits() == 1);
 
@@ -131,7 +126,12 @@ public class SingleTests
         applier.setOutLogger(new PrintStream(bos));
 
         applier.remapSources(new SimpleInputSupplier(resource, clsName), out, map, true);
-        Assert.assertEquals(Files.toString(new File(getClass().getResource("/" + resource + "_maped.txt").getFile()), Charsets.UTF_8), out.get(0));
-        Assert.assertEquals(Files.toString(new File(getClass().getResource("/" + resource + "_maped_ret.txt").getFile()), Charsets.UTF_8), bos.toString().replaceAll("\r?\n", "\n"));
+        Assert.assertEquals(getFileContents(resource, "_maped.txt"), out.get(0));
+        Assert.assertEquals(getFileContents(resource, "_maped_ret.txt"), bos.toString().replaceAll("\r?\n", "\n"));
+    }
+
+    private String getFileContents(String resource, String suffix) throws IOException {
+        File result = new File(getClass().getResource("/" + resource + suffix).getFile());
+        return  new String(Files.toByteArray(result), Charsets.UTF_8);
     }
 }

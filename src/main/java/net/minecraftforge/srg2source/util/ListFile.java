@@ -2,7 +2,7 @@ package net.minecraftforge.srg2source.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -78,9 +78,8 @@ public abstract class ListFile<T, ME extends ListFile> implements Iterable<T>
     {
         try
         {
-            for (String line : Files.readLines(file, Charset.forName("UTF-8")))
+            for (String line : Files.readLines(file, StandardCharsets.UTF_8))
             {
-
                 T thing = parseLine(line);
                 if (thing != null)
                     lines.add(thing);
@@ -88,7 +87,8 @@ public abstract class ListFile<T, ME extends ListFile> implements Iterable<T>
         }
         catch (IOException e)
         {
-            Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
 
         return (ME) this;

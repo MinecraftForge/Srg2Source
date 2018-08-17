@@ -104,9 +104,9 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         }
         catch (Exception e)
         {
-            // some isue making the output thing.
-            Throwables.propagate(e);
-            return false;
+            // some issue making the output thing.
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
         return generateRangeMap(outFile);
     }
@@ -148,6 +148,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                     SymbolRangeEmitter emitter = new SymbolRangeEmitter(path, outFile);
                     byte[] bytes = ByteStreams.toByteArray(stream);
                     String data = new String(bytes, Charsets.UTF_8).replaceAll("\r", "");
+                    @SuppressWarnings("deprecation")
                     String md5 = Hashing.md5().hashString(data, Charsets.UTF_8).toString();
 
                     log("startProcessing \"" + path + "\" md5: " + md5);

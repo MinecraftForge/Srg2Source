@@ -28,7 +28,7 @@ public class ClassTree
     public ClassTree()
     {
     }
-    
+
     public ClassTree(boolean includeInterfaces)
     {
         this.includeInterfaces = includeInterfaces;
@@ -60,7 +60,7 @@ public class ClassTree
 
                 if (entry.isDirectory() || !name.endsWith(".class") || name.startsWith("."))
                 {
-                    continue; 
+                    continue;
                 }
 
                 byte[] data = new byte[4096];
@@ -96,7 +96,7 @@ public class ClassTree
         {
             return; //Pre-processed class, shadowing a library
         }
-        
+
         cls.access = classNode.access;
         cls.setParent(getClass(classNode.superName));
 
@@ -117,7 +117,7 @@ public class ClassTree
 
         cls.hasProcessed = true;
     }
-    
+
     public boolean processClass(AbstractTypeDeclaration type)
     {
         if (type instanceof AnnotationTypeDeclaration)
@@ -133,31 +133,31 @@ public class ClassTree
             processClass((TypeDeclaration)type);
         }
         return true;
-    } 
-    
+    }
+
     @SuppressWarnings("unchecked")
     public void processClass(TypeDeclaration type)
     {
         String className = ((ITypeBinding)type.getName().resolveBinding()).getQualifiedName();
         Class cls = getClass(className);
-        
+
         if (cls.hasProcessed)
         {
             return; //don't reprocess shadowed classes?
         }
-        
+
         cls.access = type.getModifiers();
-        
+
         if (type.getSuperclassType() != null)
         {
             cls.setParent(getClass(cleanType(type.getSuperclassType())));
         }
-        
+
         for (Type i : (List<Type>)type.superInterfaceTypes())
         {
             cls.addInterface(getClass(cleanType(i)));
         }
-        
+
         FieldDeclaration[] fields = type.getFields();
         for (FieldDeclaration field : fields)
         {
@@ -183,7 +183,7 @@ public class ClassTree
         }
 
         cls.hasProcessed = true;
-        
+
         //Inner classes
         for (BodyDeclaration body : (List<BodyDeclaration>)type.bodyDeclarations())
         {
@@ -206,32 +206,32 @@ public class ClassTree
         {
             type = ((ArrayType)type).getElementType();
         }
-        
+
         if (type.isPrimitiveType())
         {
             return type.toString().replace('.', '/');
         }
-    
+
         if (type.isParameterizedType())
         {
             type = ((ParameterizedType)type).getType();
         }
-        
+
         if (type.isWildcardType())
         {
             return "WILDCARD!?!?!?";
         }
-        
+
         if (type.isSimpleType())
         {
-            
+
             SimpleType stype = (SimpleType)type;
             ITypeBinding bind = stype.getName().resolveTypeBinding().getErasure();
             return bind.getQualifiedName().replace('.', '/');
         }
         else
         {
-            System.out.println("ERROR Unknown Type: " + type + type.getClass() + " " + type.getStartPosition() + '|' + type.getStartPosition() + type.getLength());
+            System.out.println("ERROR Unknown Type: " + type + " " + type.getClass() + " " + type.getStartPosition() + '|' + (type.getStartPosition() + type.getLength()));
             return type.toString();
         }
     }
@@ -311,13 +311,13 @@ public class ClassTree
         private ArrayList<Class> children   = new ArrayList<Class>();
         private ArrayList<Node>  fields     = new ArrayList<Node>();
         private ArrayList<Node>  methods    = new ArrayList<Node>();
-        
+
 
         public Class(String name)
         {
             super(name, 0, "", false);
         }
-        
+
         public void setInclueInterfaces(boolean value)
         {
             includeInterfaces = value;
@@ -336,16 +336,16 @@ public class ClassTree
         }
 
         private void addNode(ArrayList lst, Node fld)
-        { 
+        {
             if (lst.contains(fld))
             {
                 lst.remove(fld);
             }
-            lst.add(fld); 
+            lst.add(fld);
         }
 
         public void addInterface(Class cls)
-        { 
+        {
             addNode(interfaces, cls);
             cls.addChild(this);
         }
@@ -374,7 +374,7 @@ public class ClassTree
         public boolean hasInterfaces() { return interfaces.size() > 0; }
         public boolean hasFields()     { return fields.size()     > 0; }
         public boolean hasMethods()    { return methods.size()    > 0; }
-        
+
         public Node getField(String name)
         {
             Node search = new Node(name, 0, "", false);
@@ -404,7 +404,7 @@ public class ClassTree
         {
             return getTop(name, null, true);
         }
-        
+
         public Node getTopMethod(String name, String desc)
         {
             if (name.equals("<init>"))
@@ -438,7 +438,7 @@ public class ClassTree
             Node f = (desc == null ? getField(name) : getMethod(name, desc));
             if (f != null)
             {
-                if (!Modifier.isPrivate(f.access) || isBottom) return f; 
+                if (!Modifier.isPrivate(f.access) || isBottom) return f;
             }
             return null;
         }
@@ -448,7 +448,7 @@ public class ClassTree
             return (getChildren().contains(this) || getParent().isChild(child));
         }
     }
-    
+
     public static void log(String s)
     {
         System.out.println(s);

@@ -115,7 +115,7 @@ public class SymbolRangeEmitter
         }
         else
         {
-            System.out.println("ERROR Unknown Type: " + type + type.getClass() + " " + type.getStartPosition() + FS + type.getStartPosition() + type.getLength());
+            System.out.println("ERROR Unknown Type: " + type + " " + type.getClass() + " " + type.getStartPosition() + FS + (type.getStartPosition() + type.getLength()));
         }
     }
 

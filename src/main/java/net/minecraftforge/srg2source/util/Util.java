@@ -2,7 +2,7 @@ package net.minecraftforge.srg2source.util;
 
 import java.io.File;
 import java.io.Reader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,11 +18,11 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
-import au.com.bytecode.opencsv.CSVParser;
-import au.com.bytecode.opencsv.CSVReader;
-
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
+
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRow;
 
 public class Util
 {
@@ -146,26 +146,22 @@ public class Util
      */
     public static Map<String, String> readCSVMap(File file)
     {
-        try
+        try (Reader reader = Files.newReader(file, StandardCharsets.UTF_8))
         {
-            Reader reader = Files.newReader(file, Charset.defaultCharset());
-            CSVReader csv = new CSVReader(Files.newReader(file, Charset.defaultCharset()), CSVParser.DEFAULT_SEPARATOR, CSVParser.DEFAULT_QUOTE_CHARACTER, CSVParser.DEFAULT_ESCAPE_CHARACTER, 1, false);
+            Map<String, String> map = new HashMap<>();
 
-            Map<String, String> map = new HashMap<String, String>();
-            for (String[] s : csv.readAll())
-            {
-                map.put(s[0], s[1]);
+            CsvReader csv = new CsvReader();
+            csv.setContainsHeader(true);
+            for (CsvRow row : csv.read(reader).getRows()) {
+                map.put(row.getField(0), row.getField(1));
             }
-
-            reader.close();
-            csv.close();
 
             return map;
         }
         catch (Exception e)
         {
-            Throwables.propagate(e);
-            return null;
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -337,7 +333,7 @@ public class Util
 
     public static ASTParser createParser(String javaVersion, String srcRoot, String[] libs)
     {
-        ASTParser parser = ASTParser.newParser(AST.JLS8);
+        ASTParser parser = ASTParser.newParser(AST.JLS10);
         parser.setEnvironment(libs, new String[] {srcRoot}, null, true);
         return setOptions(parser, javaVersion);
     }

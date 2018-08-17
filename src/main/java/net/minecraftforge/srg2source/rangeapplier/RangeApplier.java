@@ -171,7 +171,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         }
         catch (IOException e)
         {
-            Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
 
         return this;

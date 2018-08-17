@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -129,7 +129,7 @@ public class CodeFixer
         String[] files = Util.gatherFiles(SRC, ".java", false);
         try
         {
-            ArrayList<SourceKey> srcClasses = createTree(files);
+            ArrayList<SourceKey> srcClasses = createTree(files, "1.8");
 
             log("Gathering Fixes:");
             HashMap<String, ArrayList<FixTypes>> classFixes = findFixes(srcClasses);
@@ -195,7 +195,7 @@ public class CodeFixer
         }
     }
 
-    private static ArrayList<SourceKey> createTree(String[] files)
+    private static ArrayList<SourceKey> createTree(String[] files, String javaVersion)
     {
         ArrayList<SourceKey> ret = new ArrayList<SourceKey>();
         try
@@ -203,10 +203,10 @@ public class CodeFixer
             log("Processing Source Tree:");
             for (String file : files)
             {
-                String data = Files.toString(new File(file), Charset.forName("UTF-8")).replaceAll("\r", "");
+                String data = new String(Files.toByteArray(new File(file)), StandardCharsets.UTF_8).replaceAll("\r", "");
                 String name = file.replace('\\', '/').substring(SRC.length() + 1);
                 log("    " + name);
-                CompilationUnit cu = Util.createUnit(parser, "1.6", name, data);
+                CompilationUnit cu = Util.createUnit(parser, javaVersion, name, data);
 
                 ArrayList<TypeDeclaration> classes = new ArrayList<TypeDeclaration>();
                 List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>)cu.types();
