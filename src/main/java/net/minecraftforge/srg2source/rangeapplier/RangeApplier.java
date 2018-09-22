@@ -343,7 +343,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
                 if (key == null)
                 {
-                    // No import, fully qualified! TOD: make this logic a bit better....
+                    // No import, fully qualified! TODO: make this logic a bit better....
                 }
                 else
                 {
@@ -352,7 +352,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                     if (map.imports.containsKey(key))
                         impt = map.imports.get(key).replace('.', '/').replace('$', '/'); // TODO: make extractor print in internal names so we know about inner classes, for now, convert to the same format as the key
 
-                    if (needsImport(newTopLevelQualifiedName, impt))
+                    if (!info.qualified && needsImport(newTopLevelQualifiedName, impt))
                         importsToAdd.add(impt.replace('/', '.').replace('$', '.'));
                 }
             }

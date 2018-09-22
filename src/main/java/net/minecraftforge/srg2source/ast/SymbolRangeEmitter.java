@@ -105,17 +105,24 @@ public class SymbolRangeEmitter
             return;
         }
 
-        if (type.isSimpleType())
+        if (type.isQualifiedType())
         {
-
+            QualifiedType qtype = (QualifiedType)type;
+            emitTypeRange(qtype.getQualifier());
+            IBinding bind = qtype.getName().resolveBinding();
+            if (bind instanceof ITypeBinding)
+                emitReferencedClass(qtype.getName(), (ITypeBinding)bind, true);
+            else
+                error("ERROR SimpleName: " + qtype.getName() + " " + bind);
+        }
+        else if (type.isSimpleType())
+        {
             SimpleType stype = (SimpleType)type;
-            ITypeBinding bind = stype.getName().resolveTypeBinding();
-            if (bind.isTypeVariable()) return; // Don't spit out generic identifier.
-            log(commonFields(stype.getName().toString(), stype.getName()) + "class" + FS + bind.getErasure().getQualifiedName());
+            emitReferencedClass(stype.getName(), stype.getName().resolveTypeBinding(), false);
         }
         else
         {
-            System.out.println("ERROR Unknown Type: " + type + " " + type.getClass() + " " + type.getStartPosition() + FS + (type.getStartPosition() + type.getLength()));
+            error("ERROR Unknown Type: " + type + " " + type.getClass() + " " + type.getStartPosition() + FS + (type.getStartPosition() + type.getLength()));
         }
     }
 
@@ -258,11 +265,11 @@ public class SymbolRangeEmitter
     }
 
 
-    public void emitReferencedClass(Name name, ITypeBinding clazz)
+    public void emitReferencedClass(Name name, ITypeBinding clazz, boolean qualified)
     {
-        //String|class|java.lang.String
+        //String|class|java.lang.String|false
         if (clazz.isTypeVariable()) return;
-        log(commonFields(name.toString(), name) + "class" + FS + clazz.getErasure().getQualifiedName());
+        log(commonFields(name.toString(), name) + "class" + FS + clazz.getErasure().getQualifiedName() + FS + qualified);
     }
 
 
@@ -411,6 +418,9 @@ public class SymbolRangeEmitter
 
     public String commonFields(String oldText, ASTNode textRange)
     {
+
+        if (oldText.equals("MapColor") && textRange.getStartPosition() == 3969 && sourceFilePath.endsWith("Block.java"))
+            System.currentTimeMillis();
         // Include source filename for opening, textual range start/end, and old
         // text for sanity check
         return "@" + FS + sourceFilePath
@@ -434,6 +444,10 @@ public class SymbolRangeEmitter
         }
         if (s.contains("||"))
             throw new AssertionError("Empty field found in line: " + s);
+    }
+
+    public void error(String s) {
+        System.out.println(s);
     }
 
     public void emitThrowRange(Type exc, ITypeBinding type)

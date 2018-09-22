@@ -212,7 +212,7 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(SingleMemberAnnotation  node) { return true; }
 
     public boolean visit(FieldDeclaration node) {
-        emitter.emitTypeRange(node.getType());
+        emitter.emitTypeRange(node.getType()); //TODO: This double prints due to the walk below, Why are we specifically handling fields?
 
         this.walk(node.getJavadoc());
 
@@ -321,7 +321,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
         else if (bind instanceof ITypeBinding)
         {
-            emitter.emitReferencedClass(node, (ITypeBinding)bind);
+            emitter.emitReferencedClass(node, (ITypeBinding)bind, false);
         }
         else if (bind instanceof IVariableBinding)
         {
@@ -366,7 +366,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         IBinding bind = node.resolveBinding();
         if (bind instanceof ITypeBinding)
         {
-            emitter.emitReferencedClass(node, (ITypeBinding)bind);
+            emitter.emitReferencedClass(node, (ITypeBinding)bind, false);
             return false;
         }
         return true;
@@ -377,7 +377,7 @@ public class SymbolReferenceWalker extends ASTVisitor
         IBinding bind = node.resolveBinding();
         if (bind instanceof ITypeBinding)
         {
-            emitter.emitReferencedClass(node.getName(), (ITypeBinding)bind);
+            emitter.emitReferencedClass(node.getName(), (ITypeBinding)bind, false);
         }
         else
         {

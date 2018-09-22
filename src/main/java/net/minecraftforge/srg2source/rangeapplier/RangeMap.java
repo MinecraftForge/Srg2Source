@@ -62,6 +62,7 @@ public class RangeMap
                 String expectedOldText = tokens.get(4);
                 String kind = tokens.get(5);
                 List<String> info = tokens.subList(6, tokens.size());
+                boolean qualified = false;
 
                 String key;
                 // Build unique identifier for symbol
@@ -90,6 +91,8 @@ public class RangeMap
                         continue;
                     }
                     key = "class " + className;
+                    if (info.size() > 1 && info.get(1).equals("true"))
+                        qualified = true;
                 }
                 else if (kind.equals("field"))
                 {
@@ -117,7 +120,7 @@ public class RangeMap
                 }
 
                 // (startRange, endRange, expectedOldText, key)
-                rangeMap.put(fileName, new RangeEntry(startRange, endRange, expectedOldText, key));
+                rangeMap.put(fileName, new RangeEntry(startRange, endRange, expectedOldText, key, qualified));
             }
         }
         catch (IOException e)
@@ -132,14 +135,16 @@ public class RangeMap
     {
         public final int start, end;
         public final String expectedOldText, key;
+        public final boolean qualified;
 
-        RangeEntry(int start, int end, String expectedOldText, String key)
+        RangeEntry(int start, int end, String expectedOldText, String key, boolean qualified)
         {
             super();
             this.start = start;
             this.end = end;
             this.expectedOldText = expectedOldText;
             this.key = key;
+            this.qualified = qualified;
         }
 
         @Override
