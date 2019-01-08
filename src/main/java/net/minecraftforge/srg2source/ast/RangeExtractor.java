@@ -310,15 +310,37 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
     public RangeExtractor addLibs(File lib)
     {
         if (lib.isDirectory())
+        {
+            libArray = null;
+            libs.add(lib); // Root directories, for dev time classes.
             for (File f : lib.listFiles())
-                addLibs(f);
-        else if (lib.getPath().endsWith("jar")) // to be sure its
+                addLibsRecursive(f); // Recursively scan for jar files, to keep backwards compatibility with specifying a 'libs folder'
+        }
+        else if (lib.getPath().endsWith(".jar"))
         {
             libArray = null;
             libs.add(lib);
         }
+        else
+        {
+            log("Unsupposrted library path: " + lib.getAbsolutePath());
+        }
 
         return this;
+    }
+
+    private void addLibsRecursive(File lib)
+    {
+        if (lib.isDirectory())
+        {
+            for (File f : lib.listFiles())
+                addLibsRecursive(f);
+        }
+        else if (lib.getPath().endsWith(".jar"))
+        {
+            libArray = null;
+            libs.add(lib);
+        }
     }
 
     /**

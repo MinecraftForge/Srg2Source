@@ -233,6 +233,11 @@ public class SymbolReferenceWalker extends ASTVisitor
         return false;
     }
     public boolean visit(EnumDeclaration node) {
+        ITypeBinding bind = (ITypeBinding)node.getName().resolveBinding();
+        if (bind == null) {
+            emitter.error("Could not bind ENUM: " + node.getName() + " in " + className);
+            return false;
+        }
         String name = ((ITypeBinding)node.getName().resolveBinding()).getQualifiedName();
 
         emitter.log("Enum Start: " + name);

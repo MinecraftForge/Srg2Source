@@ -326,6 +326,10 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
             if (info.key.startsWith("class "))
             {
+                //TODO: This entire section needs re-writing so we can better detect qualifications. But that requires re-writing the extractor to print in internal names.
+                //  It currently prints inner classes as package/outer/inner. So there is no way to determine the outer class from the package.
+                //  We need to print it in bytecode internal name, so package/outer$inner.
+
                 // do importing.
                 String key = info.key;
                 if (key.equals("class " + newName.replace('.', '/')))
@@ -353,7 +357,16 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                         impt = map.imports.get(key).replace('.', '/').replace('$', '/'); // TODO: make extractor print in internal names so we know about inner classes, for now, convert to the same format as the key
 
                     if (!info.qualified && needsImport(newTopLevelQualifiedName, impt))
-                        importsToAdd.add(impt.replace('/', '.').replace('$', '.'));
+                    {
+                        if (impt.indexOf('.') == -1)
+                        {
+                            log("ERROR: Invalid import attempted, \"" + impt + "\"");
+                        }
+                        else
+                        {
+                            importsToAdd.add(impt.replace('/', '.').replace('$', '.'));
+                        }
+                    }
                 }
             }
 
