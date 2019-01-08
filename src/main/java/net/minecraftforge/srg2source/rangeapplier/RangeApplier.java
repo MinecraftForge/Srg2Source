@@ -358,13 +358,14 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
                     if (!info.qualified && needsImport(newTopLevelQualifiedName, impt))
                     {
+                        impt = impt.replace('/', '.').replace('$', '.');
                         if (impt.indexOf('.') == -1)
                         {
                             log("ERROR: Invalid import attempted, \"" + impt + "\"");
                         }
                         else
                         {
-                            importsToAdd.add(impt.replace('/', '.').replace('$', '.'));
+                            importsToAdd.add(impt);
                         }
                     }
                 }
