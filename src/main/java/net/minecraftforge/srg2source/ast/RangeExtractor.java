@@ -206,7 +206,8 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
     @Override
     protected void log(String s)
     {
-        outFile.println(s);
+        if (outFile != null)
+            outFile.println(s);
         outLogger.println(s);
     }
 
