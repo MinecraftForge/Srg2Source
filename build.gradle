@@ -92,6 +92,7 @@ task sourcesJar(type: Jar) {
 artifacts {
     archives jar
     archives shadowJar
+    archives sourcesJar
 }
 
 publishing {
@@ -100,6 +101,7 @@ publishing {
             pom {
                 from components.java
                 artifact shadowJar
+                artifact sourcesJar
                 name = 'Srg2Source'
                 description = 'Srg2Source library for ForgeGradle'
                 url = 'https://github.com/MinecraftForge/Srg2Source'
