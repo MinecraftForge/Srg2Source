@@ -324,7 +324,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
         }
         else
         {
-            log("Unsupposrted library path: " + lib.getAbsolutePath());
+            log("Unsupported library path: " + lib.getAbsolutePath());
         }
 
         return this;
