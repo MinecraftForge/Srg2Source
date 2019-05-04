@@ -370,6 +370,11 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                     }
                 }
             }
+            else if (info.key.startsWith("package ") && newTopLevelClassPackage != null)
+            {
+                // replace the package declaration in this file with the new package
+                newName = newTopLevelClassPackage.replace('/', '.');
+            }
 
             if (oldName.equals(newName))
                 continue; //No rename? Skip the rest.

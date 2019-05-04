@@ -62,15 +62,16 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
 
     public static void main(String[] args) throws IOException
     {
-        if (args.length != 3)
+        if (args.length < 3)
         {
-            System.out.println("Usage: RangeExtract [SourceDir] [LibDir] [OutFile]");
+            System.out.println("Usage: RangeExtract <SourceDir> <LibDir> <OutFile> [JavaVersion]");
             return;
         }
 
         File src = new File(args[0]);
 
-        RangeExtractor extractor = new RangeExtractor();
+        String javaVersion = args.length > 3 ? args[3] : JAVA_1_6;
+        RangeExtractor extractor = new RangeExtractor(javaVersion);
         extractor.setSrcRoot(new File(args[0]));
 
         if (args[1].equals("none") || args[1].isEmpty())
