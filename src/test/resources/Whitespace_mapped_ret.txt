@@ -2,6 +2,7 @@ Processing 1 files
 Start Processing: /core/package-info.java
 Rename class java/lang/Deprecated[1,11]::Deprecated->Deprecated/* was Deprecated*/
 Rename class javax/annotation/Generated[32,41]::Generated->Generated/* was Generated*/
+Rename package core/package-info[77,81]::core->not_core
 Import: moved.Deprecated
 Import: moved.Generated
 Rename file /core/package-info.java -> not_core/package-info.java

@@ -52,6 +52,12 @@ public class SingleTests
     }
 
     @Test
+    public void testPackagedClass() throws IOException
+    {
+        testClass("obfuscated/PackagedClass");
+    }
+
+    @Test
     public void testPackageInfo() throws IOException
     {
         testClass("PackageInfo", "test.package-info");
@@ -126,8 +132,8 @@ public class SingleTests
         applier.setOutLogger(new PrintStream(bos));
 
         applier.remapSources(new SimpleInputSupplier(resource, clsName), out, map, true);
-        Assert.assertEquals(getFileContents(resource, "_maped.txt"), out.get(0));
-        Assert.assertEquals(getFileContents(resource, "_maped_ret.txt"), bos.toString().replaceAll("\r?\n", "\n"));
+        Assert.assertEquals(getFileContents(resource, "_mapped.txt"), out.get(0));
+        Assert.assertEquals(getFileContents(resource, "_mapped_ret.txt"), bos.toString().replaceAll("\r?\n", "\n"));
     }
 
     private String getFileContents(String resource, String suffix) throws IOException {

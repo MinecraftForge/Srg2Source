@@ -1,6 +1,6 @@
 @Deprecated/* was Deprecated*/
 @Generated/* was Generated*/("TEST!")
-package core;
+package not_core;
 
 import moved.Deprecated;
 import moved.Generated;

@@ -2,9 +2,9 @@ Symbol range map extraction starting
 Processing 1 files
 startProcessing "/GenericClasses.java" md5: 9fd0334849c82de8a64a31ed3b656b37
 Class Start: GenericClasses
-   @|/GenericClasses.java|81|95|GenericClasses|class|GenericClasses
+   @|/GenericClasses.java|81|95|GenericClasses|class|GenericClasses|false
    Class Start: GenericClasses.IFoo
-      @|/GenericClasses.java|127|131|IFoo|class|GenericClasses.IFoo
+      @|/GenericClasses.java|127|131|IFoo|class|GenericClasses.IFoo|false
       Method Start: bar(Ljava/lang/Object;)Ljava/lang/Object;
          @|/GenericClasses.java|157|160|arg|param|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;|arg|0
          @|/GenericClasses.java|151|154|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
@@ -12,27 +12,27 @@ Class Start: GenericClasses
    Class End  : GenericClasses.IFoo
    Method Start: func(Ljava/util/Collection;)Ljava/util/concurrent/Callable;
       @|/GenericClasses.java|227|230|par|param|GenericClasses|func|(Ljava/util/Collection;)Ljava/util/concurrent/Callable;|par|0
-      @|/GenericClasses.java|193|201|Callable|class|java.util.concurrent.Callable
+      @|/GenericClasses.java|193|201|Callable|class|java.util.concurrent.Callable|false
       @|/GenericClasses.java|208|212|func|method|GenericClasses|func|(Ljava/util/Collection;)Ljava/util/concurrent/Callable;
-      @|/GenericClasses.java|213|223|Collection|class|java.util.Collection
+      @|/GenericClasses.java|213|223|Collection|class|java.util.Collection|false
       @|/GenericClasses.java|244|247|par|param|GenericClasses|func|(Ljava/util/Collection;)Ljava/util/concurrent/Callable;|par|0
    Method End: func(Ljava/util/Collection;)Ljava/util/concurrent/Callable;
    Method Start: main()V
       @|/GenericClasses.java|288|292|main|method|GenericClasses|main|()V
-      @|/GenericClasses.java|309|313|IFoo|class|GenericClasses.IFoo
-      @|/GenericClasses.java|314|320|String|class|java.lang.String
-      @|/GenericClasses.java|333|337|IFoo|class|GenericClasses.IFoo
-      @|/GenericClasses.java|338|344|String|class|java.lang.String
+      @|/GenericClasses.java|309|313|IFoo|class|GenericClasses.IFoo|false
+      @|/GenericClasses.java|314|320|String|class|java.lang.String|false
+      @|/GenericClasses.java|333|337|IFoo|class|GenericClasses.IFoo|false
+      @|/GenericClasses.java|338|344|String|class|java.lang.String|false
       Anon Class Start: GenericClasses$1
          Method Start: bar(Ljava/lang/String;)Ljava/lang/String;
             @|/GenericClasses.java|395|398|arg|param|GenericClasses$1|bar|(Ljava/lang/String;)Ljava/lang/String;|arg|0
-            @|/GenericClasses.java|377|383|String|class|java.lang.String
+            @|/GenericClasses.java|377|383|String|class|java.lang.String|false
             @|/GenericClasses.java|384|387|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
-            @|/GenericClasses.java|388|394|String|class|java.lang.String
+            @|/GenericClasses.java|388|394|String|class|java.lang.String|false
          Method End: bar(Ljava/lang/String;)Ljava/lang/String;
       Anon Class End: GenericClasses$1
       @|/GenericClasses.java|481|484|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
-      @|/GenericClasses.java|502|506|IFoo|class|GenericClasses.IFoo
+      @|/GenericClasses.java|502|506|IFoo|class|GenericClasses.IFoo|false
       @|/GenericClasses.java|513|516|bar|method|GenericClasses.IFoo|bar|(Ljava/lang/Object;)Ljava/lang/Object;
    Method End: main()V
 Class End  : GenericClasses

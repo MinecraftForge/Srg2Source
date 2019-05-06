@@ -1,0 +1,7 @@
+package obfuscated;
+
+public class PackagedClass {
+    public static void main(String[] args) {
+        System.out.println("Man phase is so cool");
+    }
+}

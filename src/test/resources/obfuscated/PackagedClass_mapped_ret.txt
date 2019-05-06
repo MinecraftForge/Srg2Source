@@ -1,0 +1,7 @@
+Processing 1 files
+Start Processing: /obfuscated/PackagedClass.java
+Rename package obfuscated/PackagedClass[8,18]::obfuscated->deobfuscated
+Rename class obfuscated/PackagedClass[36,49]::PackagedClass->PackagedClass/* was PackagedClass*/
+Rename file /obfuscated/PackagedClass.java -> deobfuscated/PackagedClass.java
+End  Processing: deobfuscated/PackagedClass.java
+

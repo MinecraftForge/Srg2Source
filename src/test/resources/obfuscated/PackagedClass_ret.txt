@@ -1,0 +1,17 @@
+Symbol range map extraction starting
+Processing 1 files
+startProcessing "/obfuscated/PackagedClass.java" md5: 8e7460457359e4014941ddfb677ceeed
+@|/obfuscated/PackagedClass.java|8|18|obfuscated|package|obfuscated|(file)
+Class Start: obfuscated.PackagedClass
+   @|/obfuscated/PackagedClass.java|34|47|PackagedClass|class|obfuscated.PackagedClass|false
+   Method Start: main([Ljava/lang/String;)V
+      @|/obfuscated/PackagedClass.java|87|91|args|param|obfuscated.PackagedClass|main|([Ljava/lang/String;)V|args|0
+      @|/obfuscated/PackagedClass.java|73|77|main|method|obfuscated.PackagedClass|main|([Ljava/lang/String;)V
+      @|/obfuscated/PackagedClass.java|78|84|String|class|java.lang.String|false
+      @|/obfuscated/PackagedClass.java|103|109|System|class|java.lang.System|false
+      @|/obfuscated/PackagedClass.java|110|113|out|field|java.lang.System|out
+      @|/obfuscated/PackagedClass.java|114|121|println|method|java.io.PrintStream|println|(Ljava/lang/String;)V
+   Method End: main([Ljava/lang/String;)V
+Class End  : obfuscated.PackagedClass
+endProcessing "/obfuscated/PackagedClass.java"
+
