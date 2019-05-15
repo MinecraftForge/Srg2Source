@@ -3,7 +3,7 @@
 #-dontpreverify
 -dontwarn javax.annotation.**
 -dontwarn javax.inject.**
--dontwarn com.google.gson.**
+-dontwarn com.google.**
 -dontwarn com.ibm.**
 -dontwarn org.osgi.**
 -dontwarn org.apache.**
