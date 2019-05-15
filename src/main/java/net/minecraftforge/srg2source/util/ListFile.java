@@ -1,15 +1,13 @@
 package net.minecraftforge.srg2source.util;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import com.google.common.base.Throwables;
-import com.google.common.io.Files;
 
 @SuppressWarnings("rawtypes")
 public abstract class ListFile<T, ME extends ListFile> implements Iterable<T>
@@ -78,16 +76,17 @@ public abstract class ListFile<T, ME extends ListFile> implements Iterable<T>
     {
         try
         {
-            for (String line : Files.readLines(file, StandardCharsets.UTF_8))
+            try (BufferedReader reader = new BufferedReader(new FileReader(file)))
             {
-                T thing = parseLine(line);
-                if (thing != null)
-                    lines.add(thing);
+                reader.lines().forEach(line -> {
+                    T thing = parseLine(line);
+                    if (thing != null)
+                        lines.add(thing);
+                });
             }
         }
         catch (IOException e)
         {
-            Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
         }
 

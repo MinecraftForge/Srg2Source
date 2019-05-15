@@ -1,10 +1,19 @@
 package net.minecraftforge.srg2source.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -12,14 +21,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-
-import com.google.common.base.Throwables;
-import com.google.common.io.Files;
 
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRow;
@@ -146,7 +153,7 @@ public class Util
      */
     public static Map<String, String> readCSVMap(File file)
     {
-        try (Reader reader = Files.newReader(file, StandardCharsets.UTF_8))
+        try (Reader reader = new FileReader(file))
         {
             Map<String, String> map = new HashMap<>();
 
@@ -160,7 +167,8 @@ public class Util
         }
         catch (Exception e)
         {
-            Throwables.throwIfUnchecked(e);
+            if (e instanceof RuntimeException)
+                throw (RuntimeException)e;
             throw new RuntimeException(e);
         }
     }
@@ -281,7 +289,7 @@ public class Util
         if (filename.startsWith("/") || filename.startsWith("\\"))
             filename = filename.substring(1);
 
-        return filename.replace("." + Files.getFileExtension(filename), "").replace('\\', '/');
+        return filename.replace("." + getFileExtension(filename), "").replace('\\', '/');
     }
 
     /**
@@ -337,6 +345,14 @@ public class Util
         parser.setEnvironment(libs, new String[] {srcRoot}, null, true);
         return setOptions(parser, javaVersion);
     }
+
+    public static ASTParser createParser(String javaVersion, String[] libs)
+    {
+        ASTParser parser = ASTParser.newParser(AST.JLS10);
+        parser.setEnvironment(libs, null, null, true);
+        return setOptions(parser, javaVersion);
+    }
+
     private static ASTParser setOptions(ASTParser parser, String javaVersion)
     {
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
@@ -349,11 +365,60 @@ public class Util
     }
 
 
-    public static CompilationUnit createUnit(ASTParser parser, String javaVersion, String name, String data) throws Exception
+    public static CompilationUnit createUnit(ASTParser parser, String javaVersion, String name, char[] data) throws Exception
     {
         //setOptions(parser, javaVersion);
         parser.setUnitName(name);
-        parser.setSource(data.toCharArray());
+        parser.setSource(data);
         return (CompilationUnit) parser.createAST(null);
     }
+
+    public static void transferTo(InputStream input, OutputStream output) throws IOException
+    {
+        byte[] buf = new byte[1024];
+        int cnt;
+        while ((cnt = input.read(buf)) > 0)
+            output.write(buf, 0, cnt);
+    }
+
+    public static byte[] readStream(InputStream input) throws IOException
+    {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        transferTo(input, output);
+        return output.toByteArray();
+    }
+
+    public static byte[] readFile(File input) throws IOException
+    {
+        try (InputStream stream = new FileInputStream(input))
+        {
+            return readStream(stream);
+        }
+    }
+
+    public static String md5(String data, Charset encoding)
+    {
+        try
+        {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(data.getBytes(encoding));
+            return hex(md.digest());
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String hex(byte[] data)
+    {
+        return IntStream.range(0, data.length).collect(StringBuilder::new, (sb,i)->new Formatter(sb).format("%02x", data[i] & 0xFF), StringBuilder::append).toString();
+    }
+
+    public static String getFileExtension(String fullName)
+    {
+        String fileName = new File(fullName).getName();
+        int idx = fileName.lastIndexOf('.');
+        return idx == -1 ? "" : fileName.substring(idx + 1);
+  }
 }

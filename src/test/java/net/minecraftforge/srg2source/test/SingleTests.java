@@ -8,14 +8,16 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
-
+import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
+import net.minecraftforge.srg2source.api.SourceVersion;
 import net.minecraftforge.srg2source.ast.RangeExtractor;
 import net.minecraftforge.srg2source.rangeapplier.RangeApplier;
+import net.minecraftforge.srg2source.util.Util;
 
 public class SingleTests
 {
@@ -80,17 +82,20 @@ public class SingleTests
 
     public void testClass(final String resource, final String clsName, boolean loadCache) throws IOException
     {
-        RangeExtractor extractor = new RangeExtractor(RangeExtractor.JAVA_1_8);
-        if (loadCache)
-        {
-            extractor.loadCache(getClass().getResourceAsStream("/" + resource + "_ret.txt"));
-        }
-        extractor.setSrc(new SimpleInputSupplier(resource, clsName));
-
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        PrintWriter writer = new PrintWriter(bos);
 
-        boolean worked = extractor.generateRangeMap(writer);
+        RangeExtractor extractor = new RangeExtractorBuilder()
+            .sourceCompatibility(SourceVersion.JAVA_1_8)
+            .input(new SimpleInputSupplier(resource, clsName))
+            .output(new PrintWriter(bos))
+            .build();
+
+
+        if (loadCache)
+            extractor.loadCache(getClass().getResourceAsStream("/" + resource + "_ret.txt"));
+
+        boolean worked = extractor.run();
+
         Assert.assertTrue("Failed to do work!", worked);
         Assert.assertEquals(getFileContents(resource, "_ret.txt"), bos.toString().replaceAll("\r?\n", "\n").replaceAll("Cache Hit!\n", ""));
         if (loadCache)
@@ -123,7 +128,7 @@ public class SingleTests
         RangeApplier applier = new RangeApplier().readSrg(srg);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        applier.setOutLogger(new PrintStream(bos));
+        applier.setLogger(new PrintStream(bos));
 
         applier.remapSources(new SimpleInputSupplier(resource, clsName), out, map, true);
         Assert.assertEquals(getFileContents(resource, "_maped.txt"), out.get(0));
@@ -132,6 +137,6 @@ public class SingleTests
 
     private String getFileContents(String resource, String suffix) throws IOException {
         File result = new File(getClass().getResource("/" + resource + suffix).getFile());
-        return  new String(Files.toByteArray(result), Charsets.UTF_8);
+        return  new String(Util.readFile(result), StandardCharsets.UTF_8);
     }
 }

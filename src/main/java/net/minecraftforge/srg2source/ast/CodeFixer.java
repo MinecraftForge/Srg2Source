@@ -30,8 +30,6 @@ import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
-import com.google.common.io.Files;
-
 @SuppressWarnings("unchecked")
 public class CodeFixer
 {
@@ -203,10 +201,10 @@ public class CodeFixer
             log("Processing Source Tree:");
             for (String file : files)
             {
-                String data = new String(Files.toByteArray(new File(file)), StandardCharsets.UTF_8).replaceAll("\r", "");
+                String data = new String(Util.readFile(new File(file)), StandardCharsets.UTF_8).replaceAll("\r", "");
                 String name = file.replace('\\', '/').substring(SRC.length() + 1);
                 log("    " + name);
-                CompilationUnit cu = Util.createUnit(parser, javaVersion, name, data);
+                CompilationUnit cu = Util.createUnit(parser, javaVersion, name, data.toCharArray());
 
                 ArrayList<TypeDeclaration> classes = new ArrayList<TypeDeclaration>();
                 List<AbstractTypeDeclaration> types = (List<AbstractTypeDeclaration>)cu.types();

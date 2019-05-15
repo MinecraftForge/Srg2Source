@@ -1,14 +1,14 @@
 package net.minecraftforge.srg2source.util.io;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
-
-import com.google.common.io.Files;
 
 public class FolderSupplier implements InputSupplier, OutputSupplier
 {
@@ -34,7 +34,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
                 out.getParentFile().mkdirs();
                 out.createNewFile();
             }
-            return Files.asByteSink(new File(root, relPath)).openStream();
+            return new FileOutputStream(new File(root, relPath));
         }
         catch (IOException e)
         {
@@ -47,7 +47,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier
     {
         try
         {
-            return Files.asByteSource(new File(root, relPath)).openStream();
+            return new FileInputStream(new File(root, relPath));
         }
         catch (IOException e)
         {

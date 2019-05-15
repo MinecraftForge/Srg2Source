@@ -1,5 +1,6 @@
 package net.minecraftforge.srg2source.util.io;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,8 +11,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.google.common.io.ByteSource;
-import com.google.common.io.ByteStreams;
+import net.minecraftforge.srg2source.util.Util;
 
 public class ZipInputSupplier implements InputSupplier
 {
@@ -33,7 +33,7 @@ public class ZipInputSupplier implements InputSupplier
         ZipEntry entry;
 
         while ((entry = zin.getNextEntry()) != null)
-            data.put(entry.getName(), ByteStreams.toByteArray(zin));
+            data.put(entry.getName(), Util.readStream(zin));
 
         zin.close();
     }
@@ -50,7 +50,7 @@ public class ZipInputSupplier implements InputSupplier
     {
         try
         {
-            return ByteSource.wrap(data.get(relPath)).openStream();
+            return new ByteArrayInputStream(data.get(relPath));
         }
         catch (Exception e)
         {

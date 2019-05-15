@@ -10,11 +10,15 @@ buildscript {
             url = "https://repo.eclipse.org/content/groups/eclipse/"
         }
     }
+    dependencies {
+        classpath 'net.sf.proguard:proguard-gradle:6.1.0'
+        classpath 'org.ow2.asm:asm:6.2.1'
+        classpath 'org.ow2.asm:asm-tree:6.2.1'
+    }
 }
 
 plugins {
   id 'org.ajoberstar.grgit' version '2.3.0'
-  id 'com.github.johnrengelman.shadow' version '2.0.4'
 }
 
 apply plugin: 'java'
@@ -53,6 +57,9 @@ dependencies {
 
     // necessary eclipse AST stuff
     compile 'org.eclipse.jdt:org.eclipse.jdt.core:3.14.0'
+    
+    //We use this to patch the JDT at runtime
+    compile 'cpw.mods:modlauncher:1.1.+'
 
     // Potential Eclipse AST replacement (not used yet)
     //compile 'fr.inria.gforge.spoon:spoon-core:5.1.0'
@@ -80,8 +87,178 @@ jar {
     }
 }
 
-shadowJar {
-    classifier 'fatjar'
+import java.util.zip.*
+import org.objectweb.asm.*
+import org.objectweb.asm.tree.*
+
+//TODO: Eclipse complains about unused messages. Find a way to make it shut up.
+class PatchJDTClasses extends DefaultTask {
+    static def COMPILATION_UNIT_RESOLVER = 'org/eclipse/jdt/core/dom/CompilationUnitResolver'
+    static def RANGE_EXTRACTOR = 'net/minecraftforge/srg2source/ast/RangeExtractor'
+    def RESOLVE_METHOD = 'resolve([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Lorg/eclipse/jdt/core/dom/FileASTRequestor;ILjava/util/Map;I)V'
+    def GET_CONTENTS = 'org/eclipse/jdt/internal/compiler/util/Util.getFileCharContent(Ljava/io/File;Ljava/lang/String;)[C'
+    def HOOK_DESC_RESOLVE = '(Ljava/lang/String;Ljava/lang/String;)[C'
+    
+    @Input def targets = [] as Set
+    @Input def libraries = [] as Set
+    @OutputFile File output
+    
+    void target(String value) {
+        targets.add(value)
+    }
+    
+    void library(File value) {
+        libraries.add(value)
+    }
+    
+    @TaskAction
+    void patchClass() {
+        def toProcess = targets.collect()
+        new ZipOutputStream(new FileOutputStream(output)).withCloseable{ zout ->
+            libraries.stream().filter{ !it.isDirectory() }.each { lib ->
+                new ZipFile(lib).withCloseable { zin -> 
+                    def remove = []
+                    toProcess.each{ target -> 
+                        def entry = zin.getEntry(target+'.class')
+                        if (entry == null)
+                            return
+                        
+                        def node = new ClassNode()
+                        def reader = new ClassReader(zin.getInputStream(entry))
+                        reader.accept(node, 0)
+                        
+                        //CompilationUnitResolver allows batch compiling, the problem is it is hardcoded to read the contents from a File.
+                        //So we patch this call to redirect to us, so we can get the contents from our InputSupplier
+                        if (COMPILATION_UNIT_RESOLVER.equals(target)) {
+                            logger.lifecycle('Transforming: ' + target + ' From: ' + lib)
+                            def resolve = node.methods.find{ RESOLVE_METHOD.equals(it.name + it.desc) }
+                            if (resolve == null)
+                                throw new RuntimeException('Failed to patch ' + target + ': Could not find method ' + RESOLVE_METHOD)
+                            for (int x = 0; x < resolve.instructions.size(); x++) {
+                                def insn = resolve.instructions.get(x)
+                                if (insn.type == AbstractInsnNode.METHOD_INSN) {
+                                    if (GET_CONTENTS.equals(insn.owner + '.' + insn.name + insn.desc)) {
+                                        if (
+                                            resolve.instructions.get(x - 5).opcode == Opcodes.NEW &&
+                                            resolve.instructions.get(x - 4).opcode == Opcodes.DUP &&
+                                            resolve.instructions.get(x - 3).opcode == Opcodes.ALOAD &&
+                                            resolve.instructions.get(x - 2).opcode == Opcodes.INVOKESPECIAL &&
+                                            resolve.instructions.get(x - 1).opcode == Opcodes.ALOAD
+                                        ) {
+                                            resolve.instructions.set(resolve.instructions.get(x - 5), new InsnNode(Opcodes.NOP)); // NEW File
+                                            resolve.instructions.set(resolve.instructions.get(x - 4), new InsnNode(Opcodes.NOP)); // DUP
+                                            resolve.instructions.set(resolve.instructions.get(x - 2), new InsnNode(Opcodes.NOP)); // INVOKESTATIC <init>
+                                            insn.owner = RANGE_EXTRACTOR
+                                            insn.desc = HOOK_DESC_RESOLVE
+                                            logger.lifecycle('Patched ' + node.name)
+                                        } else {
+                                            throw new IllegalStateException('Found Util.getFileCharContents call, with unexpected context')
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (RANGE_EXTRACTOR.equals(target)) {
+                            logger.lifecycle('Tansforming: ' + target + ' From: ' + lib)
+                            def marker = node.methods.find{ 'hasBeenASMPatched()Z'.equals(it.name + it.desc) }
+                            if (marker == null)
+                                throw new RuntimeException('Failed to patch ' + target + ': Could not find method hasBeenASMPatched()Z')
+                            marker.instructions.clear()
+                            marker.instructions.add(new InsnNode(Opcodes.ICONST_1))
+                            marker.instructions.add(new InsnNode(Opcodes.IRETURN))
+                            logger.lifecycle('Patched: ' + node.name)
+                        }
+                        
+                        def writer = new ClassWriter(0)
+                        node.accept(writer)
+                        
+                        remove.add(target)
+                        def nentry = new ZipEntry(entry.name)
+                        nentry.time = 0
+                        zout.putNextEntry(nentry)
+                        zout.write(writer.toByteArray())
+                        zout.closeEntry()
+                    }
+                    toProcess.removeAll(remove)
+                }
+            }
+            if (!toProcess.isEmpty())
+                throw new IllegalStateException('Patching class failed: ' + toProcess)
+        }
+    }
+}
+
+task patchJDT(type: PatchJDTClasses, dependsOn: jar) {
+    target PatchJDTClasses.COMPILATION_UNIT_RESOLVER
+    target PatchJDTClasses.RANGE_EXTRACTOR
+    library jar.archivePath
+    configurations.compile.filter{ !it.isDirectory() }.each { library it }
+    output file('build/patch_jdt.jar')
+}
+
+task shadowJar (type: Jar, dependsOn: patchJDT) {
+    classifier 'shadow'
+    duplicatesStrategy = 'exclude'
+    with jar
+    
+    from zipTree(patchJDT.output)
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    exclude 'about_files/**'
+    exclude 'ant_tasks/**'
+    exclude 'META-INF/versions/**'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/org/**'
+    exclude 'META-INF/services/**'
+    exclude 'META-INF/eclipse.inf'
+    exclude 'META-INF/ECLIPSE_.*'
+    exclude 'META-INF/DEPENDENCIES'
+    exclude 'META-INF/LICENSE'
+    exclude 'META-INF/NOTICE'
+    exclude '*.html'
+    exclude '*.profile'
+    exclude '*.properties'
+    exclude '*.jar'
+    exclude '*api_description'
+    exclude '.options'
+    exclude 'profile.list'
+    exclude 'plugin.xml'
+    exclude 'module-info.class'
+    exclude 'Log4j-*'
+    exclude 'log4j2.xml'
+}
+
+task pgShrinkJar(type: proguard.gradle.ProGuardTask, dependsOn: shadowJar) {
+    ext {
+        inputJar = shadowJar.archivePath
+        outDir = file("${buildDir}/proguard")
+        obfuscatedJar = "${outDir}/${jar.baseName}.jar"
+        config = 'proguard.pro'
+    }
+    inputs.file inputJar
+    inputs.file config
+    
+    outDir.mkdirs()
+
+    injars inputJar
+    outjars obfuscatedJar
+    libraryjars([filter: '!META-INF/versions/**'], configurations.compile)
+
+    // Automatically handle the Java version of this build.
+    if (System.getProperty('java.version').startsWith('1.')) {
+        // Before Java 9, the runtime classes were packaged in a single jar file.
+        libraryjars "${System.getProperty('java.home')}/lib/rt.jar"
+    } else {
+        // As of Java 9, the runtime classes are packaged in modular jmod files.
+        ['java.base', 'java.desktop', 'java.logging', 'jdk.unsupported', 'java.xml', 'java.management', 'java.compiler'].each {
+            libraryjars "${System.getProperty('java.home')}/jmods/${it}.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
+        }
+    }
+    configuration config
+}
+
+task shrinkJar(type: Jar, dependsOn: pgShrinkJar) {
+    classifier = 'fatjar'
+    from zipTree(pgShrinkJar.obfuscatedJar)
+    manifest.from(jar.manifest)
 }
 
 task sourcesJar(type: Jar) {
@@ -91,7 +268,7 @@ task sourcesJar(type: Jar) {
 
 artifacts {
     archives jar
-    archives shadowJar
+    archives shrinkJar
     archives sourcesJar
 }
 
@@ -100,7 +277,7 @@ publishing {
         mavenJava(MavenPublication) {
             pom {
                 from components.java
-                artifact shadowJar
+                artifact shrinkJar
                 artifact sourcesJar
                 name = 'Srg2Source'
                 description = 'Srg2Source library for ForgeGradle'

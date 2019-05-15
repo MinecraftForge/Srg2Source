@@ -5,23 +5,23 @@ import java.io.PrintStream;
 @SuppressWarnings("rawtypes")
 public abstract class ConfLogger<T extends ConfLogger>
 {
-    protected PrintStream outLogger = System.out;
+    protected PrintStream logger = System.out;
     protected PrintStream errorLogger = System.err;
-    
+
     protected void log(String s)
     {
-        outLogger.println(s);
+        logger.println(s);
     }
-    
-    public PrintStream getOutLogger()
+
+    public PrintStream getLogger()
     {
-        return outLogger;
+        return logger;
     }
 
     @SuppressWarnings("unchecked")
-    public T setOutLogger(PrintStream outLogger)
+    public T setLogger(PrintStream value)
     {
-        this.outLogger = outLogger;
+        this.logger = value;
         return (T) this;
     }
 
