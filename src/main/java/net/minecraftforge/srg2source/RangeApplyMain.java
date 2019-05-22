@@ -21,7 +21,7 @@ public class RangeApplyMain
         OptionSpec<File> mappingArg = parser.acceptsAll(a("map", "srg", "srgFiles")).withRequiredArg().ofType(File.class).required();
         OptionSpec<File> excArg = parser.acceptsAll(a("exc", "excFiles")).withRequiredArg().ofType(File.class);
         OptionSpec<File> outArg = parser.acceptsAll(a("out", "output", "outDir")).withRequiredArg().ofType(File.class).required();
-        //OptionSpec<Boolean> importArg = parser.acceptsAll(a("keepImports")).withOptionalArg().ofType(Boolean.class).defaultsTo(false);
+        OptionSpec<Boolean> importArg = parser.acceptsAll(a("keepImports")).withOptionalArg().ofType(Boolean.class).defaultsTo(false);
         //OptionSpec<Boolean> annArg = parser.acceptsAll(a("annotate")).withOptionalArg().ofType(Boolean.class).defaultsTo(false);
 
         //Old stuff, we should kill off
@@ -69,6 +69,14 @@ public class RangeApplyMain
                     System.out.println("Exc:    " + v);
                     builder.exc(v);
                 });
+            }
+
+            if (options.has(importArg))
+            {
+                if (options.valueOf(importArg))
+                    builder.keepImports();
+                else
+                    builder.trimImports();
             }
 
             builder.build().run();
