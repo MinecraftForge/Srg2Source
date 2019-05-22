@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,13 +112,6 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             String data = new String(Util.readStream(stream), StandardCharsets.UTF_8);
             stream.close();
 
-            if (data.contains("\r"))
-            {
-                // to ensure that the offsets are not off by 1.
-                log("Warning: " + filePath + " has CRLF line endings; consider switching to LF");
-                data = data.replace("\r", "");
-            }
-
             // process
             List<String> out = processJavaSourceFile(filePath, data, range.get(filePath), annotate);
             filePath = out.get(0);
@@ -127,7 +119,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
             // write.
             OutputStream outStream = output.getOutput(filePath);
-            outStream.write(data.getBytes(Charset.forName("UTF-8")));
+            outStream.write(data.getBytes(StandardCharsets.UTF_8));
             outStream.close();
 
             log("End  Processing: " + filePath);

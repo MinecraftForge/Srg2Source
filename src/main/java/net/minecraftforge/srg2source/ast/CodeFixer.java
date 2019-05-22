@@ -201,7 +201,7 @@ public class CodeFixer
             log("Processing Source Tree:");
             for (String file : files)
             {
-                String data = new String(Util.readFile(new File(file)), StandardCharsets.UTF_8).replaceAll("\r", "");
+                String data = new String(Util.readFile(new File(file)), StandardCharsets.UTF_8);
                 String name = file.replace('\\', '/').substring(SRC.length() + 1);
                 log("    " + name);
                 CompilationUnit cu = Util.createUnit(parser, javaVersion, name, data.toCharArray());

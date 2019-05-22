@@ -165,7 +165,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor>
                 try (InputStream stream = input.getInput(path))
                 {
                     SymbolRangeEmitter emitter = new SymbolRangeEmitter(path, output);
-                    String data = new String(Util.readStream(stream), encoding).replaceAll("\r", "");
+                    String data = new String(Util.readStream(stream), encoding);
                     String md5 = Util.md5(data, encoding);
 
                     log("startProcessing \"" + path + "\" md5: " + md5);
