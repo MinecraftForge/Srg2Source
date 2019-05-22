@@ -92,16 +92,6 @@ public abstract class ListFile<T, ME extends ListFile> implements Iterable<T>
 
         return (ME) this;
     }
-
-    @SuppressWarnings("unchecked")
-    public ME read(Iterable<File> files)
-    {
-        for (File f : files)
-            read(f);
-
-        return (ME) this;
-    }
-
     /**
      * This may return null, and if it does, the
      * @return

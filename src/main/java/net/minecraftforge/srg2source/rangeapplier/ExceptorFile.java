@@ -1,5 +1,6 @@
 package net.minecraftforge.srg2source.rangeapplier;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,12 @@ public class ExceptorFile extends ListFile<ExcLine, ExceptorFile>
     public ExceptorFile()
     {
         super();
+    }
+
+    public ExceptorFile(File src)
+    {
+        super();
+        read(src);
     }
 
     @Override

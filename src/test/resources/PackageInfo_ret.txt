@@ -2,7 +2,7 @@ Symbol range map extraction starting
 Processing 1 files
 startProcessing "/test/package-info.java" md5: c33c9d94791783d0fe61f3f7034f22b5
 @|/test/package-info.java|40|58|net.minecraft.core|package|net.minecraft.core|(file)
-@|/test/package-info.java|1|11|Deprecated|class|java.lang.Deprecated
-@|/test/package-info.java|13|22|Generated|class|javax.annotation.Generated
+@|/test/package-info.java|1|11|Deprecated|class|java.lang.Deprecated|false
+@|/test/package-info.java|13|22|Generated|class|javax.annotation.Generated|false
 endProcessing "/test/package-info.java"
 

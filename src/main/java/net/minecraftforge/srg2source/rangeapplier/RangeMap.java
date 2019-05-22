@@ -36,6 +36,12 @@ public class RangeMap
         });
     }
 
+    public RangeMap(File src)
+    {
+        this();
+        read(src);
+    }
+
     public Set<String> keySet()
     {
         return rangeMap.keySet();

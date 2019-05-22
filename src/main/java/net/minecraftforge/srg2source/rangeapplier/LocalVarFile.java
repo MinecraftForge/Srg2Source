@@ -1,5 +1,6 @@
 package net.minecraftforge.srg2source.rangeapplier;
 
+import java.io.File;
 import java.io.Serializable;
 
 import net.minecraftforge.srg2source.rangeapplier.LocalVarFile.LocalVar;
@@ -7,6 +8,17 @@ import net.minecraftforge.srg2source.util.ListFile;
 
 public class LocalVarFile extends ListFile<LocalVar, LocalVarFile>
 {
+    public LocalVarFile()
+    {
+        super();
+    }
+
+    public LocalVarFile(File src)
+    {
+        super();
+        read(src);
+    }
+
     @Override
     protected LocalVar parseLine(String line)
     {

@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import joptsimple.internal.Strings;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.io.Files;
@@ -33,6 +32,7 @@ public class SrgContainer
     {
         return readSrg(srg, false);
     }
+
     public SrgContainer readSrg(File srg, boolean reverse)
     {
         try
@@ -41,12 +41,11 @@ public class SrgContainer
         }
         catch (IOException e)
         {
-            Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
         }
     }
 
-    public SrgContainer readSrg(List<String> lines, boolean reverse)
+    private SrgContainer readSrg(List<String> lines, boolean reverse)
     {
         String currentClass = null;
         lines = lines.stream().map(line -> line.split("#")[0]).filter(l -> !Strings.isNullOrEmpty(l.trim())).collect(Collectors.toList());
@@ -136,15 +135,5 @@ public class SrgContainer
         }
         matcher.appendTail(buf);
         return buf.toString();
-    }
-
-    public SrgContainer readSrgs(Iterable<File> srgs)
-    {
-        for (File file : srgs)
-        {
-            readSrg(file);
-        }
-
-        return this;
     }
 }

@@ -125,12 +125,17 @@ public class SingleTests
             return;
 
         MemoryOutputSupplier out = new MemoryOutputSupplier();
-        RangeApplier applier = new RangeApplier().readSrg(srg);
+        RangeApplier applier = new RangeApplier();
+        applier.readSrg(srg);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         applier.setLogger(new PrintStream(bos));
+        applier.setInput(new SimpleInputSupplier(resource, clsName));
+        applier.setOutput(out);
+        applier.annotate(true);
+        applier.readRangeMap(map);
 
-        applier.remapSources(new SimpleInputSupplier(resource, clsName), out, map, true);
+        applier.run();
         Assert.assertEquals(getFileContents(resource, "_maped.txt"), out.get(0));
         Assert.assertEquals(getFileContents(resource, "_maped_ret.txt"), bos.toString().replaceAll("\r?\n", "\n"));
     }

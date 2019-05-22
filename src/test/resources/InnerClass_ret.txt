@@ -2,25 +2,25 @@ Symbol range map extraction starting
 Processing 1 files
 startProcessing "/InnerClass.java" md5: 2a9eace10eeacad626a7062f74792b31
 Class Start: InnerClass
-   @|/InnerClass.java|13|23|InnerClass|class|InnerClass
+   @|/InnerClass.java|13|23|InnerClass|class|InnerClass|false
    Class Start: InnerClass.Inner
-      @|/InnerClass.java|51|56|Inner|class|InnerClass.Inner
+      @|/InnerClass.java|51|56|Inner|class|InnerClass.Inner|false
       Class Start: InnerClass.Inner.Nested
-         @|/InnerClass.java|92|98|Nested|class|InnerClass.Inner.Nested
-         @|/InnerClass.java|129|135|String|class|java.lang.String
-         @|/InnerClass.java|129|135|String|class|java.lang.String
+         @|/InnerClass.java|92|98|Nested|class|InnerClass.Inner.Nested|false
+         @|/InnerClass.java|129|135|String|class|java.lang.String|false
+         @|/InnerClass.java|129|135|String|class|java.lang.String|false
          @|/InnerClass.java|136|141|value|field|InnerClass.Inner.Nested|value|
          Method Start: getValue()Ljava/lang/String;
-            @|/InnerClass.java|169|175|String|class|java.lang.String
+            @|/InnerClass.java|169|175|String|class|java.lang.String|false
             @|/InnerClass.java|176|184|getValue|method|InnerClass.Inner.Nested|getValue|()Ljava/lang/String;
             @|/InnerClass.java|224|229|value|field|InnerClass.Inner.Nested|value
          Method End: getValue()Ljava/lang/String;
       Class End  : InnerClass.Inner.Nested
-      @|/InnerClass.java|272|278|String|class|java.lang.String
-      @|/InnerClass.java|272|278|String|class|java.lang.String
+      @|/InnerClass.java|272|278|String|class|java.lang.String|false
+      @|/InnerClass.java|272|278|String|class|java.lang.String|false
       @|/InnerClass.java|279|284|value|field|InnerClass.Inner|value|
       Method Start: getValue()Ljava/lang/String;
-         @|/InnerClass.java|308|314|String|class|java.lang.String
+         @|/InnerClass.java|308|314|String|class|java.lang.String|false
          @|/InnerClass.java|315|323|getValue|method|InnerClass.Inner|getValue|()Ljava/lang/String;
          @|/InnerClass.java|355|360|value|field|InnerClass.Inner|value
       Method End: getValue()Ljava/lang/String;
@@ -28,8 +28,8 @@ Class Start: InnerClass
    Method Start: main([Ljava/lang/String;)V
       @|/InnerClass.java|416|420|args|param|InnerClass|main|([Ljava/lang/String;)V|args|0
       @|/InnerClass.java|402|406|main|method|InnerClass|main|([Ljava/lang/String;)V
-      @|/InnerClass.java|407|413|String|class|java.lang.String
-      @|/InnerClass.java|440|445|Inner|class|InnerClass.Inner
+      @|/InnerClass.java|407|413|String|class|java.lang.String|false
+      @|/InnerClass.java|440|445|Inner|class|InnerClass.Inner|false
       @|/InnerClass.java|448|456|getValue|method|InnerClass.Inner|getValue|()Ljava/lang/String;
    Method End: main([Ljava/lang/String;)V
 Class End  : InnerClass

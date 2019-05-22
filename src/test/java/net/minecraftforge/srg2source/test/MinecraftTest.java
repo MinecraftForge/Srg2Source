@@ -7,15 +7,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -25,6 +28,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.objectweb.asm.Type;
 
 import cpw.mods.modlauncher.LaunchPluginHandler;
 import cpw.mods.modlauncher.TransformStore;
@@ -33,6 +37,7 @@ import cpw.mods.modlauncher.TransformingClassLoader;
 import cpw.mods.modlauncher.api.ITransformationService;
 import de.siegmar.fastcsv.reader.CsvContainer;
 import de.siegmar.fastcsv.reader.CsvReader;
+import net.minecraftforge.srg2source.api.RangeApplierBuilder;
 import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
 import net.minecraftforge.srg2source.asm.TransformationService;
 import net.minecraftforge.srg2source.ast.RangeExtractor;
@@ -48,6 +53,7 @@ public class MinecraftTest
     private static final Path MCP_ROOT = Paths.get("Z:/Projects/MCP/MCPConfig/");
     private static final String MC_VERSION = "1.13.2";
     private static final String MAPPING_VERSION = "20190513-1.13.2";
+    private static Pattern CLS_ENTRY = Pattern.compile("L([^;]+);");
 
     @Test
     public void testMCP() throws Exception {
@@ -67,8 +73,13 @@ public class MinecraftTest
         TransformingClassLoader tcl = new TransformingClassLoader(transformStore, new LaunchPluginHandler(), targetPaths);
 
         Class<?> cls = Class.forName(getClass().getName() + "$Redefined", true, tcl);
-        cls.getDeclaredMethod("run", boolean.class).invoke(cls.getConstructor().newInstance(), false);
+        long legacy = (Long)cls.getDeclaredMethod("extract", boolean.class).invoke(cls.getConstructor().newInstance(), true);
+        long batched =  (Long)cls.getDeclaredMethod("extract", boolean.class).invoke(cls.getConstructor().newInstance(), false);
+        long apply = (Long)cls.getDeclaredMethod("apply").invoke(cls.getConstructor().newInstance());
 
+        System.out.println("Legacy  Time: " + legacy);
+        System.out.println("Batched Time: " + batched);
+        System.out.println("Apply   Time: " + apply);
     }
 
     private Path getClassRoot(String cls) {
@@ -86,7 +97,7 @@ public class MinecraftTest
     public static class Redefined {
         private static final Pattern SRG_FINDER = Pattern.compile("func_[0-9]+_[a-zA-Z_]+|field_[0-9]+_[a-zA-Z_]+|p_[\\w]+_\\d+_\\b");
 
-        public void run(boolean forceOld) throws Exception {
+        public long extract(boolean forceOld) throws Exception {
             List<Path> libraries = gatherLibraries();
             File mapping_file = getMappingFile();
             Map<String, String> mappings = getMappings(mapping_file);
@@ -94,22 +105,62 @@ public class MinecraftTest
             Assert.assertTrue("Missing SRG Source jar: " + src_srg, Files.exists(src_srg));
             Path src_mcp = getMappedSrc(src_srg, mappings);
 
-            RangeExtractorBuilder builder = new RangeExtractorBuilder()
-                .input(new ZipInputSupplier(src_mcp.toFile()))
-                .batch(!forceOld)
-                .output(new File("build/test/mcptest/extract_" + (forceOld ? "legacy" : "batched") + ".txt"));
 
-            libraries.forEach(l -> {
-                System.out.println("Library: " + l);
-                builder.library(l.toFile());
-            });
+            try (PrintStream log = new PrintStream(new FileOutputStream(new File("build/test/mcptest/extract_" + (forceOld ? "legacy" : "batched") + ".log")))) {
+                RangeExtractorBuilder builder = new RangeExtractorBuilder()
+                    .input(new ZipInputSupplier(src_mcp.toFile()))
+                    .batch(!forceOld)
+                    .output(new File("build/test/mcptest/extract_" + (forceOld ? "legacy" : "batched") + ".txt"))
+                    .logger(log);
+
+                libraries.forEach(l -> {
+                    System.out.println("Library: " + l);
+                    builder.library(l.toFile());
+                });
 
 
-            long startTime = System.currentTimeMillis();
-            builder.build().run();
-            long duration = System.currentTimeMillis() - startTime;
+                long startTime = System.currentTimeMillis();
+                builder.build().run();
+                long duration = System.currentTimeMillis() - startTime;
 
-            System.out.println((forceOld ? "legacy" : "batched") + " Time: " + duration);
+                return duration;
+            }
+        }
+
+        public long apply() throws Exception {
+            File mapping_file = getMappingFile();
+            Map<String, String> mappings = getMappings(mapping_file);
+            Path src_srg = MCP_ROOT.resolve("build/versions/" + MC_VERSION + "/" + MC_VERSION + ".joined.decomp.jar");
+            Assert.assertTrue("Missing SRG Source jar: " + src_srg, Files.exists(src_srg));
+            Path src_mcp = getMappedSrc(src_srg, mappings);
+            Path mcp_to_srg = getMcpToSrg(mappings);
+            Path exc = getMcpExc(mappings);
+
+            try (PrintStream log = new PrintStream(new FileOutputStream(new File("build/test/mcptest/apply.log")))) {
+                RangeApplierBuilder builder = new RangeApplierBuilder()
+                    .input(new ZipInputSupplier(src_mcp.toFile()))
+                    .output(new File("build/test/mcptest/apply_output.jar"))
+                    .range(new File("build/test/mcptest/extract_batched.txt"))
+                    .srg(mcp_to_srg.toFile())
+                    .exc(exc.toFile())
+                    .keepImports()
+                    .annotate(false)
+                    .logger(log);
+
+                long startTime = System.currentTimeMillis();
+                builder.build().run();
+                long duration = System.currentTimeMillis() - startTime;
+
+                try (ZipInputSupplier clean = new ZipInputSupplier(MCP_ROOT.resolve("build/versions/" + MC_VERSION + "/" + MC_VERSION + ".joined.decomp.jar").toFile());
+                     ZipInputSupplier zout = new ZipInputSupplier(new File("build/test/mcptest/apply_output.jar"))) {
+                    for (String path : clean.gatherAll(".java")) {
+                        String c = new String(Util.readStream(clean.getInput(path)), StandardCharsets.UTF_8);
+                        String o = new String(Util.readStream(clean.getInput(path)), StandardCharsets.UTF_8);
+                        Assert.assertEquals("Output Mismatch: " + path, c, o);
+                    }
+                }
+                return duration;
+            }
         }
 
         private List<Path> gatherLibraries() throws IOException {
@@ -197,6 +248,126 @@ public class MinecraftTest
                 });
             }
             return target;
+        }
+
+        private Path getMcpToSrg(Map<String, String> mappings) throws IOException {
+            Path target = Paths.get("build/test/mcptest/" + MC_VERSION + ".mcp_to_srg." + MAPPING_VERSION + ".tsrg");
+            //TODO: Check MD5's?
+            if (Files.exists(target))
+                return target;
+
+            Path source = MCP_ROOT.resolve("versions/" + MC_VERSION + "/joined.tsrg");
+            List<String> lines = Files.lines(source, StandardCharsets.UTF_8).map(l -> l.split("#")[0]).filter(l -> !l.trim().isEmpty()).collect(Collectors.toList());
+
+            Map<String, String> clsMap = lines.stream()
+                .filter(l -> !l.startsWith("\t"))
+                .map(l -> l.split(" "))
+                .filter(l -> l.length == 2 && !l[0].endsWith("/"))
+                .collect(Collectors.toMap(l -> l[0], l -> l[1]));
+
+            try (PrintStream out = new PrintStream(new FileOutputStream(target.toFile()))) {
+                lines.forEach(line -> {
+                    String[] pts = line.split(" ");
+                    if (line.startsWith("\t")) {
+                        if (pts.length == 2)
+                            out.print("\t" + mappings.getOrDefault(pts[1], pts[1]) + " " + pts[1] + "\n");
+                        else if (pts.length == 3)
+                            out.print("\t" + mappings.getOrDefault(pts[2], pts[2]) + " " + remapDesc(pts[1], clsMap) + " " + pts[2] + "\n");
+                        else
+                            throw new IllegalArgumentException("Invalid TSRG Line: " + line);
+                    } else if (pts.length == 2)
+                        out.print(pts[1] + " " + pts[1] + "\n");
+                    else
+                        throw new IllegalArgumentException("Invalid TSRG Line: " + line);
+                });
+            }
+            return target;
+        }
+
+        private Path getMcpExc(Map<String, String> mappings) throws IOException {
+            Path target = Paths.get("build/test/mcptest/" + MC_VERSION + "." + MAPPING_VERSION + ".exc");
+            //TODO: Check MD5's?
+            if (Files.exists(target))
+                return target;
+
+            List<String> ret = new ArrayList<>();
+
+            Path static_mtds = MCP_ROOT.resolve("build/versions/" + MC_VERSION + "/data/static_methods.txt");
+            Set<String> statics = Files.lines(static_mtds, StandardCharsets.UTF_8).map(l -> l.split("#")[0]).filter(l -> !l.trim().isEmpty()).collect(Collectors.toSet());
+
+            Path tsrg = MCP_ROOT.resolve("versions/" + MC_VERSION + "/joined.tsrg");
+            List<String> lines = Files.lines(tsrg, StandardCharsets.UTF_8).map(l -> l.split("#")[0]).filter(l -> !l.trim().isEmpty()).collect(Collectors.toList());
+
+            Map<String, String> clsMap = lines.stream()
+                .filter(l -> !l.startsWith("\t"))
+                .map(l -> l.split(" "))
+                .filter(l -> l.length == 2 && !l[0].endsWith("/"))
+                .collect(Collectors.toMap(l -> l[0], l -> l[1]));
+
+            String current = null;
+            for (String line : lines) {
+                if (line.startsWith("\t")) {
+                    Assert.assertNotNull("Invalid TSRG Line: " + line, current);
+                    line = current + " " + line.substring(1);
+                }
+                String[] pts = line.split(" ");
+                if (pts.length == 2)
+                    current = pts[0];
+                else if (pts.length == 4) {
+                    if (pts[3].startsWith("func_") && !pts[2].contains("()")) {
+                        ret.add(remapClass(pts[0], clsMap) + "." + mappings.getOrDefault(pts[3], pts[3]) + remapDesc(pts[2], clsMap) + "=|" + buildArgs(pts[3], pts[2], statics.contains(pts[3])));
+                    }
+                }
+            }
+
+            Path ctrs = MCP_ROOT.resolve("versions/" + MC_VERSION + "/constructors.txt");
+            Files.lines(ctrs, StandardCharsets.UTF_8).map(l -> l.split(" ")).forEach(pts -> {
+                ret.add(pts[1] + ".<init>" + pts[2] + "=|" + buildArgs(pts[0], pts[2], false));
+            });
+
+            try (PrintStream out = new PrintStream(new FileOutputStream(target.toFile()))) {
+                ret.forEach(l -> out.print(l + "\n"));
+            }
+
+            return target;
+        }
+
+        private String remapClass(String cls, Map<String, String> clsMap)
+        {
+            return clsMap.computeIfAbsent(cls, k -> {
+                int idx = cls.lastIndexOf('$');
+                if (idx != -1)
+                    return remapClass(cls.substring(0, idx), clsMap) + cls.substring(idx);
+                else
+                    return cls;
+            });
+        }
+
+        private String remapDesc(String desc, Map<String, String> clsMap)
+        {
+            StringBuffer buf = new StringBuffer();
+            Matcher matcher = CLS_ENTRY.matcher(desc);
+            while (matcher.find())
+                matcher.appendReplacement(buf, "L" + Matcher.quoteReplacement(remapClass(matcher.group(1), clsMap)) + ";");
+            matcher.appendTail(buf);
+            return buf.toString();
+        }
+
+
+
+        private String buildArgs(String name, String desc, boolean isStatic) {
+            String prefix = "p_i" + name + "_";
+            if (name.startsWith("func_")) {
+                prefix = "p_" + name.split("_")[1] + "_";
+            }
+            List<String> ret = new ArrayList<String>();
+            int idx = isStatic ? 0 : 1;
+            for (Type arg : Type.getArgumentTypes(desc)) {
+                ret.add(prefix + idx + '_');
+                idx += arg.getSize();
+            }
+
+            return ret.stream().collect(Collectors.joining(","));
         }
     }
 }

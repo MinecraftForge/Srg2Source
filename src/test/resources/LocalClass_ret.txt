@@ -2,18 +2,17 @@ Symbol range map extraction starting
 Processing 1 files
 startProcessing "/LocalClass.java" md5: 2e417b1052ddf3b672b7094fa3d345f5
 Class Start: LocalClass
-   @|/LocalClass.java|13|23|LocalClass|class|LocalClass
+   @|/LocalClass.java|13|23|LocalClass|class|LocalClass|false
    Class Start: LocalClass.Nested
-      @|/LocalClass.java|43|49|Nested|class|LocalClass.Nested
+      @|/LocalClass.java|43|49|Nested|class|LocalClass.Nested|false
       Method Start: test()V
          @|/LocalClass.java|77|81|test|method|LocalClass.Nested|test|()V
          Class Start: LocalClass.Nested$1Local
-            @|/LocalClass.java|112|117|Local|class|
-            @|/LocalClass.java|156|162|String|class|java.lang.String
-            @|/LocalClass.java|156|162|String|class|java.lang.String
+            @|/LocalClass.java|156|162|String|class|java.lang.String|false
+            @|/LocalClass.java|156|162|String|class|java.lang.String|false
             @|/LocalClass.java|163|168|value|field|LocalClass.Nested$1Local|value|
             Method Start: getValue()Ljava/lang/String;
-               @|/LocalClass.java|200|206|String|class|java.lang.String
+               @|/LocalClass.java|200|206|String|class|java.lang.String|false
                @|/LocalClass.java|207|215|getValue|method|LocalClass.Nested$1Local|getValue|()Ljava/lang/String;
                @|/LocalClass.java|263|268|value|field|LocalClass.Nested$1Local|value
             Method End: getValue()Ljava/lang/String;
@@ -23,33 +22,29 @@ Class Start: LocalClass
    Method Start: funA()V
       @|/LocalClass.java|335|339|funA|method|LocalClass|funA|()V
       Class Start: LocalClass$1Local
-         @|/LocalClass.java|362|367|Local|class|
-         @|/LocalClass.java|398|404|String|class|java.lang.String
-         @|/LocalClass.java|398|404|String|class|java.lang.String
+         @|/LocalClass.java|398|404|String|class|java.lang.String|false
+         @|/LocalClass.java|398|404|String|class|java.lang.String|false
          @|/LocalClass.java|405|410|value|field|LocalClass$1Local|value|
          Method Start: getValue()Ljava/lang/String;
-            @|/LocalClass.java|438|444|String|class|java.lang.String
+            @|/LocalClass.java|438|444|String|class|java.lang.String|false
             @|/LocalClass.java|445|453|getValue|method|LocalClass$1Local|getValue|()Ljava/lang/String;
             @|/LocalClass.java|493|498|value|field|LocalClass$1Local|value
          Method End: getValue()Ljava/lang/String;
       Class End  : LocalClass$1Local
-      @|/LocalClass.java|537|542|Local|class|
       @|/LocalClass.java|545|553|getValue|method|LocalClass|getValue|()Ljava/lang/String;
    Method End: funA()V
    Method Start: funB()V
       @|/LocalClass.java|580|584|funB|method|LocalClass|funB|()V
       Class Start: LocalClass$2Local
-         @|/LocalClass.java|607|612|Local|class|
-         @|/LocalClass.java|643|649|String|class|java.lang.String
-         @|/LocalClass.java|643|649|String|class|java.lang.String
+         @|/LocalClass.java|643|649|String|class|java.lang.String|false
+         @|/LocalClass.java|643|649|String|class|java.lang.String|false
          @|/LocalClass.java|650|655|value|field|LocalClass$2Local|value|
          Method Start: getValue()Ljava/lang/String;
-            @|/LocalClass.java|683|689|String|class|java.lang.String
+            @|/LocalClass.java|683|689|String|class|java.lang.String|false
             @|/LocalClass.java|690|698|getValue|method|LocalClass$2Local|getValue|()Ljava/lang/String;
             @|/LocalClass.java|738|743|value|field|LocalClass$2Local|value
          Method End: getValue()Ljava/lang/String;
       Class End  : LocalClass$2Local
-      @|/LocalClass.java|782|787|Local|class|
       @|/LocalClass.java|790|798|getValue|method|LocalClass|getValue|()Ljava/lang/String;
    Method End: funB()V
 Class End  : LocalClass

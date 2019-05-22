@@ -1,20 +1,25 @@
 package net.minecraftforge.srg2source;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-
-import net.minecraftforge.srg2source.rangeapplier.RangeApplier;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ConsoleTool
 {
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args) throws Exception
     {
-        boolean apply = false, extract = false;
+        Task target = null;
+        Map<String, Task> tasks = new HashMap<>();
+        for (Task t : Task.values())
+            tasks.put("--" + t.name().toLowerCase(Locale.ENGLISH), t);
+
         Deque<String> que = new LinkedList<>();
         for(String arg : args)
             que.add(arg);
@@ -24,10 +29,12 @@ public class ConsoleTool
         String arg;
         while ((arg = que.poll()) != null)
         {
-            if ("--apply".equals(arg))
-                apply = true;
-            else if ("--extract".equals(arg))
-                extract = true;
+            if (tasks.containsKey(arg.toLowerCase(Locale.ENGLISH)))
+            {
+                if (target != null)
+                    throw new IllegalArgumentException("Only one task allowed at a time, trued to run " + arg + " when " + target + " already set");
+                target = tasks.get(arg.toLowerCase(Locale.ENGLISH));
+            }
             else if ("--cfg".equals(arg))
             {
                 String cfg = que.poll();
@@ -41,21 +48,25 @@ public class ConsoleTool
                 _args.add(arg);
         }
 
-        if (apply && extract)
-        {
-            System.out.println("Must specify EITHER --apply or --extract, can not run both at once.");
-        }
-        else if (apply)
-        {
-            RangeApplier.main(_args.toArray(new String[_args.size()]));
-        }
-        else if (extract)
-        {
-            RangeExtractMain.main(_args.toArray(new String[_args.size()]));
-        }
+        if (target == null)
+            System.out.println("Must specify a task to run: " + tasks.keySet().stream().collect(Collectors.joining(", ")));
         else
-        {
-            System.out.println("Must specify either --apply or --extract");
+            target.task.accept(_args.toArray(new String[_args.size()]));
+    }
+
+    private static enum Task {
+        APPLY(RangeApplyMain::main),
+        EXTRACT(RangeExtractMain::main),
+        SORT(RangeSortMain::main);
+
+        private Consumer<String[]> task;
+        private Task(Consumer<String[]> task) {
+            this.task = task;
         }
+    }
+
+    @FunctionalInterface
+    public interface Consumer<T> {
+        void accept(T t) throws Exception;
     }
 }
