@@ -125,6 +125,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             log("End  Processing: " + filePath);
             log("");
         }
+
+        output.close();
     }
 
     // ---------------------------------------------------------------------------------------------------
