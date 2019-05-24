@@ -15,6 +15,8 @@ public class ConsoleTool
 {
     public static void main(String[] args) throws Exception
     {
+        System.setProperty("osgi.nls.warnings", "ignore"); //Shutup Eclipse in our trimmed fat-jar.
+
         Task target = null;
         Map<String, Task> tasks = new HashMap<>();
         for (Task t : Task.values())

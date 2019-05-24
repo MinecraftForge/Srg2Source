@@ -14,6 +14,7 @@ public class ZipOutputSupplier implements OutputSupplier
 
     public ZipOutputSupplier(File out) throws IOException
     {
+        out = out.getAbsoluteFile(); //Make sure we know the parent or else getParentFile nulls
         if (!out.exists())
         {
             out.getParentFile().mkdirs();
@@ -39,7 +40,7 @@ public class ZipOutputSupplier implements OutputSupplier
     {
         if (tempOut != null)
             throw new IllegalStateException("You must close the previous stream before getting a new one!");
-        
+
         try
         {
             zout.putNextEntry(new ZipEntry(relPath));
@@ -48,7 +49,7 @@ public class ZipOutputSupplier implements OutputSupplier
         {
             return null;
         }
-        
+
         return new EntryOutStream();
     }
 
