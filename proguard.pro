@@ -33,3 +33,8 @@
 -keepclasseswithmembers,allowshrinking class * {
     native <methods>;
 }
+
+# Keep all of our API
+-keepclassmembers public class net.minecraftforge.** {
+    *;
+}

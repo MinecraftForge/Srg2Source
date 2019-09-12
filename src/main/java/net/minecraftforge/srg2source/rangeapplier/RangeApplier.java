@@ -118,9 +118,13 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             data = out.get(1);
 
             // write.
-            OutputStream outStream = output.getOutput(filePath);
-            outStream.write(data.getBytes(StandardCharsets.UTF_8));
-            outStream.close();
+            if (data != null) {
+                OutputStream outStream = output.getOutput(filePath);
+                if (outStream == null)
+                    throw new IllegalStateException("Could not get output stream form: " + filePath);
+                outStream.write(data.getBytes(StandardCharsets.UTF_8));
+                outStream.close();
+            }
 
             log("End  Processing: " + filePath);
             log("");
