@@ -71,6 +71,12 @@ public class SingleTests
         testClass("Whitespace", "core.package-info");
     }
 
+    @Test
+    public void testImportSpaces() throws IOException
+    {
+        testClass("ImportSpaces");
+    }
+
     public void testClass(final String resource) throws IOException
     {
         testClass(resource, resource, false);

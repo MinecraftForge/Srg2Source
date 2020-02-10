@@ -181,7 +181,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             newTopLevelClassName = oldTopLevelClassName;
         }
 
-        String newTopLevelQualifiedName = (newTopLevelClassPackage + "/" + newTopLevelClassName).replace('\\', '/');
+        String newTopLevelQualifiedName = ((newTopLevelClassPackage == null ? "" : newTopLevelClassPackage + '/') + newTopLevelClassName).replace('\\', '/');
 
         // start,end,expectedOldText,key
         for (RangeEntry info : rangeList)
@@ -274,6 +274,10 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         // rename?
         fileName = fileName.replace('\\', '/');
         String newFileName = newTopLevelQualifiedName + ".java";
+
+        if (newFileName.charAt(0) != '/' && fileName.charAt(0) == '/')
+            newFileName = '/' + newFileName;
+
         if (!fileName.equals(newFileName))
         {
             log("Rename file " + fileName + " -> " + newFileName);
@@ -288,7 +292,10 @@ public class RangeApplier extends ConfLogger<RangeApplier>
     {
         if (reference.startsWith(topLevel)) //This is a inner class, nested unknown amounts deep.... Just assume it's qualified correctly in code.
             return false;
-        if (Util.splitPackageName(topLevel).equals(Util.splitPackageName(reference))) // We are in the same package, no import needed
+
+        String pkg = Util.splitPackageName(topLevel);
+
+        if ((pkg == null ? "" : pkg).equals(Util.splitPackageName(reference))) // We are in the same package, no import needed
             return false;
         //Keep java/lang for now, to keep the imports in the source if they are explicitly imported.
         //We remove the NEED for them before adding any.
@@ -318,18 +325,19 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         boolean sawImports = false;
         int packageLine = -1;
 
-        String line;
         while (nextIndex > -1)
         {
-            line = data.substring(lastIndex, nextIndex);
+            String line = data.substring(lastIndex, nextIndex);
+            int comment = line.indexOf("//");
 
-            while (line.isEmpty() || line.startsWith("\n"))
+            while ((comment == -1 ? line : line.substring(0, comment)).trim().isEmpty())
             {
-                lastIndex++;
-                nextIndex = data.indexOf("\n", lastIndex + 1);
+                lastIndex += line.length() == 0 ? 1 : line.length();
+                nextIndex = data.indexOf("\n", lastIndex);
                 if (nextIndex == -1) //EOF
                     break;
                 line = data.substring(lastIndex, nextIndex);
+                comment = line.indexOf("//");
             }
             //log("Line: " + line);
 
@@ -340,21 +348,24 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             {
                 sawImports = true;
 
+                String oldClass = line.substring(7, line.indexOf(';'));
+
                 // remove stuff thats already added by a wildcard
-                if (line.indexOf('*') > 0)
+                boolean wildMatch = false;
+                if (oldClass.endsWith("*"))
                 {
                     LinkedList<String> remove = new LinkedList<String>();
-                    String starter = line.replace("import ", "").replace(".*;", "").trim();
+                    String starter = oldClass.substring(0, oldClass.length() - 1);
                     for (String imp : newImports)
                     {
-                        String impStart = imp.substring(0, imp.lastIndexOf('.'));
-                        if (impStart.equals(starter))
+                        String impStart = imp.substring(0, imp.lastIndexOf('.') + 1);
+                        if (impStart.equals(starter)) {
                             remove.add(imp);
+                            wildMatch = true;
+                        }
                     }
                     newImports.removeAll(remove);
                 }
-
-                String oldClass = line.replace("import ", "").replace(";", "").trim();
 
                 String newClass = importMap.get("class " + Util.sourceName2Internal(oldClass));
                 if (newClass == null)
@@ -363,7 +374,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
                 log("Import: " + newClass);
 
-                if (!newImports.remove(newClass)) // New file doesn't need the import, so delete the line.
+                if (!wildMatch && !newImports.remove(newClass)) // New file doesn't need the import, so delete the line.
                 {
                     //log("        " + HashCode.fromBytes(newClass.getBytes()).toString());
                     if (this.keepImports)
@@ -413,7 +424,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
             // next line.
             lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
-            nextIndex = data.indexOf("\n", lastIndex + 1); // another +1 because otherwise it would just return lastIndex
+            nextIndex = data.indexOf("\n", lastIndex); // another +1 because otherwise it would just return lastIndex
         }
 
         // got through the whole file without seeing or adding any imports???
