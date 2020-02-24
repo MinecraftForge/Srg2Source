@@ -339,6 +339,10 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                 line = data.substring(lastIndex, nextIndex);
                 comment = line.indexOf("//");
             }
+
+            if (nextIndex == -1) //EOF
+                break;
+
             //log("Line: " + line);
 
             if (line.startsWith("package "))
