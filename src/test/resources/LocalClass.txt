@@ -45,4 +45,13 @@ public class LocalClass
 
         new Local().getValue();
     }
+
+    public interface ITest {
+        default void inFoo() {
+          class Target<T> {
+            T test() { return null; }
+          }
+          new Target<String>();
+        }
+    }
 }

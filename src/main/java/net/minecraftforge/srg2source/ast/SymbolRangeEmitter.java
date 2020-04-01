@@ -269,7 +269,7 @@ public class SymbolRangeEmitter
     {
         //String|class|java.lang.String|false
         if (clazz.isTypeVariable()) return;
-        if (clazz.getDeclaringMember() != null)
+        if (clazz.getDeclaringMember() != null || clazz.getErasure().getDeclaringMember() != null)
             return; //There is currently no way to properly address a local named type.
         log(commonFields(name.toString(), name) + "class" + FS + clazz.getErasure().getQualifiedName() + FS + qualified);
     }
