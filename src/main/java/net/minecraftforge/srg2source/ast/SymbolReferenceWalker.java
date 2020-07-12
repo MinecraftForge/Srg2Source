@@ -193,7 +193,6 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(Assignment              node) { return true; }
     public boolean visit(CastExpression          node) { return true; }
     public boolean visit(CatchClause             node) { return true; }
-    public boolean visit(ClassInstanceCreation   node) { return true; }
     public boolean visit(CompilationUnit         node) { return true; }
     public boolean visit(ConstructorInvocation   node) { return true; }
     public boolean visit(EnumConstantDeclaration node) { return true; }
@@ -210,6 +209,20 @@ public class SymbolReferenceWalker extends ASTVisitor
     public boolean visit(MarkerAnnotation        node) { return true; }
     public boolean visit(NormalAnnotation        node) { return true; }
     public boolean visit(SingleMemberAnnotation  node) { return true; }
+
+    public boolean visit(ClassInstanceCreation node) {
+        walk(node.getExpression());
+        if (node.getAST().apiLevel() == 2) {
+            walk(node.getName());
+        }
+        if (node.getAST().apiLevel() >= 3) {
+            walk(node.typeArguments());
+            emitter.emitTypeRange(node.getType(), node.getExpression() != null);
+        }
+        walk(node.arguments());
+        walk(node.getAnonymousClassDeclaration());
+        return false;
+    }
 
     public boolean visit(FieldDeclaration node) {
         emitter.emitTypeRange(node.getType()); //TODO: This double prints due to the walk below, Why are we specifically handling fields?
@@ -326,7 +339,8 @@ public class SymbolReferenceWalker extends ASTVisitor
         }
         else if (bind instanceof ITypeBinding)
         {
-            emitter.emitReferencedClass(node, (ITypeBinding)bind, false);
+            boolean qualified = node.getParent() instanceof QualifiedType && ((QualifiedType)node.getParent()).getName().equals(node);
+            emitter.emitReferencedClass(node, (ITypeBinding)bind, qualified);
         }
         else if (bind instanceof IVariableBinding)
         {

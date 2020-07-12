@@ -70,7 +70,11 @@ public class SymbolRangeEmitter
      * Emit type reference element range (This is for when types are used, not
      * declared) Only class name references will be emitted
      */
-    public void emitTypeRange(Type type)
+    public void emitTypeRange(Type type) {
+        emitTypeRange(type, false);
+    }
+
+    public void emitTypeRange(Type type, boolean qualified)
     {
         if (type == null)
         {
@@ -118,7 +122,7 @@ public class SymbolRangeEmitter
         else if (type.isSimpleType())
         {
             SimpleType stype = (SimpleType)type;
-            emitReferencedClass(stype.getName(), stype.getName().resolveTypeBinding(), false);
+            emitReferencedClass(stype.getName(), stype.getName().resolveTypeBinding(), qualified);
         }
         else
         {
