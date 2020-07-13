@@ -20,6 +20,7 @@ patches/
 .idea
 *.iml
 *.ipr
+/out/
 RunDir
 rundir
 MINECRAFT_TEST*

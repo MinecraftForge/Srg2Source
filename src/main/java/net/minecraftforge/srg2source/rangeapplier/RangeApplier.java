@@ -313,12 +313,8 @@ public class RangeApplier extends ConfLogger<RangeApplier>
      */
     private String updateImports(StringBuilder data, Set<String> newImports, Map<String, String> importMap)
     {
-        //String[] lines = data.split("\n");
-        if (data.charAt(data.length()-1) != '\n')
-            data.append('\n');
-
         int lastIndex = 0;
-        int nextIndex = data.indexOf("\n");
+        int nextIndex = getNextIndex(data.indexOf("\n"), data.length(), lastIndex);
         // Parse the existing imports and find out where to add ours
         // This doesn't use Psi.. but the syntax is easy enough to parse here
         boolean addedNewImports = false;
@@ -333,7 +329,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
             while ((comment == -1 ? line : line.substring(0, comment)).trim().isEmpty())
             {
                 lastIndex += line.length() == 0 ? 1 : line.length();
-                nextIndex = data.indexOf("\n", lastIndex);
+                nextIndex = getNextIndex(data.indexOf("\n", lastIndex), data.length(), lastIndex);
                 if (nextIndex == -1) //EOF
                     break;
                 line = data.substring(lastIndex, nextIndex);
@@ -385,7 +381,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
                         lastIndex = nextIndex + 1;
                     else
                         data.delete(lastIndex, nextIndex + 1);
-                    nextIndex = data.indexOf("\n", lastIndex);
+                    nextIndex = getNextIndex(data.indexOf("\n", lastIndex), data.length(), lastIndex);
                     continue;
                 }
 
@@ -428,7 +424,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
             // next line.
             lastIndex = nextIndex + 1; // +1 to skip the \n at the end of the line there
-            nextIndex = data.indexOf("\n", lastIndex); // another +1 because otherwise it would just return lastIndex
+            nextIndex = getNextIndex(data.indexOf("\n", lastIndex), data.length(), lastIndex); // another +1 because otherwise it would just return lastIndex
         }
 
         // got through the whole file without seeing or adding any imports???
@@ -456,6 +452,12 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         }
 
         return data.toString();
+    }
+
+    private int getNextIndex(int newLine, int dataLength, int oldIndex) {
+        if (newLine == -1 && dataLength > oldIndex)
+            return dataLength;
+        return newLine;
     }
 
     private void filterImports(Set<String> newImports)
