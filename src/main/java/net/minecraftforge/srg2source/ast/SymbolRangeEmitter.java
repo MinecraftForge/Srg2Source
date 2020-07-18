@@ -96,11 +96,12 @@ public class SymbolRangeEmitter
         if (type.isParameterizedType())
         {
             ParameterizedType p = (ParameterizedType)type;
+            emitTypeRange(p.getType(), qualified);
             for (Type t : (List<Type>)p.typeArguments())
             {
                 emitTypeRange(t);
             }
-            type = p.getType();
+            return;
         }
 
         if (type.isWildcardType())

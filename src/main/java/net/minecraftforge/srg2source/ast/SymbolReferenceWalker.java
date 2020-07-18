@@ -225,8 +225,6 @@ public class SymbolReferenceWalker extends ASTVisitor
     }
 
     public boolean visit(FieldDeclaration node) {
-        emitter.emitTypeRange(node.getType()); //TODO: This double prints due to the walk below, Why are we specifically handling fields?
-
         this.walk(node.getJavadoc());
 
         if (node.getAST().apiLevel() >= 3)

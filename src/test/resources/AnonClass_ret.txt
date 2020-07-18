@@ -6,7 +6,6 @@ Class Start: AnonClass
    Class Start: AnonClass.Nested
       @|/AnonClass.java|42|48|Nested|class|AnonClass.Nested|false
       @|/AnonClass.java|71|77|Object|class|java.lang.Object|false
-      @|/AnonClass.java|71|77|Object|class|java.lang.Object|false
       @|/AnonClass.java|78|82|test|field|AnonClass.Nested|test|
       @|/AnonClass.java|89|95|Object|class|java.lang.Object|false
       Anon Class Start: AnonClass.Nested$1

@@ -8,7 +8,6 @@ Class Start: InnerClass
       Class Start: InnerClass.Inner.Nested
          @|/InnerClass.java|92|98|Nested|class|InnerClass.Inner.Nested|false
          @|/InnerClass.java|129|135|String|class|java.lang.String|false
-         @|/InnerClass.java|129|135|String|class|java.lang.String|false
          @|/InnerClass.java|136|141|value|field|InnerClass.Inner.Nested|value|
          Method Start: getValue()Ljava/lang/String;
             @|/InnerClass.java|169|175|String|class|java.lang.String|false
@@ -16,7 +15,6 @@ Class Start: InnerClass
             @|/InnerClass.java|224|229|value|field|InnerClass.Inner.Nested|value
          Method End: getValue()Ljava/lang/String;
       Class End  : InnerClass.Inner.Nested
-      @|/InnerClass.java|272|278|String|class|java.lang.String|false
       @|/InnerClass.java|272|278|String|class|java.lang.String|false
       @|/InnerClass.java|279|284|value|field|InnerClass.Inner|value|
       Method Start: getValue()Ljava/lang/String;

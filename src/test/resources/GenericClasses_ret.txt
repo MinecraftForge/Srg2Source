@@ -21,8 +21,8 @@ Class Start: GenericClasses
       @|/GenericClasses.java|288|292|main|method|GenericClasses|main|()V
       @|/GenericClasses.java|309|313|IFoo|class|GenericClasses.IFoo|false
       @|/GenericClasses.java|314|320|String|class|java.lang.String|false
-      @|/GenericClasses.java|338|344|String|class|java.lang.String|false
       @|/GenericClasses.java|333|337|IFoo|class|GenericClasses.IFoo|false
+      @|/GenericClasses.java|338|344|String|class|java.lang.String|false
       Anon Class Start: GenericClasses$1
          Method Start: bar(Ljava/lang/String;)Ljava/lang/String;
             @|/GenericClasses.java|395|398|arg|param|GenericClasses$1|bar|(Ljava/lang/String;)Ljava/lang/String;|arg|0
