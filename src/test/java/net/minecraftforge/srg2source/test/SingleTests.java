@@ -2,116 +2,101 @@ package net.minecraftforge.srg2source.test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
 import net.minecraftforge.srg2source.api.SourceVersion;
-import net.minecraftforge.srg2source.ast.RangeExtractor;
-import net.minecraftforge.srg2source.rangeapplier.RangeApplier;
+import net.minecraftforge.srg2source.extract.RangeExtractor;
 import net.minecraftforge.srg2source.util.Util;
+import net.minecraftforge.srg2source.util.io.FolderSupplier;
 
-public class SingleTests
-{
-    @Test
-    public void testGenerics() throws IOException
-    {
-        testClass("GenericClasses");
-    }
-    @Test
-    public void testLambda() throws IOException
-    {
-        String version = System.getProperty("java.version");
-        int java_version = Integer.parseInt(version.split("\\.")[version.startsWith("1.") ? 1 : 0]);
-        if (java_version >= 8)
-            testClass("Lambda");
-    }
+public class SingleTests {
 
-    @Test
-    public void testAnonClass() throws IOException
-    {
-        testClass("AnonClass");
-    }
+    //@Test public void testLambda()         { testClass("Lambda");         }
+    //@Test public void testGenerics()       { testClass("GenericClasses"); }
+    //@Test public void testAnonClass()      { testClass("AnonClass"     ); }
+    //@Test public void testInnerClass()     { testClass("InnerClass"    ); }
+    //@Test public void testLocalClass()     { testClass("LocalClass"    ); }
+    //@Test public void testImportSpaces()   { testClass("ImportSpaces"  ); }
+    @Test public void testNestedGenerics() { testClass("NestedGenerics"); }
+    //@Test public void testPackageInfo()    { testClass("PackageInfo"   ); }
+    //@Test public void testCache()          { testClass("GenericClasses"); }
+    //@Test public void testWhiteSpace()     { testClass("Whitespace"    ); }
 
-    @Test
-    public void testInnerClass() throws IOException
-    {
-        testClass("InnerClass");
+    private File getRoot() {
+        URL url = this.getClass().getResource("/test.marker");
+        Assert.assertNotNull("Could not find test.marker", url);
+        try {
+            return new File(url.toURI()).getParentFile();
+        } catch (URISyntaxException e) {
+            return new File(url.getPath()).getParentFile();
+        }
     }
 
-    @Test
-    public void testLocalClass() throws IOException
-    {
-        testClass("LocalClass");
+    public void testClass(final String name) {
+        final File root = new File(getRoot(), name);
+
+        Assert.assertTrue("Unknown test: " + root.getAbsolutePath(), root.exists());
+
+        List<File> libraries = gatherLibraries(root, new File(getRoot(), "libraries"));
+
+        testExtract(new File(root, "original"), new File(root, "original.range"), libraries);
     }
 
-    @Test
-    public void testPackageInfo() throws IOException
-    {
-        testClass("PackageInfo", "test.package-info");
+    private List<File> gatherLibraries(File root, File libs) {
+        final File info = new File(root, "libs.txt");
+        if (!info.exists())
+            return Collections.emptyList();
+        try {
+            List<File> ret = Files.lines(info.toPath()).map(l -> new File(libs, l)).collect(Collectors.toList());
+            for (File f : ret) {
+                if (!f.exists())
+                    throw new IllegalStateException("Missing Library: " + f);
+            }
+            return ret;
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read " + info.getAbsolutePath(), e);
+        }
     }
 
-    @Test
-    public void testCache() throws IOException
-    {
-        testClass("GenericClasses", "GenericClasses", true);
-    }
-
-    @Test
-    public void testWhiteSpace() throws IOException
-    {
-        testClass("Whitespace", "core.package-info");
-    }
-
-    @Test
-    public void testImportSpaces() throws IOException
-    {
-        testClass("ImportSpaces");
-    }
-
-    public void testClass(final String resource) throws IOException
-    {
-        testClass(resource, resource, false);
-    }
-    public void testClass(final String resource, final String clsName) throws IOException
-    {
-        testClass(resource, clsName, false);
-    }
-
-    public void testClass(final String resource, final String clsName, boolean loadCache) throws IOException
-    {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    private void testExtract(File src, File range, List<File> libs) {
+        ByteArrayOutputStream data = new ByteArrayOutputStream();
+        ByteArrayOutputStream logs = new ByteArrayOutputStream();
 
         RangeExtractor extractor = new RangeExtractorBuilder()
             .sourceCompatibility(SourceVersion.JAVA_1_8)
-            .input(new SimpleInputSupplier(resource, clsName))
-            .output(new PrintWriter(bos))
+            .input(new TestFolderSupplier(src))
+            .logger(new PrintStream(logs))
+            .output(new PrintWriter(data))
             .build();
 
-
-        if (loadCache)
-            extractor.loadCache(getClass().getResourceAsStream("/" + resource + "_ret.txt"));
-
         boolean worked = extractor.run();
+        @SuppressWarnings("unused")
+        String log = logs.toString();
 
         Assert.assertTrue("Failed to do work!", worked);
-        Assert.assertEquals(getFileContents(resource, "_ret.txt"), bos.toString().replaceAll("\r?\n", "\n").replaceAll("Cache Hit!\n", ""));
-        if (loadCache)
-            Assert.assertTrue("Cache Missed!", extractor.getCacheHits() == 1);
+        if (range.exists())
+            Assert.assertEquals(getFileContents(range), data.toString());
 
-        testApply(resource, clsName);
+        //testApply(resource, clsName);
     }
 
-    private void testApply(final String resource, final String clsName) throws IOException
-    {
+    /*
+    private void testApply(final String resource, final String clsName) throws IOException {
         File srg = null;
         File map = null;
         try {
@@ -145,9 +130,40 @@ public class SingleTests
         Assert.assertEquals(getFileContents(resource, "_maped.txt"), out.get(0));
         Assert.assertEquals(getFileContents(resource, "_maped_ret.txt"), bos.toString().replaceAll("\r?\n", "\n"));
     }
+    */
 
-    private String getFileContents(String resource, String suffix) throws IOException {
-        File result = new File(getClass().getResource("/" + resource + suffix).getFile());
-        return  new String(Util.readFile(result), StandardCharsets.UTF_8);
+    private String getFileContents(File file) {
+        try {
+            return new String(readFile(file), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read " + file.getAbsolutePath(), e);
+        }
+    }
+
+    private static byte[] readFile(File input) throws IOException {
+        try (InputStream stream = new FileInputStream(input)) {
+            return Util.readStream(stream);
+        }
+    }
+
+    private static class TestFolderSupplier extends FolderSupplier {
+        public TestFolderSupplier(File root) {
+            super(root);
+        }
+
+        @Override
+        public InputStream getInput(String path) {
+            if (path.endsWith(".java"))
+                return super.getInput(path.substring(0, path.length() - 4) + "txt");
+            return super.getInput(path);
+        }
+
+        @Override
+        public List<String> gatherAll(String endFilter) {
+            if (!".java".equals(endFilter))
+                return super.gatherAll(endFilter);
+
+            return super.gatherAll(".txt").stream().map(f -> f.substring(0, f.length() - 4) + ".java").collect(Collectors.toList());
+        }
     }
 }

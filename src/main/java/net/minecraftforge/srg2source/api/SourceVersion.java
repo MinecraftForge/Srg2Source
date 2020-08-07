@@ -14,18 +14,15 @@ public enum SourceVersion {
         this.spec = spec;
     }
 
-    public String getSpec()
-    {
+    public String getSpec() {
         return spec;
     }
 
-    public static SourceVersion parse(String name)
-    {
+    public static SourceVersion parse(String name) {
         if (name == null)
             return null;
 
-        for (SourceVersion v : SourceVersion.values())
-        {
+        for (SourceVersion v : SourceVersion.values()) {
             if (v.name().equals(name) || v.getSpec().equals(name))
                 return v;
         }

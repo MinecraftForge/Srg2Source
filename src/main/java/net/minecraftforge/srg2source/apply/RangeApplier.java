@@ -1,87 +1,91 @@
-package net.minecraftforge.srg2source.rangeapplier;
+package net.minecraftforge.srg2source.apply;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
-import net.minecraftforge.srg2source.rangeapplier.RangeMap.RangeEntry;
-import net.minecraftforge.srg2source.util.Util;
+import net.minecraftforge.srg2source.api.InputSupplier;
+import net.minecraftforge.srg2source.api.OutputSupplier;
+import net.minecraftforge.srg2source.range.RangeMap;
 import net.minecraftforge.srg2source.util.io.ConfLogger;
-import net.minecraftforge.srg2source.util.io.InputSupplier;
-import net.minecraftforge.srg2source.util.io.OutputSupplier;
+import net.minecraftforge.srgutils.IMappingFile;
 
-public class RangeApplier extends ConfLogger<RangeApplier>
-{
-    private SrgContainer    srg = new SrgContainer();
-    private final RenameMap map = new RenameMap();
+@SuppressWarnings("unused")
+public class RangeApplier extends ConfLogger<RangeApplier> {
+    private List<IMappingFile> srgs = new ArrayList<>();
+    private List<ExceptorFile> excs = new ArrayList<>();
     private boolean keepImports = false; // Keep imports that are not referenced anywhere in code.
     private InputSupplier input = null;
     private OutputSupplier output = null;
-    private RangeMap range = null;
+    private Map<String, RangeMap> range = new HashMap<>();
     private boolean annotate = false;
 
-    public void readSrg(File srgs)
-    {
-        srg.readSrg(srgs);
-        map.readSrg(this.srg);
-    }
-
-    public void readExc(File exceptor)
-    {
-        map.readParamMap(srg, new ExceptorFile(exceptor));
-    }
-
-    public void readLvRangeMap(File lvRangeMap)
-    {
-        try
-        {
-            map.readLocalVariableMap(new LocalVarFile(lvRangeMap), srg);
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException(e);
+    public void readSrg(File srg) {
+        try {
+            srgs.add(IMappingFile.load(srg)); //TODO: Add merge function to SrgUtils?
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read SRG: " + srg, e);
         }
     }
 
-    public void setInput(InputSupplier value)
-    {
+    public void readSrg(Path srg) {
+        try (InputStream in = Files.newInputStream(srg)) {
+            srgs.add(IMappingFile.load(in)); //TODO: Add merge function to SrgUtils?
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read SRG: " + srg, e);
+        }
+    }
+
+    public void readExc(File exceptor) {
+        excs.add(new ExceptorFile(exceptor));
+    }
+
+    public void readExc(Path exceptor) {
+        excs.add(new ExceptorFile(exceptor));
+    }
+
+    public void setInput(InputSupplier value) {
         this.input = value;
     }
 
-    public void setOutput(OutputSupplier value)
-    {
+    public void setOutput(OutputSupplier value) {
         this.output = value;
     }
 
-    public void readRangeMap(File value)
-    {
-        this.range = new RangeMap(value);
+    public void readRangeMap(File value) {
+        try (InputStream in = Files.newInputStream(value.toPath())) {
+            this.range.putAll(RangeMap.readAll(in));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Invalid range map: " + value);
+        }
     }
 
-    public void keepImports(boolean value)
-    {
+    public void readRangeMap(Path value) {
+        try (InputStream in = Files.newInputStream(value)) {
+            this.range.putAll(RangeMap.readAll(in));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Invalid range map: " + value);
+        }
+    }
+
+    public void keepImports(boolean value) {
         this.keepImports = value;
     }
 
-    public void annotate(boolean value)
-    {
+    public void annotate(boolean value) {
         this.annotate = value;
     }
 
 
-    //private void remapSources(boolean annotate) throws IOException
+    public void run() throws IOException {
+        throw new RuntimeException("Not Implemented yet, Work in proggress!");
+    }
+    /*
     public void run() throws IOException
     {
         if (input == null)
@@ -138,11 +142,6 @@ public class RangeApplier extends ConfLogger<RangeApplier>
     // ---------------------------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------------------------
 
-    /**
-     * Rename symbols in source code
-     * @return
-     * @throws IOException
-     */
     private List<String> processJavaSourceFile(String fileName, String data, Collection<RangeEntry> rangeList, boolean shouldAnnotate) throws IOException
     {
         StringBuilder outData = new StringBuilder();
@@ -310,7 +309,7 @@ public class RangeApplier extends ConfLogger<RangeApplier>
 
     /**
      * Add new import statements to source
-     */
+     * /
     private String updateImports(StringBuilder data, Set<String> newImports, Map<String, String> importMap)
     {
         int lastIndex = 0;
@@ -509,14 +508,14 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         newName = Util.splitBaseName(newName, Util.countChar(oldName, '.'));
 
         if (shouldAnnotate)
-            newName += "/* was " + oldName + "*/";
+            newName += "/* was " + oldName + '*' + '/';
 
         return newName;
     }
 
     /**
      * Check whether a unique identifier method key is a constructor, if so return full class name for remapping, else null
-     */
+     * /
     private String getConstructor(String key)
     {
         String[] tokens = key.split(" ", 3);  // TODO: switch to non-conflicting separator..types can have spaces :(
@@ -536,4 +535,5 @@ public class RangeApplier extends ConfLogger<RangeApplier>
         else
             return null;
     }
+    */
 }

@@ -37,7 +37,6 @@ public class RangeExtractorTransformer implements ITransformer<ClassNode> {
 
     @Override
     public Set<Target> targets() {
-        return Collections.singleton(Target.targetClass("net.minecraftforge.srg2source.ast.RangeExtractor"));
+        return Collections.singleton(Target.targetClass("net.minecraftforge.srg2source.extract.RangeExtractor"));
     }
-
 }

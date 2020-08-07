@@ -14,8 +14,15 @@ import org.objectweb.asm.tree.MethodNode;
 import cpw.mods.modlauncher.api.ITransformer;
 import cpw.mods.modlauncher.api.ITransformerVotingContext;
 import cpw.mods.modlauncher.api.TransformerVoteResult;
-import net.minecraftforge.srg2source.ast.RangeExtractor;
+import net.minecraftforge.srg2source.extract.RangeExtractor;
 
+/*
+ * Eclipse's JDT does not support non file based source loocations.
+ * We have to patch the line that loads the characters from the file to redirect into our input suppliers.
+ * We are specifically patching this line: https://github.com/eclipse/eclipse.jdt.core/blob/master/org.eclipse.jdt.core/dom/org/eclipse/jdt/core/dom/CompilationUnitResolver.java#L1013
+ * From: contents = Util.getFileCharContent(new File(sourceUnitPath), encoding);
+ * To: contents = RangeExtractor.getFileCharContent(sourceUnitPath, encoding);
+ */
 public class CompilationUnitResolverTransfomer implements ITransformer<ClassNode> {
     private static final String RESOLVE_METHOD = "resolve([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Lorg/eclipse/jdt/core/dom/FileASTRequestor;ILjava/util/Map;I)V";
     private static final String GET_CONTENTS = "org/eclipse/jdt/internal/compiler/util/Util.getFileCharContent(Ljava/io/File;Ljava/lang/String;)[C";
@@ -66,5 +73,4 @@ public class CompilationUnitResolverTransfomer implements ITransformer<ClassNode
     public Set<Target> targets() {
         return Collections.singleton(Target.targetClass("org.eclipse.jdt.core.dom.CompilationUnitResolver"));
     }
-
 }

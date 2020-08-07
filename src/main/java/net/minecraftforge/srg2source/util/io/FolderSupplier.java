@@ -6,87 +6,68 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.LinkedList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
-import java.util.Stack;
+import java.util.stream.Collectors;
 
-public class FolderSupplier implements InputSupplier, OutputSupplier
-{
-    private final File root;
+import net.minecraftforge.srg2source.api.InputSupplier;
+import net.minecraftforge.srg2source.api.OutputSupplier;
 
-    public FolderSupplier(File root)
-    {
+public class FolderSupplier implements InputSupplier, OutputSupplier {
+    protected final File root;
+
+    public FolderSupplier(File root) {
         if (!root.exists())
-        {
             root.mkdirs();
-        }
         this.root = root;
     }
 
     @Override
-    public OutputStream getOutput(String relPath)
-    {
-        try
-        {
+    public OutputStream getOutput(String relPath) {
+        try {
             File out = new File(root, relPath);
-            if (!out.exists())
-            {
+            if (!out.exists()) {
                 out.getParentFile().mkdirs();
                 out.createNewFile();
             }
             return new FileOutputStream(new File(root, relPath));
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             return null;
         }
     }
 
     @Override
-    public InputStream getInput(String relPath)
-    {
-        try
-        {
+    public InputStream getInput(String relPath) {
+        try {
             return new FileInputStream(new File(root, relPath));
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             return null;
         }
     }
 
     @Override
-    public List<String> gatherAll(String endFilter)
-    {
-        LinkedList<String> out = new LinkedList<String>();
-        Stack<File> dirStack = new Stack<File>();
-        dirStack.push(root);
-
-        int rootCut = root.getAbsolutePath().length() + 1; // +1 for the slash
-
-        while(dirStack.size() > 0)
-        {
-            for (File f : dirStack.pop().listFiles())
-            {
-                if (f.isDirectory())
-                    dirStack.push(f);
-                else if (f.getPath().endsWith(endFilter))
-                    out.add(f.getAbsolutePath().substring(rootCut));
-            }
+    public List<String> gatherAll(String endFilter) {
+        final Path proot = root.toPath();
+        try {
+            return Files.walk(proot).filter(Files::isRegularFile)
+                    .map(proot::relativize).map(Path::toString)
+                    .filter(p -> p.endsWith(endFilter))
+                    .sorted().collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Collections.emptyList();
         }
-
-        return out;
     }
 
     @Override
-    public void close() throws IOException
-    {
+    public void close() throws IOException {
         // they are files.. what do you want me to do?
     }
 
     @Override
-    public String getRoot(String resource)
-    {
+    public String getRoot(String resource) {
         return root.getAbsolutePath();
     }
 }

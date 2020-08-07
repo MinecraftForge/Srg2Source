@@ -1,3 +1,0 @@
-CL: core/package-info not_core/package-info
-CL: java/lang/Deprecated moved/Deprecated
-CL: javax/annotation/Generated moved/Generated

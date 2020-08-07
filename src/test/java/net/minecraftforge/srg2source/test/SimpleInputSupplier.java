@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import net.minecraftforge.srg2source.util.io.InputSupplier;
+import net.minecraftforge.srg2source.api.InputSupplier;
 
 public class SimpleInputSupplier implements InputSupplier {
     String resource = null;

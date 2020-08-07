@@ -10,29 +10,23 @@ import cpw.mods.modlauncher.api.ITransformer;
 import cpw.mods.modlauncher.api.IncompatibleEnvironmentException;
 
 public class TransformationService implements ITransformationService {
-
     @Override
-    public String name()
-    {
+    public String name() {
         return "JDTPatcher";
     }
 
     @Override
-    public void initialize(IEnvironment environment) {
-    }
+    public void initialize(IEnvironment environment) {}
 
     @Override
-    public void beginScanning(IEnvironment environment) {
-    }
+    public void beginScanning(IEnvironment environment) {}
 
     @Override
-    public void onLoad(IEnvironment env, Set<String> otherServices) throws IncompatibleEnvironmentException {
-    }
+    public void onLoad(IEnvironment env, Set<String> otherServices) throws IncompatibleEnvironmentException {}
 
     @SuppressWarnings("rawtypes")
     @Override
     public List<ITransformer> transformers() {
         return Arrays.asList(new CompilationUnitResolverTransfomer(), new RangeExtractorTransformer());
     }
-
 }

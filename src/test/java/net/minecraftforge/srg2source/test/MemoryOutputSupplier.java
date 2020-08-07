@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.minecraftforge.srg2source.util.io.OutputSupplier;
+import net.minecraftforge.srg2source.api.OutputSupplier;
 
 public class MemoryOutputSupplier implements OutputSupplier {
     private List<String> byIndex = new ArrayList<String>();

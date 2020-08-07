@@ -3,37 +3,35 @@ package net.minecraftforge.srg2source.util.io;
 import java.io.PrintStream;
 
 @SuppressWarnings("rawtypes")
-public abstract class ConfLogger<T extends ConfLogger>
-{
-    protected PrintStream logger = System.out;
-    protected PrintStream errorLogger = System.err;
+public abstract class ConfLogger<T extends ConfLogger> {
+    private PrintStream logger = System.out;
+    private PrintStream errorLogger = System.err;
 
-    protected void log(String s)
-    {
+    protected void log(String s) {
         logger.println(s);
     }
 
-    public PrintStream getLogger()
-    {
+    public void error(String s) {
+        errorLogger.println(s);
+    }
+
+    public PrintStream getLogger() {
         return logger;
     }
 
     @SuppressWarnings("unchecked")
-    public T setLogger(PrintStream value)
-    {
+    public T setLogger(PrintStream value) {
         this.logger = value;
-        return (T) this;
+        return (T)this;
     }
 
-    public PrintStream getErrorLogger()
-    {
+    public PrintStream getErrorLogger() {
         return errorLogger;
     }
 
     @SuppressWarnings("unchecked")
-    public T setErrorLogger(PrintStream errorLogger)
-    {
+    public T setErrorLogger(PrintStream errorLogger) {
         this.errorLogger = errorLogger;
-        return (T) this;
+        return (T)this;
     }
 }

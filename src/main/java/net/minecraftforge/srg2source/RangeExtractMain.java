@@ -15,8 +15,7 @@ import joptsimple.ValueConverter;
 import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
 import net.minecraftforge.srg2source.api.SourceVersion;
 
-public class RangeExtractMain
-{
+public class RangeExtractMain {
     /*
      * TODO:
      *   Support Source Directories/Inputs on the classpath. Which is the sourcepathEntries argument in
@@ -28,9 +27,7 @@ public class RangeExtractMain
      *   Find a way to pass RangeExtractor instance to our JDT hook so we can run multiple batches at once.
      */
 
-
-    public static void main(String[] args) throws IOException
-    {
+    public static void main(String[] args) throws IOException {
         OptionParser parser = new OptionParser();
         OptionSpec<File> libArg = parser.acceptsAll(Arrays.asList("e", "lib")).withRequiredArg().ofType(File.class);
         OptionSpec<File> inputArg = parser.acceptsAll(Arrays.asList("in", "input")).withRequiredArg().ofType(File.class).required();
@@ -39,23 +36,19 @@ public class RangeExtractMain
         OptionSpec<SourceVersion> jversionArg = parser.acceptsAll(Arrays.asList("sc", "source-compatibility")).withRequiredArg().ofType(SourceVersion.class).defaultsTo(SourceVersion.JAVA_1_8)
             .withValuesConvertedBy(new ValueConverter<SourceVersion>() {
                 @Override
-                public SourceVersion convert(String value)
-                {
+                public SourceVersion convert(String value) {
                     return SourceVersion.parse(value);
                 }
 
                 @Override
-                public Class<? extends SourceVersion> valueType()
-                {
+                public Class<? extends SourceVersion> valueType() {
                     return SourceVersion.class;
                 }
 
                 @Override
-                public String valuePattern()
-                {
+                public String valuePattern() {
                     List<String> ret = new ArrayList<>();
-                    for (SourceVersion v : SourceVersion.values())
-                    {
+                    for (SourceVersion v : SourceVersion.values()) {
                         ret.add(v.name());
                         ret.add(v.getSpec());
                     }
@@ -63,8 +56,7 @@ public class RangeExtractMain
                 }
             });
 
-        try
-        {
+        try {
             OptionSet options = parser.parse(args);
             System.out.println("Compat: " + options.valueOf(jversionArg));
             System.out.println("Output: " + options.valueOf(outputArg));
@@ -75,8 +67,7 @@ public class RangeExtractMain
                 .output(options.valueOf(outputArg))
                 .batch(options.valueOf(batch));
 
-            if (options.has(libArg))
-            {
+            if (options.has(libArg)) {
                 options.valuesOf(libArg).forEach(v -> {
                     System.out.println("Lib:    " + v);
                     builder.library(v);
@@ -89,9 +80,7 @@ public class RangeExtractMain
             });
 
             builder.build().run();
-        }
-        catch (OptionException e)
-        {
+        } catch (OptionException e) {
             parser.printHelpOn(System.out);
             e.printStackTrace();
         }

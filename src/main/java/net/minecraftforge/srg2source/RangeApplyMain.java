@@ -24,10 +24,6 @@ public class RangeApplyMain
         OptionSpec<Boolean> importArg = parser.acceptsAll(a("keepImports")).withOptionalArg().ofType(Boolean.class).defaultsTo(true);
         //OptionSpec<Boolean> annArg = parser.acceptsAll(a("annotate")).withOptionalArg().ofType(Boolean.class).defaultsTo(false);
 
-        //Old stuff, we should kill off
-        OptionSpec<File> lvRangeArg = parser.acceptsAll(a("lvRangeMap")).withRequiredArg().ofType(File.class);
-        //OptionSpec<File> mcpDirArg = parser.acceptsAll(a("mcpConfDir")).withRequiredArg().ofType(File.class);
-
         try
         {
             OptionSet options = parser.parse(args);
@@ -39,18 +35,15 @@ public class RangeApplyMain
 
             File range = options.valueOf(rangeArg);
             File output = options.valueOf(outArg);
-            File lvRange = options.valueOf(lvRangeArg);
             boolean keepImports = options.has(importArg) && options.valueOf(importArg);
 
             System.out.println("Range:   " + range);
             System.out.println("Output:  " + output);
-            System.out.println("LVRange: " + lvRange);
             System.out.println("Imports: " + keepImports);
 
             RangeApplierBuilder builder = new RangeApplierBuilder()
                 .range(range)
-                .output(output)
-                .lvrange(lvRange);
+                .output(output);
 
             if (options.has(mappingArg))
             {

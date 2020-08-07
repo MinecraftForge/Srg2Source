@@ -11,10 +11,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ConsoleTool
-{
-    public static void main(String[] args) throws Exception
-    {
+public class ConsoleTool {
+    public static void main(String[] args) throws Exception {
         System.setProperty("osgi.nls.warnings", "ignore"); //Shutup Eclipse in our trimmed fat-jar.
 
         Task target = null;
@@ -29,16 +27,12 @@ public class ConsoleTool
         List<String> _args = new ArrayList<String>();
 
         String arg;
-        while ((arg = que.poll()) != null)
-        {
-            if (tasks.containsKey(arg.toLowerCase(Locale.ENGLISH)))
-            {
+        while ((arg = que.poll()) != null) {
+            if (tasks.containsKey(arg.toLowerCase(Locale.ENGLISH))) {
                 if (target != null)
                     throw new IllegalArgumentException("Only one task allowed at a time, trued to run " + arg + " when " + target + " already set");
                 target = tasks.get(arg.toLowerCase(Locale.ENGLISH));
-            }
-            else if ("--cfg".equals(arg))
-            {
+            } else if ("--cfg".equals(arg)) {
                 String cfg = que.poll();
                 if (cfg == null)
                     throw new IllegalArgumentException("Invalid --cfg entry, missing file path");
@@ -58,8 +52,7 @@ public class ConsoleTool
 
     private static enum Task {
         APPLY(RangeApplyMain::main),
-        EXTRACT(RangeExtractMain::main),
-        SORT(RangeSortMain::main);
+        EXTRACT(RangeExtractMain::main);
 
         private Consumer<String[]> task;
         private Task(Consumer<String[]> task) {
