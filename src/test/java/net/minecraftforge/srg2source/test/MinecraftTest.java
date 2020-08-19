@@ -1,3 +1,22 @@
+/*
+ * Srg2Source
+ * Copyright (c) 2020.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.srg2source.test;
 
 import java.io.BufferedOutputStream;
@@ -6,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.net.URI;
@@ -59,6 +79,7 @@ public class MinecraftTest {
 
     private static final Path MCP_ROOT = Paths.get("Z:/Projects/MCP/MCPConfig/");
     private static final String MC_VERSION = "1.16.2";
+    private static final OutputStream NULL_OUTPUT = new OutputStream() { public void write(int b) throws IOException { } };
 
     /**
      * We have to patch the JDT to allow custom source providers. So we can process jar files instead of extracting them.
@@ -130,7 +151,7 @@ public class MinecraftTest {
 
             Path src_mcp = getMappedSrc(src_srg);
 
-            try (PrintStream log = new PrintStream(Files.newOutputStream(root.resolve("extract_" + (forceOld ? "legacy" : "batched") + ".log")))) {
+            try (PrintStream log = new PrintStream(NULL_OUTPUT /*Files.newOutputStream(root.resolve("extract_" + (forceOld ? "legacy" : "batched") + ".log"))*/)) {
                 RangeExtractorBuilder builder = new RangeExtractorBuilder()
                     .input(ZipInputSupplier.create(src_mcp, StandardCharsets.UTF_8))
                     .batch(!forceOld)
@@ -159,7 +180,7 @@ public class MinecraftTest {
             Path mcp_to_srg = getMcpToSrg();
             Path exc = getMcpExc();
 
-            try (PrintStream log = new PrintStream(Files.newOutputStream(root.resolve("apply.log")))) {
+            try (PrintStream log = new PrintStream(NULL_OUTPUT /*Files.newOutputStream(root.resolve("apply.log"))*/)) {
                 RangeApplierBuilder builder = new RangeApplierBuilder()
                     .input(ZipInputSupplier.create(src_mcp, StandardCharsets.UTF_8))
                     .output(root.resolve("apply_output.jar"))

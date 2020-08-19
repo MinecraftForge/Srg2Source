@@ -19,6 +19,7 @@ buildscript {
 
 plugins {
   id 'org.ajoberstar.grgit' version '2.3.0'
+  id 'net.minecrell.licenser' version '0.4'
 }
 
 apply plugin: 'java'
@@ -84,6 +85,12 @@ jar {
     }
 }
 
+
+license {
+	header = file('LICENSE-header.txt')
+	include 'net/minecraftforge/'
+}
+
 import java.util.zip.*
 import org.objectweb.asm.*
 import org.objectweb.asm.tree.*
@@ -91,7 +98,7 @@ import org.objectweb.asm.tree.*
 //TODO: Eclipse complains about unused messages. Find a way to make it shut up.
 class PatchJDTClasses extends DefaultTask {
     static def COMPILATION_UNIT_RESOLVER = 'org/eclipse/jdt/core/dom/CompilationUnitResolver'
-    static def RANGE_EXTRACTOR = 'net/minecraftforge/srg2source/range/RangeExtractor'
+    static def RANGE_EXTRACTOR = 'net/minecraftforge/srg2source/extract/RangeExtractor'
     def RESOLVE_METHOD = 'resolve([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Lorg/eclipse/jdt/core/dom/FileASTRequestor;ILjava/util/Map;I)V'
     def GET_CONTENTS = 'org/eclipse/jdt/internal/compiler/util/Util.getFileCharContent(Ljava/io/File;Ljava/lang/String;)[C'
     def HOOK_DESC_RESOLVE = '(Ljava/lang/String;Ljava/lang/String;)[C'
@@ -291,24 +298,16 @@ publishing {
 
                 licenses {
                     license {
-                        name = 'The BSD 3-Clause License'
-                        url = 'http://opensource.org/licenses/BSD-3-Clause'
-                        distribution = 'repo'
+						name = 'LGPL 2.1'
+						url = 'https://github.com/MinecraftForge/Srg2Source/blob/master/LICENSE'
+						distribution = 'repo'
                     }
                 }
 
                 developers {
                     developer {
-                        id = 'agaricusb'
-                        name = 'Agaricusb'
-                    }
-                    developer {
                         id = 'LexManos'
                         name = 'Lex Manos'
-                    }
-                    developer {
-                        id = 'AbrarSyed'
-                        name = 'Abrar Syed'
                     }
                 }
             }
@@ -321,7 +320,7 @@ publishing {
                     username = project.properties.mavenUser
                     password = project.properties.mavenPassword
                 }
-                url 'http://files.minecraftforge.net/maven/manage/upload'
+                url 'https://files.minecraftforge.net/maven/manage/upload'
             } else {
                 url 'file://' + rootProject.file('repo').getAbsolutePath()
             }

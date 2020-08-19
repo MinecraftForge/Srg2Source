@@ -1,3 +1,22 @@
+/*
+ * Srg2Source
+ * Copyright (c) 2020.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.srg2source;
 
 import java.io.File;
@@ -13,10 +32,12 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.ValueConverter;
+import joptsimple.util.PathConverter;
 import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
 import net.minecraftforge.srg2source.api.SourceVersion;
 
 public class RangeExtractMain {
+    private static final ValueConverter<Path> PATH_CONVERTER = new PathConverter();
     /*
      * TODO:
      *   Support Source Directories/Inputs on the classpath. Which is the sourcepathEntries argument in
@@ -31,8 +52,8 @@ public class RangeExtractMain {
     public static void main(String[] args) throws IOException {
         OptionParser parser = new OptionParser();
         OptionSpec<File> libArg = parser.acceptsAll(Arrays.asList("e", "lib")).withRequiredArg().ofType(File.class);
-        OptionSpec<Path> inputArg = parser.acceptsAll(Arrays.asList("in", "input")).withRequiredArg().ofType(Path.class).required();
-        OptionSpec<Path> outputArg = parser.acceptsAll(Arrays.asList("out", "output")).withRequiredArg().ofType(Path.class).required();
+        OptionSpec<Path> inputArg = parser.acceptsAll(Arrays.asList("in", "input")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER).required();
+        OptionSpec<Path> outputArg = parser.acceptsAll(Arrays.asList("out", "output")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER).required();
         OptionSpec<Boolean> batch = parser.accepts("batch").withOptionalArg().ofType(Boolean.class).defaultsTo(true);
         //TODO: Encoding argument
         OptionSpec<SourceVersion> jversionArg = parser.acceptsAll(Arrays.asList("sc", "source-compatibility")).withRequiredArg().ofType(SourceVersion.class).defaultsTo(SourceVersion.JAVA_1_8)

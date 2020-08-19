@@ -1,8 +1,31 @@
+/*
+ * Srg2Source
+ * Copyright (c) 2020.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.srg2source.extract;
 
 import java.util.HashMap;
 import java.util.List;
+
+import javax.annotation.Nullable;
+
 import org.eclipse.jdt.core.dom.*;
+import org.objectweb.asm.Opcodes;
 
 import net.minecraftforge.srg2source.range.RangeMapBuilder;
 
@@ -79,6 +102,13 @@ public class SymbolReferenceWalker {
     private String getDescriptor(IMethodBinding method) {
         StringBuilder buf = new StringBuilder();
         buf.append('(');
+        if (method.isConstructor()) { //Synthetic args
+            ITypeBinding type = method.getDeclaringClass();
+            if (type.isEnum())
+                buf.append("Ljava/lang/String;I");
+            else if (type.isNested() && type.isClass() && ((type.getModifiers() & Opcodes.ACC_STATIC) == 0))
+                buf.append(getTypeSignature(type.getDeclaringClass()));
+        }
         for (ITypeBinding param : method.getParameterTypes())
             buf.append(getTypeSignature(param));
         buf.append(')');
@@ -94,7 +124,7 @@ public class SymbolReferenceWalker {
         int aidx = ret.lastIndexOf('[');
         String prefix = null;
         if (aidx != -1) {
-            prefix = ret.substring(0, aidx);
+            prefix = ret.substring(0, aidx + 1);
             ret = ret.substring(aidx + 1);
         }
 
@@ -103,10 +133,10 @@ public class SymbolReferenceWalker {
         return prefix == null ? ret : prefix + ret;
     }
 
-    private void trackParameters(String name, String desc, IMethodBinding mtd, List<VariableDeclaration> params) {
-        ITypeBinding[] args = mtd.getParameterTypes();
-        int index = 0; //Modifier.isStatic(mtd.getModifiers()) ? 0 : 1;
-        for (int x = 0; x < args.length; x++) {
+    private void trackParameters(String name, String desc, IMethodBinding mtd, List<VariableDeclaration> params, int synthetics) {
+        //ITypeBinding[] args = mtd.getParameterTypes();
+        int index = synthetics; //Modifier.isStatic(mtd.getModifiers()) ? 0 : 1;
+        for (int x = 0; x < params.size(); x++) {
             String key = params.get(x).getName().resolveBinding().getKey();
             parameterInfo.put(key, new ParamInfo(className, name, desc, index));
 
@@ -128,6 +158,44 @@ public class SymbolReferenceWalker {
         return parent == null ? null : parent.findParameter(key);
     }
 
+    private IMethodBinding findRoot(IMethodBinding mtd) {
+        ITypeBinding clazz = mtd.getDeclaringClass();
+        if (clazz == null)
+            return mtd;
+        IMethodBinding root = findRoot(mtd, clazz.getSuperclass());
+        if (root != null)
+            return root.getMethodDeclaration();
+
+        for (ITypeBinding intf : clazz.getInterfaces()) {
+            root = findRoot(mtd, intf);
+            if (root != null)
+                return root.getMethodDeclaration();
+        }
+        return mtd;
+    }
+
+    @Nullable
+    private IMethodBinding findRoot(IMethodBinding target, @Nullable ITypeBinding type) {
+        if (type == null || target.isConstructor())
+            return target;
+
+        for (IMethodBinding mtd : type.getDeclaredMethods())
+            if (target.overrides(mtd))
+                return findRoot(mtd);
+
+        IMethodBinding root = findRoot(target, type.getSuperclass());
+        if (root != null)
+            return root;
+
+        for (ITypeBinding intf : type.getInterfaces()) {
+            root = findRoot(target, intf);
+            if (root != null)
+                return root;
+        }
+
+        return null;
+    }
+
     @SuppressWarnings("unused")
     private void log(String message) {
         this.extractor.log("# " + message);
@@ -145,11 +213,7 @@ public class SymbolReferenceWalker {
     /* ===================================================================================================== */
 
     private boolean process(AnnotationTypeDeclaration node) {
-        if (node != null) {
-            error(node, "Not Implemented: I need a test case for annotation types.");
-            return false;
-        }
-        //builder.addAnnotationDeclaration(node.getStartPosition(), node.getLength(), node.getName().getIdentifier());
+        builder.addAnnotationDeclaration(node.getStartPosition(), node.getLength(), node.getName().getIdentifier());
         return true;
     }
 
@@ -217,11 +281,17 @@ public class SymbolReferenceWalker {
      * We need to gather all parameters so we can try and provide a proper bytecode index for identification.
      */
     private boolean process(LambdaExpression node) {
+        //This isn't the real signature, it doesn't include the prefixed synthetic arguments... TODO: Figure out somethinf for this.
+        IMethodBinding mtd = node.resolveMethodBinding();
+        String name = mtd.isConstructor() ? "<init>" : mtd.getName();
+        String desc = getDescriptor(mtd);
+        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), "lambda[" + name + ']', desc);
+
         @SuppressWarnings("unchecked")
         List<VariableDeclaration> params = (List<VariableDeclaration>)node.parameters();
+        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), name, desc);
 
         if (!params.isEmpty()) {
-            IMethodBinding mtd = node.resolveMethodBinding();
             /*
              * This is stupid dirty hack to pull out the lambda id and descriptor
              * Example: Lcom/mojang/blaze3d/matrix/com\mojang\blaze3d\matrix\MatrixStack~MatrixStack;.lambda$0(Ljava/util/ArrayDeque;)V
@@ -233,13 +303,15 @@ public class SymbolReferenceWalker {
 
             mtdKey = mtdKey.substring(idx + 2); //Strip ugly prefix: lambda$0(Ljava/util/ArrayDeque;)V
             idx = mtdKey.indexOf('(');
-            String name = mtdKey.substring(0, idx); //Name: lambda$0
+            name = mtdKey.substring(0, idx); //Name: lambda$0
             mtdKey = mtdKey.substring(idx); // Strip name: (Ljava/util/ArrayDeque;)V
             idx = mtdKey.indexOf(')');
             // If return type is Object, we need to find the end of it, if it's primitive just add one
-            String desc = mtdKey.substring(0, (mtdKey.charAt(idx + 1) == 'L' ? mtdKey.indexOf(';', idx) : idx) + 1);
+            desc = mtdKey.substring(0, (mtdKey.charAt(idx + 1) == 'L' ? mtdKey.indexOf(';', idx) : idx) + 1);
 
-            trackParameters(name, desc, mtd, params);
+
+            ITypeBinding[] args = mtd.getParameterTypes();
+            trackParameters(name, desc, mtd, params, args.length - params.size());
         }
 
         return true;
@@ -250,13 +322,23 @@ public class SymbolReferenceWalker {
      */
     private boolean process(MethodDeclaration node) {
         IMethodBinding mtd = node.resolveBinding();
+        String name = mtd.isConstructor() ? "<init>" : mtd.getName();
         String desc = getDescriptor(mtd);
-        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), node.getName().toString(), desc);
+        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), name, desc);
 
         @SuppressWarnings("unchecked")
         List<VariableDeclaration> params = (List<VariableDeclaration>)node.parameters();
-        if (!params.isEmpty())
-            trackParameters(node.getName().toString(), desc, mtd, params);
+        if (!params.isEmpty()) {
+            int synthetic = 0;
+            if (mtd.isConstructor()) {
+                ITypeBinding type = mtd.getDeclaringClass();
+                if (type.isEnum())
+                    synthetic = 2; //String, int
+                else if (type.isNested() && type.isClass() && ((type.getModifiers() & Opcodes.ACC_STATIC) == 0))
+                    synthetic = 1; //Outer class
+            }
+            trackParameters(name, desc, mtd, params, synthetic);
+        }
         return true;
     }
 
@@ -277,6 +359,8 @@ public class SymbolReferenceWalker {
                 if (type.isTypeVariable()) //Generic type names can't be remapped at this time.. should we allow it?
                     return false;
 
+                if (className != null && className.endsWith("ViewFrustum") && node.toString().equals("ChunkRender"))
+                    System.currentTimeMillis();
                 String clsName = getInternalName(type, node);
                 builder.addClassReference(node.getStartPosition(), node.getLength(), node.toString(), clsName, false);
                 return true; //There currently arn't any children for SimpleNames, so this return does nothing.
@@ -303,7 +387,7 @@ public class SymbolReferenceWalker {
                 }
                 return true;
             case IBinding.METHOD:
-                IMethodBinding mtd = (IMethodBinding)bind;
+                IMethodBinding mtd = findRoot((IMethodBinding)bind);
                 //TODO: Resolve overrides?
                 builder.addMethodReference(node.getStartPosition(), node.getLength(), node.toString(),
                         getInternalName(mtd.getDeclaringClass(), node), mtd.isConstructor() ? "<init>" : mtd.getName(), getDescriptor(mtd.getMethodDeclaration()));
@@ -434,6 +518,35 @@ public class SymbolReferenceWalker {
         return false;
     }
 
+    /*
+     * Sometimes inner classes can he initialized indirectly with references to the outer class.
+     * In these cases, the import for the inner class is not needed, because it is qualified by the outer instance.
+     * However, the name itself is not a qualified name, so our normal name printing does not know it doesn't need a import.
+     *
+     * This is what causes ViewFrustum to add the extra ChunkRenderDispatcher.ChunkRender import:
+     * `renderChunkFactory.new ChunkRender();`
+     * Problem is.... we have no idea how to get the subtype's root name object... Will need to look into this more
+     */
+    private boolean process(ClassInstanceCreation node) {
+        return true;
+        /*
+        if (node.getExpression() == null)
+            return true;
+
+        if (node.toString().contains("ChunkRender()"))
+            System.currentTimeMillis();
+        if (node.getAST().apiLevel() == JLS2) {
+            acceptChild(node.getName());
+        } else if (node.getAST().apiLevel() >= JLS3) {
+            acceptChildren(node.typeArguments());
+            acceptChild(node.getType();
+        }
+        acceptChildren(node.arguments());
+        acceptChild(node.getAnonymousClassDeclaration());
+        return false;
+        */
+    }
+
     private static class ParamInfo {
         private final String owner;
         private final String name;
@@ -471,7 +584,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(CastExpression                  node) { return true; }
         @Override public boolean visit(CatchClause                     node) { return true; }
         @Override public boolean visit(CharacterLiteral                node) { return true; }
-        @Override public boolean visit(ClassInstanceCreation           node) { return true; }
+        @Override public boolean visit(ClassInstanceCreation           node) { return process(node); }
         @Override public boolean visit(ConditionalExpression           node) { return true; }
         @Override public boolean visit(ConstructorInvocation           node) { return true; }
         @Override public boolean visit(ContinueStatement               node) { return process(node); }

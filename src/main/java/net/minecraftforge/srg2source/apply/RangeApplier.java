@@ -1,3 +1,22 @@
+/*
+ * Srg2Source
+ * Copyright (c) 2020.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.srg2source.apply;
 
 import java.io.File;
@@ -35,7 +54,7 @@ import net.minecraftforge.srgutils.IMappingFile;
 
 @SuppressWarnings("unused")
 public class RangeApplier extends ConfLogger<RangeApplier> {
-    private static Pattern IMPORT = Pattern.compile("import\\s+((?<static>static)\\s+)?(?<class>[A-Za-z][A-Za-z0-9_\\.]*\\*?);");
+    private static Pattern IMPORT = Pattern.compile("import\\s+((?<static>static)\\s+)?(?<class>[A-Za-z][A-Za-z0-9_\\.]*\\*?);\r?");
 
     private List<IMappingFile> srgs = new ArrayList<>();
     private Map<String, String> clsSrc2Internal = new HashMap<>();
@@ -188,7 +207,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
             String newName = null;
             switch (info.getType()) {
                 case PACKAGE: // This should be OUR package reference, other packages are expressed as qualified class entries.
-                    newName = newTopLevelClassPackage; //TODO: Support remapping to no package, thus removing this entirely. Problem is this doesn't reference the "package" text itself.
+                    newName = newTopLevelClassPackage.replace('/', '.'); //TODO: Support remapping to no package, thus removing this entirely. Problem is this doesn't reference the "package" text itself.
                     break;
                 case CLASS: {
                     ClassReference ref = (ClassReference)info;

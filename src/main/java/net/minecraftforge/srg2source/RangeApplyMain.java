@@ -1,3 +1,22 @@
+/*
+ * Srg2Source
+ * Copyright (c) 2020.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.srg2source;
 
 import java.io.File;
@@ -9,18 +28,20 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+import joptsimple.ValueConverter;
+import joptsimple.util.PathConverter;
 import net.minecraftforge.srg2source.api.RangeApplierBuilder;
 
-public class RangeApplyMain
-{
-    public static void main(String[] args) throws IOException
-    {
+public class RangeApplyMain {
+    private static final ValueConverter<Path> PATH_CONVERTER = new PathConverter();
+
+    public static void main(String[] args) throws IOException {
         OptionParser parser = new OptionParser();
         OptionSpec<?> helpArg = parser.acceptsAll(a("h", "help")).forHelp();
-        OptionSpec<Path> inputArg = parser.acceptsAll(a("in", "input", "srcRoot")).withRequiredArg().ofType(Path.class).required();
-        OptionSpec<Path> outArg = parser.acceptsAll(a("out", "output", "outDir")).withRequiredArg().ofType(Path.class).required();
-        OptionSpec<Path> excArg = parser.acceptsAll(a("exc", "excFiles")).withRequiredArg().ofType(Path.class);
-        OptionSpec<Path> mappingArg = parser.acceptsAll(a("map", "srg", "srgFiles")).withRequiredArg().ofType(Path.class).required();
+        OptionSpec<Path> inputArg = parser.acceptsAll(a("in", "input", "srcRoot")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER).required();
+        OptionSpec<Path> outArg = parser.acceptsAll(a("out", "output", "outDir")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER).required();
+        OptionSpec<Path> excArg = parser.acceptsAll(a("exc", "excFiles")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER);
+        OptionSpec<Path> mappingArg = parser.acceptsAll(a("map", "srg", "srgFiles")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER).required();
         //TODO: Encoding arguments
 
         OptionSpec<File> rangeArg = parser.acceptsAll(a("rm", "range", "srcRangeMap")).withRequiredArg().ofType(File.class).required();

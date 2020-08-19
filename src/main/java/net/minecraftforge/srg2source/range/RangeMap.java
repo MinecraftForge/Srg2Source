@@ -1,3 +1,22 @@
+/*
+ * Srg2Source
+ * Copyright (c) 2020.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.srg2source.range;
 
 import java.io.BufferedReader;
@@ -22,6 +41,9 @@ import net.minecraftforge.srg2source.util.Util;
 public class RangeMap {
     private final int SPEC = 1;
 
+    //TODO: Support output types:
+    // Directory: every range file is split into it's own file. Would allow for easier navigation/debug
+    // Zip: Same as directory, but also compressed, easier debugging, and lower file size
     public static Map<String, RangeMap> readAll(InputStream stream) throws IOException {
         Map<String, RangeMap> ret = new HashMap<>();
         List<String> lines = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).lines().collect(Collectors.toList());
@@ -50,7 +72,7 @@ public class RangeMap {
                     throw new IllegalArgumentException("Invalid RangeMap. Start on line #" + x + " with no end");
 
                 if (spec == 1)
-                    ret.put(pts.get(2), new RangeMap(spec, pts.get(2), pts.get(3), lines, x + 1, end - 1));
+                    ret.put(pts.get(2), new RangeMap(spec, pts.get(2), pts.get(3), lines, x + 1, end));
                 else
                     throw new IllegalArgumentException("Invalid RangeMap line #" + x + " Unknown Spec: " + lines.get(x));
 
@@ -143,7 +165,8 @@ public class RangeMap {
                     if (pretty) {
                         writer.accept("# Start " + next.getType().name() + ' ' + next.getName() + (next.getDescriptor() == null ? "" : next.getDescriptor()));
                         writer.tabs++;
-                        stack.push(next);
+                        if (last != null)
+                            stack.push(last);
                         last = next;
                         next = segments.hasNext() ? segments.next() : null;
                     }
@@ -162,7 +185,6 @@ public class RangeMap {
         }
 
         if (pretty) {
-            last = stack.empty() ? null : stack.pop();
             while (last != null) {
                 writer.tabs--;
                 writer.accept("# End " + last.getType().name());
@@ -170,6 +192,7 @@ public class RangeMap {
             }
         }
 
+        writer.tabs = 0;
         writer.accept("end");
     }
 
