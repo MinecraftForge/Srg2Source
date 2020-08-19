@@ -33,6 +33,22 @@ public class ParameterReference extends RangeEntry {
         this.index = index;
     }
 
+    public String getOwner() {
+        return this.owner;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getDescriptor() {
+        return this.desc;
+    }
+
+    public int getIndex() {
+        return this.index;
+    }
+
     @Override
     protected String getExtraFields() {
         return "Owner: " + owner + ", Name: " + name + ", Descriptor: " + desc + ", Index: " + index;

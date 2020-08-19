@@ -3,6 +3,8 @@ package net.minecraftforge.srg2source.api;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -37,34 +39,15 @@ public class RangeApplierBuilder {
         return this;
     }
 
-    public RangeApplierBuilder output(File value) {
-        if (value.isDirectory())
-            this.output = new FolderSupplier(value);
-        else {
-            try {
-                this.output = new ZipOutputSupplier(value);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return this;
-    }
-
     public RangeApplierBuilder output(Path value) {
-        if (Files.isDirectory(value))
-            this.output = new FolderSupplier(value.toFile());
-        else {
-            try {
+        try {
+            if (Files.isDirectory(value))
+                this.output = FolderSupplier.create(value, null);
+            else
                 this.output = new ZipOutputSupplier(value);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Invalid output: " + value, e);
         }
-        return this;
-    }
-
-    public RangeApplierBuilder srg(File value) {
-        this.srgs.add(a -> a.readSrg(value));
         return this;
     }
 
@@ -73,52 +56,32 @@ public class RangeApplierBuilder {
         return this;
     }
 
-    public RangeApplierBuilder exc(File value) {
-        this.excs.add(a -> a.readExc(value));
-        return this;
-    }
 
     public RangeApplierBuilder exc(Path value) {
         this.excs.add(a -> a.readExc(value));
         return this;
     }
 
-    @SuppressWarnings("resource")
-    public RangeApplierBuilder input(File value) {
-        if (value == null || !value.exists())
-            throw new IllegalArgumentException("Invalid input value: " + value);
-
-        String filename = value.getName().toLowerCase(Locale.ENGLISH);
-        if (value.isDirectory())
-            inputs.add(new FolderSupplier(value));
-        else if (filename.endsWith(".jar") || filename.endsWith(".zip")) {
-            try {
-                inputs.add(new ZipInputSupplier(value));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else
-            throw new IllegalArgumentException("Invalid input value: " + value);
-
-        return this;
+    public RangeApplierBuilder input(Path value) {
+        return input(value, StandardCharsets.UTF_8);
     }
 
     @SuppressWarnings("resource")
-    public RangeApplierBuilder input(Path value) {
+    public RangeApplierBuilder input(Path value, Charset encoding) {
         if (value == null || !Files.exists(value))
             throw new IllegalArgumentException("Invalid input value: " + value);
 
         String filename = value.getFileName().toString().toLowerCase(Locale.ENGLISH);
-        if (Files.isDirectory(value))
-            inputs.add(new FolderSupplier(value.toFile()));
-        else if (filename.endsWith(".jar") || filename.endsWith(".zip")) {
-            try {
-                inputs.add(new ZipInputSupplier(value));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else
-            throw new IllegalArgumentException("Invalid input value: " + value);
+        try {
+            if (Files.isDirectory(value))
+                inputs.add(FolderSupplier.create(value, encoding));
+            else if (filename.endsWith(".jar") || filename.endsWith(".zip")) {
+                inputs.add(ZipInputSupplier.create(value, encoding));
+            } else
+                throw new IllegalArgumentException("Invalid input value: " + value);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Invalid input: " + value, e);
+        }
 
         return this;
     }

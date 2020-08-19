@@ -1,53 +1,44 @@
 package net.minecraftforge.srg2source.util.io;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import javax.annotation.Nullable;
 
 import net.minecraftforge.srg2source.api.InputSupplier;
 import net.minecraftforge.srg2source.util.Util;
 
 public class ZipInputSupplier implements InputSupplier {
-    protected final HashMap<String, byte[]> data = new HashMap<String, byte[]>();
-    protected String root;
-
-    public ZipInputSupplier(){}
-    public ZipInputSupplier(File zip) throws IOException {
-        readZip(zip);
-    }
-    public ZipInputSupplier(Path path) throws IOException {
-        readZip(path);
-    }
-
-    private void readZip(File zip) throws IOException {
-        root = zip.getCanonicalPath();
-        try (InputStream in = new FileInputStream(zip)) {
-            readZip(in);
-        }
-    }
-
-    private void readZip(Path zip) throws IOException {
-        root = zip.toString();
-        try (InputStream in = Files.newInputStream(zip)) {
-            readZip(in);
-        }
-    }
-
-    private void readZip(InputStream stream) throws IOException {
-        try (ZipInputStream zin = new ZipInputStream(stream)) {
+    public static ZipInputSupplier create(Path path, @Nullable Charset encoding) throws IOException {
+        Map<String, byte[]> data = new HashMap<>();
+        try (InputStream in = Files.newInputStream(path);
+             ZipInputStream zin = new ZipInputStream(in)) {
             ZipEntry entry;
             while ((entry = zin.getNextEntry()) != null)
                 data.put(entry.getName(), Util.readStream(zin));
         }
+
+        return new ZipInputSupplier(path.toString(), data, encoding);
+    }
+
+    private final String root;
+    private final Map<String, byte[]> data;
+    private final Charset encoding;
+
+    private ZipInputSupplier(String root, Map<String, byte[]> data, @Nullable Charset encoding) {
+        this.root = root;
+        this.data = data;
+        this.encoding = encoding;
     }
 
     @Override
@@ -79,5 +70,10 @@ public class ZipInputSupplier implements InputSupplier {
     @Override
     public String getRoot(String resource) {
         return root;
+    }
+
+    @Override
+    public Charset getEncoding(String resource) {
+        return encoding;
     }
 }

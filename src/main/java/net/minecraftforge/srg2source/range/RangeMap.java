@@ -42,7 +42,7 @@ public class RangeMap {
                     throw new IllegalArgumentException("Invalid RangeMap line #" + x + ": " + lines.get(x));
                 }
 
-                int end = -1;
+                int end = x + 1;
                 while (end < lines.size() && !"end".equals(stripComment(lines.get(end))))
                     end++;
 
@@ -53,7 +53,9 @@ public class RangeMap {
                     ret.put(pts.get(2), new RangeMap(spec, pts.get(2), pts.get(3), lines, x + 1, end - 1));
                 else
                     throw new IllegalArgumentException("Invalid RangeMap line #" + x + " Unknown Spec: " + lines.get(x));
-            } else if ("end".equals(line)) {
+
+                x = end;
+            } else if ("end".equals(stripComment(line))) {
                 throw new IllegalArgumentException("Invalid RangeMap. End on line #" + x + " with no start");
             }
         }
@@ -82,7 +84,7 @@ public class RangeMap {
                 throw new IllegalArgumentException("Invalid RangeMap line #" + x + ": " + lines.get(x));
 
             try {
-                String type = line.substring(0, idx - 1);
+                String type = line.substring(0, idx);
                 if (type.endsWith("def")) //Structure
                     structures.add(StructuralEntry.read(spec, type.substring(0, type.length() - 3), line.substring(idx + 1)));
                 else //entry
@@ -101,11 +103,19 @@ public class RangeMap {
     }
 
     public String getFilename() {
-        return filename;
+        return this.filename;
     }
 
     public String getHash() {
-        return hash;
+        return this.hash;
+    }
+
+    public List<RangeEntry> getEntries() {
+        return this.entries;
+    }
+
+    public List<StructuralEntry> getStructures() {
+        return this.structures;
     }
 
     public void write(PrintWriter out, boolean pretty) {

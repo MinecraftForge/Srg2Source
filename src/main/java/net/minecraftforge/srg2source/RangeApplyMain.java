@@ -2,6 +2,7 @@ package net.minecraftforge.srg2source;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import joptsimple.OptionException;
@@ -16,11 +17,13 @@ public class RangeApplyMain
     {
         OptionParser parser = new OptionParser();
         OptionSpec<?> helpArg = parser.acceptsAll(a("h", "help")).forHelp();
-        OptionSpec<File> inputArg = parser.acceptsAll(a("in", "input", "srcRoot")).withRequiredArg().ofType(File.class).required();
+        OptionSpec<Path> inputArg = parser.acceptsAll(a("in", "input", "srcRoot")).withRequiredArg().ofType(Path.class).required();
+        OptionSpec<Path> outArg = parser.acceptsAll(a("out", "output", "outDir")).withRequiredArg().ofType(Path.class).required();
+        OptionSpec<Path> excArg = parser.acceptsAll(a("exc", "excFiles")).withRequiredArg().ofType(Path.class);
+        OptionSpec<Path> mappingArg = parser.acceptsAll(a("map", "srg", "srgFiles")).withRequiredArg().ofType(Path.class).required();
+        //TODO: Encoding arguments
+
         OptionSpec<File> rangeArg = parser.acceptsAll(a("rm", "range", "srcRangeMap")).withRequiredArg().ofType(File.class).required();
-        OptionSpec<File> mappingArg = parser.acceptsAll(a("map", "srg", "srgFiles")).withRequiredArg().ofType(File.class).required();
-        OptionSpec<File> excArg = parser.acceptsAll(a("exc", "excFiles")).withRequiredArg().ofType(File.class);
-        OptionSpec<File> outArg = parser.acceptsAll(a("out", "output", "outDir")).withRequiredArg().ofType(File.class).required();
         OptionSpec<Boolean> importArg = parser.acceptsAll(a("keepImports")).withOptionalArg().ofType(Boolean.class).defaultsTo(true);
         //OptionSpec<Boolean> annArg = parser.acceptsAll(a("annotate")).withOptionalArg().ofType(Boolean.class).defaultsTo(false);
 
@@ -34,7 +37,7 @@ public class RangeApplyMain
             }
 
             File range = options.valueOf(rangeArg);
-            File output = options.valueOf(outArg);
+            Path output = options.valueOf(outArg);
             boolean keepImports = options.has(importArg) && options.valueOf(importArg);
 
             System.out.println("Range:   " + range);

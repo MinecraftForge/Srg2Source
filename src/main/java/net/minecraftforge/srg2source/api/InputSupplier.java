@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 public interface InputSupplier extends Closeable {
     /**
      * The absolute path of the root entity of the given resource, be it a file or directory.
@@ -12,6 +14,7 @@ public interface InputSupplier extends Closeable {
      * @param resource The resource to find the root for
      * @return The absolute path of the root entity of the given resource, be it a file or directory.
      */
+    @Nullable
     String getRoot(String resource);
 
     /**
@@ -20,6 +23,7 @@ public interface InputSupplier extends Closeable {
      * @param relPath Relative path separated with '/' and having no preceding slash.
      * @return InputStream for the specified path
      */
+    @Nullable
     InputStream getInput(String relPath);
 
     /**
@@ -38,6 +42,7 @@ public interface InputSupplier extends Closeable {
      * @param resouce The resource that we will be reading.
      * @return Encoding charset, or Null if unknown.
      */
+    @Nullable
     default Charset getEncoding(String resource) {
         return null;
     }

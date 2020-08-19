@@ -29,11 +29,13 @@ public abstract class RangeEntry implements IRange {
     }
 
     public static RangeEntry read(int spec, String type, String data) {
+        Type ret = null;
         try {
-            return Type.valueOf(type.toUpperCase(Locale.ENGLISH)).read(spec, data);
+            ret = Type.valueOf(type.toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown Structure Type: " + type);
+            throw new IllegalArgumentException("Unknown Structure Type: " + type.toUpperCase(Locale.ENGLISH));
         }
+        return ret.read(spec, data);
     }
 
     private final Type type;
@@ -71,9 +73,8 @@ public abstract class RangeEntry implements IRange {
     public String toString() {
         if (toString == null) {
             String extra = getExtraFields();
-            toString = "RangeEntry[type: " + type.name() +
-                    ", Start: " + start + ", Len: " + length +
-                    ", Text: \"" + text + "\"" +
+            toString = getClass().getSimpleName() + '[' + start + ':' + length +
+                    ", \"" + text + "\"" +
                     (extra == null ? "" : ", " + extra) +
                     "]";
         }

@@ -58,7 +58,7 @@ public class MinecraftTest {
     //It will make all necessary files for this test.
 
     private static final Path MCP_ROOT = Paths.get("Z:/Projects/MCP/MCPConfig/");
-    private static final String MC_VERSION = "1.16.1";
+    private static final String MC_VERSION = "1.16.2";
 
     /**
      * We have to patch the JDT to allow custom source providers. So we can process jar files instead of extracting them.
@@ -83,9 +83,9 @@ public class MinecraftTest {
 
         Class<?> cls = Class.forName(getClass().getName() + "$Redefined", true, tcl);
 
-        long legacy  = 0; //(Long)cls.getDeclaredMethod("extract", boolean.class).invoke(cls.getConstructor(String.class).newInstance(MC_VERSION), true);
+        long legacy  = (Long)cls.getDeclaredMethod("extract", boolean.class).invoke(cls.getConstructor(String.class).newInstance(MC_VERSION), true);
         long batched = (Long)cls.getDeclaredMethod("extract", boolean.class).invoke(cls.getConstructor(String.class).newInstance(MC_VERSION), false);
-        long apply   = 0; //(Long)cls.getDeclaredMethod("apply")                 .invoke(cls.getConstructor(String.class).newInstance(MC_VERSION));
+        long apply   = (Long)cls.getDeclaredMethod("apply")                 .invoke(cls.getConstructor(String.class).newInstance(MC_VERSION));
 
         System.out.println("Legacy  Time: " + legacy);
         System.out.println("Batched Time: " + batched);
@@ -132,7 +132,7 @@ public class MinecraftTest {
 
             try (PrintStream log = new PrintStream(Files.newOutputStream(root.resolve("extract_" + (forceOld ? "legacy" : "batched") + ".log")))) {
                 RangeExtractorBuilder builder = new RangeExtractorBuilder()
-                    .input(new ZipInputSupplier(src_mcp.toFile()))
+                    .input(ZipInputSupplier.create(src_mcp, StandardCharsets.UTF_8))
                     .batch(!forceOld)
                     .output(root.resolve("extract_" + (forceOld ? "legacy" : "batched") + ".txt"))
                     .logger(log);
@@ -161,11 +161,11 @@ public class MinecraftTest {
 
             try (PrintStream log = new PrintStream(Files.newOutputStream(root.resolve("apply.log")))) {
                 RangeApplierBuilder builder = new RangeApplierBuilder()
-                    .input(new ZipInputSupplier(src_mcp.toFile()))
+                    .input(ZipInputSupplier.create(src_mcp, StandardCharsets.UTF_8))
                     .output(root.resolve("apply_output.jar"))
                     .range(root.resolve("extract_batched.txt"))
-                    .srg(mcp_to_srg.toFile())
-                    .exc(exc.toFile())
+                    .srg(mcp_to_srg)
+                    .exc(exc)
                     .keepImports()
                     .annotate(false)
                     .logger(log);
@@ -174,8 +174,8 @@ public class MinecraftTest {
                 builder.build().run();
                 long duration = System.currentTimeMillis() - startTime;
 
-                try (ZipInputSupplier clean = new ZipInputSupplier(src_mcp);
-                     ZipInputSupplier zout = new ZipInputSupplier(root.resolve("apply_output.jar"))) {
+                try (ZipInputSupplier clean = ZipInputSupplier.create(src_mcp , StandardCharsets.UTF_8);
+                     ZipInputSupplier zout = ZipInputSupplier.create(root.resolve("apply_output.jar"), StandardCharsets.UTF_8)) {
                     for (String path : clean.gatherAll(".java")) {
                         String c = new String(Util.readStream(clean.getInput(path)), StandardCharsets.UTF_8);
                         String o = new String(Util.readStream(clean.getInput(path)), StandardCharsets.UTF_8);
@@ -220,6 +220,8 @@ public class MinecraftTest {
             return libs;
         }
 
+        //So, currently there is no real way to identify lambda arguments... so we need to figure that out.
+        //For the time being we need to figure out how to NOT remap lambda arguments so the test will pass..
         private String makeName(String srg) {
             String[] pts = srg.split("_");
             if ("func".equals(pts[0]))

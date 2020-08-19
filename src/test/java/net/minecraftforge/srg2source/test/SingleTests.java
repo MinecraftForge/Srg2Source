@@ -2,7 +2,6 @@ package net.minecraftforge.srg2source.test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -11,6 +10,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,43 +37,43 @@ public class SingleTests {
     //@Test public void testCache()          { testClass("GenericClasses"); }
     //@Test public void testWhiteSpace()     { testClass("Whitespace"    ); }
 
-    private File getRoot() {
+    private Path getRoot() {
         URL url = this.getClass().getResource("/test.marker");
         Assert.assertNotNull("Could not find test.marker", url);
         try {
-            return new File(url.toURI()).getParentFile();
+            return new File(url.toURI()).getParentFile().toPath();
         } catch (URISyntaxException e) {
-            return new File(url.getPath()).getParentFile();
+            return new File(url.getPath()).getParentFile().toPath();
         }
     }
 
     public void testClass(final String name) {
-        final File root = new File(getRoot(), name);
+        final Path root = getRoot().resolve(name);
 
-        Assert.assertTrue("Unknown test: " + root.getAbsolutePath(), root.exists());
+        Assert.assertTrue("Unknown test: " + root.toAbsolutePath(), Files.exists(root));
 
-        List<File> libraries = gatherLibraries(root, new File(getRoot(), "libraries"));
+        List<Path> libraries = gatherLibraries(root, getRoot().resolve("libraries"));
 
-        testExtract(new File(root, "original"), new File(root, "original.range"), libraries);
+        testExtract(root.resolve("original"), root.resolve("original.range"), libraries);
     }
 
-    private List<File> gatherLibraries(File root, File libs) {
-        final File info = new File(root, "libs.txt");
-        if (!info.exists())
+    private List<Path> gatherLibraries(Path root, Path libs) {
+        final Path info = root.resolve("libs.txt");
+        if (!Files.exists(info))
             return Collections.emptyList();
         try {
-            List<File> ret = Files.lines(info.toPath()).map(l -> new File(libs, l)).collect(Collectors.toList());
-            for (File f : ret) {
-                if (!f.exists())
+            List<Path> ret = Files.lines(info).map(l -> libs.resolve(l)).collect(Collectors.toList());
+            for (Path f : ret) {
+                if (!Files.exists(f))
                     throw new IllegalStateException("Missing Library: " + f);
             }
             return ret;
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to read " + info.getAbsolutePath(), e);
+            throw new IllegalStateException("Failed to read " + info.toAbsolutePath(), e);
         }
     }
 
-    private void testExtract(File src, File range, List<File> libs) {
+    private void testExtract(Path src, Path range, List<Path> libs) {
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         ByteArrayOutputStream logs = new ByteArrayOutputStream();
 
@@ -89,7 +89,7 @@ public class SingleTests {
         String log = logs.toString();
 
         Assert.assertTrue("Failed to do work!", worked);
-        if (range.exists())
+        if (Files.exists(range))
             Assert.assertEquals(getFileContents(range), data.toString());
 
         //testApply(resource, clsName);
@@ -132,23 +132,23 @@ public class SingleTests {
     }
     */
 
-    private String getFileContents(File file) {
+    private String getFileContents(Path file) {
         try {
             return new String(readFile(file), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to read " + file.getAbsolutePath(), e);
+            throw new IllegalStateException("Failed to read " + file.toAbsolutePath(), e);
         }
     }
 
-    private static byte[] readFile(File input) throws IOException {
-        try (InputStream stream = new FileInputStream(input)) {
+    private static byte[] readFile(Path input) throws IOException {
+        try (InputStream stream = Files.newInputStream(input)) {
             return Util.readStream(stream);
         }
     }
 
     private static class TestFolderSupplier extends FolderSupplier {
-        public TestFolderSupplier(File root) {
-            super(root);
+        public TestFolderSupplier(Path root) {
+            super(root, StandardCharsets.UTF_8);
         }
 
         @Override

@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import javax.annotation.Nullable;
+
 import net.minecraftforge.srg2source.extract.RangeExtractor;
 import net.minecraftforge.srg2source.util.io.ChainedInputSupplier;
 import net.minecraftforge.srg2source.util.io.FolderSupplier;
@@ -121,22 +123,31 @@ public class RangeExtractorBuilder {
         return this;
     }
 
+
+    public RangeExtractorBuilder input(Path value) {
+        return input(value, StandardCharsets.UTF_8);
+    }
+
     @SuppressWarnings("resource")
-    public RangeExtractorBuilder input(File value) {
-        if (value == null || !value.exists())
+    public RangeExtractorBuilder input(Path value, @Nullable Charset encoding) {
+        if (value == null || !Files.exists(value))
             throw new IllegalArgumentException("Invalid input value: " + value);
 
-        String filename = value.getName().toLowerCase(Locale.ENGLISH);
-        if (value.isDirectory())
-            inputs.add(new FolderSupplier(value));
-        else if (filename.endsWith(".jar") || filename.endsWith(".zip")) {
-            try {
-                inputs.add(new ZipInputSupplier(value));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else
-            throw new IllegalArgumentException("Invalid input value: " + value);
+        String filename = value.getFileName().toString().toLowerCase(Locale.ENGLISH);
+        try {
+            if (Files.isDirectory(value))
+                inputs.add(FolderSupplier.create(value, encoding));
+            else if (filename.endsWith(".jar") || filename.endsWith(".zip")) {
+                try {
+                    inputs.add(ZipInputSupplier.create(value, encoding));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else
+                throw new IllegalArgumentException("Invalid input value: " + value);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Invalid input: " + value, e);
+        }
 
         return this;
     }

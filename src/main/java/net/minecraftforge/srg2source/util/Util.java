@@ -14,48 +14,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Util
-{
-    /**
-     * Converts names seperated with '.' to seperated with '/'
-     */
-    public static String sourceName2Internal(String sourceName)
-    {
-        return sourceName2Internal(sourceName, true);
-    }
-
-    /**
-     * Converts names seperated with '.' to seperated with '/'
-     */
-    public static String sourceName2Internal(String sourceName, boolean inner)
-    {
-        if (sourceName == null)
-            return null;
-        else if (inner)
-            return sourceName.replace('.', '/').replace('$', '/');
-        else
-            return sourceName.replace('.', '/');
-    }
-
+public class Util {
     /**
      * Get the top-level class required to be declared in a file by its given name, if in the main tree
      * This is an internal name, including slashes for packages components
      */
-    public static String getTopLevelClassForFilename(String filename)
-    {
-        //withoutExt, ext = os.path.splitext(filename)
-
-        //String noExt = Files.getNameWithoutExtension(filename);
-        //noExt = noExt.replace('\\', '/'); // ya never know windows...
-
-        // expect project-relative pathname, standard Maven structure
-        //assert parts[0] == "src", "unexpected filename '%s', not in src" % (filename,)
-        //assert parts[1] in ("main", "test"), "unexpected filename '%s', not in src/{test,main}" % (filename,)
-        //assert parts[2] == "java", "unexpected filename '%s', not in src/{test,main}/java" % (filename,)
-
-        // return "/".join(parts[0:])  # "internal" fully-qualified class name, separated by /
-
-        //return noExt;
+    public static String getTopLevelClassForFilename(String filename) {
         filename = filename.replace('\\', '/');
         if (filename.startsWith("/"))
             filename = filename.substring(1);
@@ -118,12 +82,10 @@ public class Util
         for (int x = 0; x < count; x++) {
             if (data.charAt(0) != '"') {
                 int idx = data.indexOf(' ');
-                if (idx == -1) {
-                    ret.add(data);
+                if (idx == -1)
                     break;
-                }
-                ret.add(data.substring(0, idx -1));
-                data = data.substring(idx);
+                ret.add(data.substring(0, idx));
+                data = data.substring(idx + 1);
             } else {
                 int end = 1;
                 int idx = data.indexOf('"', 1);

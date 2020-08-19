@@ -7,8 +7,8 @@ import net.minecraftforge.srg2source.util.Util;
 
 public class ClassReference extends RangeEntry {
 
-    public static ClassReference create(int start, int length, String text, String internal, boolean qualified) {
-        return new ClassReference(start, length, text, internal, qualified);
+    public static ClassReference create(int start, int length, String text, String className, boolean qualified) {
+        return new ClassReference(start, length, text, className, qualified);
     }
 
     static ClassReference read(int spec, int start, int length, String text, String data) {
@@ -18,22 +18,30 @@ public class ClassReference extends RangeEntry {
         return new ClassReference(start, length, text, pts.get(1), Boolean.parseBoolean(pts.get(0)));
     }
 
-    private final String internal;
+    private final String className;
     private final boolean qualified;
 
-    protected ClassReference(int start, int length, String text, String internal, boolean qualified) {
+    protected ClassReference(int start, int length, String text, String className, boolean qualified) {
         super(RangeEntry.Type.CLASS, start, length, text);
-        this.internal = internal;
+        this.className = className;
         this.qualified = qualified;
+    }
+
+    public String getClassName() {
+        return this.className;
+    }
+
+    public boolean isQualified() {
+        return this.qualified;
     }
 
     @Override
     protected String getExtraFields() {
-        return "Internal: " + internal + ", Qualified: " + qualified;
+        return "Internal: " + className + ", Qualified: " + qualified;
     }
 
     @Override
     protected void writeInternal(Consumer<String> out) {
-        out.accept(Util.quote(Boolean.toString(qualified), internal));
+        out.accept(Util.quote(Boolean.toString(qualified), className));
     }
 }

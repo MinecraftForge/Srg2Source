@@ -1,47 +1,63 @@
 package net.minecraftforge.srg2source.util.io;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 import net.minecraftforge.srg2source.api.InputSupplier;
 import net.minecraftforge.srg2source.api.OutputSupplier;
 
 public class FolderSupplier implements InputSupplier, OutputSupplier {
-    protected final File root;
+    public static FolderSupplier create(Path root, @Nullable Charset encoding) throws IOException {
+        if (!Files.exists(root))
+            Files.createDirectories(root);
+        return new FolderSupplier(root, encoding);
+    }
 
-    public FolderSupplier(File root) {
-        if (!root.exists())
-            root.mkdirs();
+    private final Path root;
+    private final String sroot;
+    @Nullable
+    private final Charset encoding;
+
+    protected FolderSupplier(Path root, @Nullable Charset encoding) {
         this.root = root;
+        this.sroot = root.toAbsolutePath().toString();
+        this.encoding = encoding;
     }
 
     @Override
+    @Nullable
     public OutputStream getOutput(String relPath) {
         try {
-            File out = new File(root, relPath);
-            if (!out.exists()) {
-                out.getParentFile().mkdirs();
-                out.createNewFile();
+            Path target = root.resolve(relPath);
+            if (!Files.exists(target)) {
+                Path parent = target.getParent();
+                if (!Files.exists(parent))
+                    Files.createDirectories(parent);
             }
-            return new FileOutputStream(new File(root, relPath));
+            return Files.newOutputStream(target, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
             return null;
         }
     }
 
     @Override
+    @Nullable
     public InputStream getInput(String relPath) {
         try {
-            return new FileInputStream(new File(root, relPath));
+            Path target = root.resolve(relPath);
+            if (!Files.exists(target))
+                return null;
+            return Files.newInputStream(target, StandardOpenOption.READ);
         } catch (IOException e) {
             return null;
         }
@@ -49,10 +65,9 @@ public class FolderSupplier implements InputSupplier, OutputSupplier {
 
     @Override
     public List<String> gatherAll(String endFilter) {
-        final Path proot = root.toPath();
         try {
-            return Files.walk(proot).filter(Files::isRegularFile)
-                    .map(proot::relativize).map(Path::toString)
+            return Files.walk(root).filter(Files::isRegularFile)
+                    .map(root::relativize).map(Path::toString)
                     .filter(p -> p.endsWith(endFilter))
                     .sorted().collect(Collectors.toList());
         } catch (IOException e) {
@@ -67,7 +82,14 @@ public class FolderSupplier implements InputSupplier, OutputSupplier {
     }
 
     @Override
+    @Nullable
     public String getRoot(String resource) {
-        return root.getAbsolutePath();
+        return sroot;
+    }
+
+    @Override
+    @Nullable
+    public Charset getEncoding(String resource) {
+        return encoding;
     }
 }

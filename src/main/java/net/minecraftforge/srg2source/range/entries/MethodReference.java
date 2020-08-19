@@ -29,6 +29,18 @@ public class MethodReference extends RangeEntry {
         this.desc = desc;
     }
 
+    public String getOwner() {
+        return this.owner;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getDescriptor() {
+        return this.desc;
+    }
+
     @Override
     protected String getExtraFields() {
         return "Owner: " + owner + ", Name: " + name + ", Descriptor: " + desc;

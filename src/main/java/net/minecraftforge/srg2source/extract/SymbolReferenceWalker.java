@@ -105,17 +105,19 @@ public class SymbolReferenceWalker {
 
     private void trackParameters(String name, String desc, IMethodBinding mtd, List<VariableDeclaration> params) {
         ITypeBinding[] args = mtd.getParameterTypes();
-        int index = Modifier.isStatic(mtd.getModifiers()) ? 0 : 1;
+        int index = 0; //Modifier.isStatic(mtd.getModifiers()) ? 0 : 1;
         for (int x = 0; x < args.length; x++) {
             String key = params.get(x).getName().resolveBinding().getKey();
             parameterInfo.put(key, new ParamInfo(className, name, desc, index));
 
-            index++;
+            index++; // We output the arguments in source indexs. Not Bytecode indexs. Because the applier has no idea if a method is static/synthetic/whatever.
+            /*
             if (args[x].isPrimitive()) {
                 char chr = args[x].getBinaryName().charAt(0); //There has got to be a better way...
                 if (chr == 'D' || chr == 'L')
                     index++;
             }
+            */
         }
     }
 

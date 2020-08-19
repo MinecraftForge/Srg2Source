@@ -2,6 +2,7 @@ package net.minecraftforge.srg2source;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,9 +31,10 @@ public class RangeExtractMain {
     public static void main(String[] args) throws IOException {
         OptionParser parser = new OptionParser();
         OptionSpec<File> libArg = parser.acceptsAll(Arrays.asList("e", "lib")).withRequiredArg().ofType(File.class);
-        OptionSpec<File> inputArg = parser.acceptsAll(Arrays.asList("in", "input")).withRequiredArg().ofType(File.class).required();
-        OptionSpec<File> outputArg = parser.acceptsAll(Arrays.asList("out", "output")).withRequiredArg().ofType(File.class).required();
+        OptionSpec<Path> inputArg = parser.acceptsAll(Arrays.asList("in", "input")).withRequiredArg().ofType(Path.class).required();
+        OptionSpec<Path> outputArg = parser.acceptsAll(Arrays.asList("out", "output")).withRequiredArg().ofType(Path.class).required();
         OptionSpec<Boolean> batch = parser.accepts("batch").withOptionalArg().ofType(Boolean.class).defaultsTo(true);
+        //TODO: Encoding argument
         OptionSpec<SourceVersion> jversionArg = parser.acceptsAll(Arrays.asList("sc", "source-compatibility")).withRequiredArg().ofType(SourceVersion.class).defaultsTo(SourceVersion.JAVA_1_8)
             .withValuesConvertedBy(new ValueConverter<SourceVersion>() {
                 @Override
