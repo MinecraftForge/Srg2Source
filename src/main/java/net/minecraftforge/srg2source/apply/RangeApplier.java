@@ -54,7 +54,7 @@ import net.minecraftforge.srgutils.IMappingFile;
 
 @SuppressWarnings("unused")
 public class RangeApplier extends ConfLogger<RangeApplier> {
-    private static Pattern IMPORT = Pattern.compile("import\\s+((?<static>static)\\s+)?(?<class>[A-Za-z][A-Za-z0-9_\\.]*\\*?);\r?");
+    private static Pattern IMPORT = Pattern.compile("import\\s+((?<static>static)\\s+)?(?<class>[A-Za-z][A-Za-z0-9_\\.]*\\*?);.*");
 
     private List<IMappingFile> srgs = new ArrayList<>();
     private Map<String, String> clsSrc2Internal = new HashMap<>();

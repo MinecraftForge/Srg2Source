@@ -151,8 +151,10 @@ public class RangeMap {
         StructuralEntry next = segments.hasNext() ? segments.next() : null;
 
         for (RangeEntry entry : entries) {
-            if (last != null) {
-                if (pretty && entry.getStart() >= end(last)) {
+            if (pretty) {
+                while (last != null) {
+                    if (entry.getStart() < end(last))
+                        break;
                     writer.tabs--;
                     writer.accept("# End " + last.getType().name());
                     last = stack.empty() ? null : stack.pop();
@@ -207,7 +209,7 @@ public class RangeMap {
         public void accept(String line) {
             for (int x = 0; x < tabs; x++)
                 out.write("  ");
-            out.println(line);
+            out.print(line + '\n'); //Don't use println, as we want consistent line endings.
         }
     }
 

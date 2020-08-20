@@ -1,6 +1,11 @@
 @Deprecated
 @Generated("TEST!")
-package net.minecraft.core;
+package not_test;
 
 import java.lang.Deprecated;
 import javax.annotation.Generated;
+
+
+
+
+

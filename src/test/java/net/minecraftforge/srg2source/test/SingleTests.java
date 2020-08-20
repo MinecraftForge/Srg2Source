@@ -28,17 +28,24 @@ import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
+
+import net.minecraftforge.srg2source.api.RangeApplierBuilder;
 import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
 import net.minecraftforge.srg2source.api.SourceVersion;
+import net.minecraftforge.srg2source.apply.RangeApplier;
 import net.minecraftforge.srg2source.extract.RangeExtractor;
 import net.minecraftforge.srg2source.util.Util;
 import net.minecraftforge.srg2source.util.io.FolderSupplier;
@@ -46,15 +53,15 @@ import net.minecraftforge.srg2source.util.io.FolderSupplier;
 public class SingleTests {
 
     //@Test public void testLambda()         { testClass("Lambda");         }
-    //@Test public void testGenerics()       { testClass("GenericClasses"); }
-    //@Test public void testAnonClass()      { testClass("AnonClass"     ); }
-    //@Test public void testInnerClass()     { testClass("InnerClass"    ); }
-    //@Test public void testLocalClass()     { testClass("LocalClass"    ); }
-    //@Test public void testImportSpaces()   { testClass("ImportSpaces"  ); }
+    @Test public void testGenerics()       { testClass("GenericClasses"); }
+    @Test public void testAnonClass()      { testClass("AnonClass"     ); }
+    @Test public void testInnerClass()     { testClass("InnerClass"    ); }
+    @Test public void testLocalClass()     { testClass("LocalClass"    ); }
+    @Test public void testImportSpaces()   { testClass("ImportSpaces"  ); }
     @Test public void testNestedGenerics() { testClass("NestedGenerics"); }
-    //@Test public void testPackageInfo()    { testClass("PackageInfo"   ); }
+    @Test public void testPackageInfo()    { testClass("PackageInfo"   ); }
     //@Test public void testCache()          { testClass("GenericClasses"); }
-    //@Test public void testWhiteSpace()     { testClass("Whitespace"    ); }
+    @Test public void testWhiteSpace()     { testClass("Whitespace"    ); }
 
     private Path getRoot() {
         URL url = this.getClass().getResource("/test.marker");
@@ -73,7 +80,14 @@ public class SingleTests {
 
         List<Path> libraries = gatherLibraries(root, getRoot().resolve("libraries"));
 
-        testExtract(root.resolve("original"), root.resolve("original.range"), libraries);
+        Path original = root.resolve("original");
+        Path mapped = root.resolve("mapped");
+        testExtract(original, root.resolve("original.range"), libraries);
+        if (Files.exists(mapped)) {
+            Path range = root.resolve("mapped.range");
+            testExtract(mapped, range, libraries);
+            testApply(original, range, mapped, root.resolve("mapped.tsrg"));
+        }
     }
 
     private List<Path> gatherLibraries(Path root, Path libs) {
@@ -108,48 +122,42 @@ public class SingleTests {
         String log = logs.toString();
 
         Assert.assertTrue("Failed to do work!", worked);
-        if (Files.exists(range))
-            Assert.assertEquals(getFileContents(range), data.toString());
-
-        //testApply(resource, clsName);
+        Assert.assertEquals(getFileContents(range), data.toString());
     }
 
-    /*
-    private void testApply(final String resource, final String clsName) throws IOException {
-        File srg = null;
-        File map = null;
-        try {
-            URL url = getClass().getResource("/" + resource + "_srg.txt");
-            if (url == null)
-                return;
-            srg = new File(url.toURI());
-        } catch (URISyntaxException e) {
-            throw new FileNotFoundException("/" + resource + "_srg.txt");
+    private void testApply(Path original, Path range, Path mapped, Path srg) {
+        try (FileSystem imfs = Jimfs.newFileSystem(Configuration.unix())) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            Path out = imfs.getPath("/");
+            RangeApplier applier = new RangeApplierBuilder()
+                .logger(new PrintStream(bos))
+                .input(new TestFolderSupplier(mapped))
+                .output(out)
+                .annotate(true)
+                .range(range)
+                .build();
+
+            if (Files.exists(srg))
+                applier.readSrg(srg);
+
+            applier.run();
+
+            compareDirs(original, out);
+            //Compare log?
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        try {
-            map = new File(getClass().getResource("/" + resource + "_ret.txt").toURI());
-        } catch (URISyntaxException e) {
-            throw new FileNotFoundException("/" + resource + "_ret.txt");
-        }
-        if (!srg.exists())
-            return;
-
-        MemoryOutputSupplier out = new MemoryOutputSupplier();
-        RangeApplier applier = new RangeApplier();
-        applier.readSrg(srg);
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        applier.setLogger(new PrintStream(bos));
-        applier.setInput(new SimpleInputSupplier(resource, clsName));
-        applier.setOutput(out);
-        applier.annotate(true);
-        applier.readRangeMap(map);
-
-        applier.run();
-        Assert.assertEquals(getFileContents(resource, "_maped.txt"), out.get(0));
-        Assert.assertEquals(getFileContents(resource, "_maped_ret.txt"), bos.toString().replaceAll("\r?\n", "\n"));
     }
-    */
+
+    private void compareDirs(Path expected, Path actual) throws IOException {
+        Set<String> lstExpected = Files.walk(expected).filter(Files::isRegularFile).map(p -> expected.relativize(p).toString().replace('\\', '/').replace(".txt", ".java")).collect(Collectors.toSet());
+        Set<String> lstActual = Files.walk(actual).filter(Files::isRegularFile).map(p -> actual.relativize(p).toString().replace('\\', '/')).collect(Collectors.toSet());
+        Assert.assertEquals("File listing differ", lstExpected, lstActual);
+        Files.walk(actual).filter(Files::isRegularFile).forEach(p -> {
+            String relative = actual.relativize(p).toString().replace(".java", ".txt");
+            Assert.assertEquals("Files differ: " + relative, getFileContents(expected.resolve(relative)), getFileContents(p));
+        });
+    }
 
     private String getFileContents(Path file) {
         try {

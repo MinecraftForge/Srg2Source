@@ -1,0 +1,44 @@
+start 1 GenericClasses.java 95d478a9e8ed24c5ab28ca4d7ca384d1
+classdef 68 488 GenericClasses
+# Start CLASS GenericClasses
+  class 81 14 GenericClasses false GenericClasses
+  interfacedef 102 66 GenericClasses$IFoo
+  # Start INTERFACE GenericClasses$IFoo
+    class 127 4 IFoo false GenericClasses$IFoo
+    methoddef 149 13 bar (Ljava/lang/Object;)Ljava/lang/Object;
+    # Start METHOD bar(Ljava/lang/Object;)Ljava/lang/Object;
+      method 151 3 bar GenericClasses$IFoo bar (Ljava/lang/Object;)Ljava/lang/Object;
+      parameter 157 3 arg GenericClasses$IFoo bar (Ljava/lang/Object;)Ljava/lang/Object; 0
+    # End METHOD
+  # End INTERFACE
+  methoddef 174 114 func (Ljava/util/Collection;)Ljava/util/concurrent/Callable;
+  # Start METHOD func(Ljava/util/Collection;)Ljava/util/concurrent/Callable;
+    class 192 8 Callable false java/util/concurrent/Callable
+    method 207 4 func GenericClasses func (Ljava/util/Collection;)Ljava/util/concurrent/Callable;
+    class 212 10 Collection false java/util/Collection
+    parameter 226 3 par GenericClasses func (Ljava/util/Collection;)Ljava/util/concurrent/Callable; 0
+    parameter 256 3 par GenericClasses func (Ljava/util/Collection;)Ljava/util/concurrent/Callable; 0
+  # End METHOD
+  methoddef 294 260 main ()V
+  # Start METHOD main()V
+    method 313 4 main GenericClasses main ()V
+    class 334 4 IFoo false GenericClasses$IFoo
+    class 339 6 String false java/lang/String
+    class 358 4 IFoo false GenericClasses$IFoo
+    class 363 6 String false java/lang/String
+    classdef 381 110 GenericClasses$1
+    # Start CLASS GenericClasses$1
+      class 402 6 String false java/lang/String
+      methoddef 395 86 bar (Ljava/lang/String;)Ljava/lang/String;
+      # Start METHOD bar(Ljava/lang/String;)Ljava/lang/String;
+        method 409 3 bar GenericClasses$1 bar (Ljava/lang/String;)Ljava/lang/String;
+        class 413 6 String false java/lang/String
+        parameter 420 3 arg GenericClasses$1 bar (Ljava/lang/String;)Ljava/lang/String; 0
+      # End METHOD
+    # End CLASS
+    method 506 3 bar GenericClasses$IFoo bar (Ljava/lang/Object;)Ljava/lang/Object;
+    class 527 4 IFoo false GenericClasses$IFoo
+    method 538 3 bar GenericClasses$IFoo bar (Ljava/lang/Object;)Ljava/lang/Object;
+  # End METHOD
+# End CLASS
+end

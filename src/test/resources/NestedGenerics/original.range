@@ -1,0 +1,28 @@
+start 1 Test.java ca10928048abf6b283e8a5320fa3dd0f
+classdef 102 194 Test
+# Start CLASS Test
+  class 115 4 Test false Test
+  methoddef 124 169 main ([Ljava/lang/String;)V
+  # Start METHOD main([Ljava/lang/String;)V
+    method 143 4 main Test main ([Ljava/lang/String;)V
+    class 148 6 String false java/lang/String
+    parameter 157 4 args Test main ([Ljava/lang/String;)V 0
+    class 168 3 Map false java/util/Map
+    class 172 4 Test false Test
+    class 178 3 Set false java/util/Set
+    class 182 6 String false java/lang/String
+    class 201 7 HashMap false java/util/HashMap
+    method 221 15 computeIfAbsent java/util/Map computeIfAbsent (Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;
+    class 241 4 Test false Test
+    parameter 249 1 k Test lambda$0 (LTest;)Ljava/util/Set; 0
+    methoddef 249 20 lambda[apply] (LTest;)Ljava/util/Set;
+    # Start METHOD lambda[apply](LTest;)Ljava/util/Set;
+      class 258 7 HashSet false java/util/HashSet
+    # End METHOD
+    methoddef 249 20 apply (LTest;)Ljava/util/Set;
+    # Start METHOD apply(LTest;)Ljava/util/Set;
+      method 271 3 add java/util/Set add (Ljava/lang/Object;)Z
+    # End METHOD
+  # End METHOD
+# End CLASS
+end

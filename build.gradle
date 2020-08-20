@@ -47,7 +47,8 @@ configurations {
 }
 
 dependencies {
-    testCompile "junit:junit:4.12"
+    testCompile 'junit:junit:4.12'
+	testCompile 'com.google.jimfs:jimfs:1.1'
 
     compile 'org.ow2.asm:asm:6.2.1'
     compile 'org.ow2.asm:asm-tree:6.2.1'

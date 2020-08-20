@@ -1,6 +1,6 @@
 @Deprecated
 @Generated("TEST!")
-package core;
+package test;
 
 import java.lang.Deprecated;
 import javax.annotation.Generated;

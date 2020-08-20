@@ -1,0 +1,5 @@
+start 1 test\package-info.java ba4c9c7968a298823b3132109eeaefdf
+class 1 10 Deprecated false java/lang/Deprecated
+class 13 9 Generated false javax/annotation/Generated
+package 40 4 test
+end

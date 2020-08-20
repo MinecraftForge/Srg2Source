@@ -1,0 +1,38 @@
+start 1 InnerClass.java 2a9eace10eeacad626a7062f74792b31
+classdef 0 467 InnerClass
+# Start CLASS InnerClass
+  class 13 10 InnerClass false InnerClass
+  classdef 30 347 InnerClass$Inner
+  # Start CLASS InnerClass$Inner
+    class 51 5 Inner false InnerClass$Inner
+    classdef 71 183 InnerClass$Inner$Nested
+    # Start CLASS InnerClass$Inner$Nested
+      class 92 6 Nested false InnerClass$Inner$Nested
+      class 129 6 String false java/lang/String
+      field 136 5 value InnerClass$Inner$Nested
+      methoddef 162 82 getValue ()Ljava/lang/String;
+      # Start METHOD getValue()Ljava/lang/String;
+        class 169 6 String false java/lang/String
+        method 176 8 getValue InnerClass$Inner$Nested getValue ()Ljava/lang/String;
+        field 224 5 value InnerClass$Inner$Nested
+      # End METHOD
+    # End CLASS
+    class 272 6 String false java/lang/String
+    field 279 5 value InnerClass$Inner
+    methoddef 301 70 getValue ()Ljava/lang/String;
+    # Start METHOD getValue()Ljava/lang/String;
+      class 308 6 String false java/lang/String
+      method 315 8 getValue InnerClass$Inner getValue ()Ljava/lang/String;
+      field 355 5 value InnerClass$Inner
+    # End METHOD
+  # End CLASS
+  methoddef 383 82 main ([Ljava/lang/String;)V
+  # Start METHOD main([Ljava/lang/String;)V
+    method 402 4 main InnerClass main ([Ljava/lang/String;)V
+    class 407 6 String false java/lang/String
+    parameter 416 4 args InnerClass main ([Ljava/lang/String;)V 0
+    class 440 5 Inner false InnerClass$Inner
+    method 448 8 getValue InnerClass$Inner getValue ()Ljava/lang/String;
+  # End METHOD
+# End CLASS
+end

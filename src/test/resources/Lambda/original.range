@@ -1,0 +1,17 @@
+start 1 Lambda.java 4c05901959835b10dc5618de02e3cd87
+classdef 0 348 Lambda
+# Start CLASS Lambda
+  class 13 6 Lambda false Lambda
+  class 40 8 Runnable false java/lang/Runnable
+  field 49 10 workerTask Lambda
+  methoddef 62 283 lambda[run] ()V
+  # Start METHOD lambda[run]()V
+    class 159 5 Error false java/lang/Error
+    methoddef 62 283 run ()V
+    # Start METHOD run()V
+      This should have a reference to Error
+      class 301 9 Throwable false java/lang/Throwable
+    # End METHOD
+  # End METHOD
+# End CLASS
+end

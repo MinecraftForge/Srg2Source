@@ -1,0 +1,43 @@
+start 1 AnonClass.java e36cb4b5ad527aba7e7dc8754a86a095
+classdef 0 488 AnonClass
+# Start CLASS AnonClass
+  class 13 9 AnonClass false AnonClass
+  classdef 29 220 AnonClass$Nested
+  # Start CLASS AnonClass$Nested
+    class 42 6 Nested false AnonClass$Nested
+    class 71 6 Object false java/lang/Object
+    field 78 4 test AnonClass$Nested
+    class 89 6 Object false java/lang/Object
+    classdef 106 136 AnonClass$Nested$1
+    # Start CLASS AnonClass$Nested$1
+      class 128 6 String false java/lang/String
+      field 135 5 value AnonClass$Nested$1
+      methoddef 161 71 getValue ()Ljava/lang/String;
+      # Start METHOD getValue()Ljava/lang/String;
+        class 169 6 String false java/lang/String
+        method 176 8 getValue AnonClass$Nested$1 getValue ()Ljava/lang/String;
+        field 212 5 value AnonClass$Nested$1
+      # End METHOD
+    # End CLASS
+  # End CLASS
+  methoddef 255 231 main ([Ljava/lang/String;)V
+  # Start METHOD main([Ljava/lang/String;)V
+    method 274 4 main AnonClass main ([Ljava/lang/String;)V
+    class 279 6 String false java/lang/String
+    parameter 288 4 args AnonClass main ([Ljava/lang/String;)V 0
+    class 308 6 Object false java/lang/Object
+    class 326 6 Object false java/lang/Object
+    classdef 343 136 AnonClass$1
+    # Start CLASS AnonClass$1
+      class 365 6 String false java/lang/String
+      field 372 5 value AnonClass$1
+      methoddef 398 71 getValue ()Ljava/lang/String;
+      # Start METHOD getValue()Ljava/lang/String;
+        class 406 6 String false java/lang/String
+        method 413 8 getValue AnonClass$1 getValue ()Ljava/lang/String;
+        field 449 5 value AnonClass$1
+      # End METHOD
+    # End CLASS
+  # End METHOD
+# End CLASS
+end

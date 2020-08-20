@@ -1,0 +1,80 @@
+start 1 LocalClass.java b16cc963b787387f46824bf70a5ed60e
+classdef 0 996 LocalClass
+# Start CLASS LocalClass
+  class 13 10 LocalClass false LocalClass
+  classdef 30 287 LocalClass$Nested
+  # Start CLASS LocalClass$Nested
+    class 43 6 Nested false LocalClass$Nested
+    methoddef 64 247 test ()V
+    # Start METHOD test()V
+      method 77 4 test LocalClass$Nested test ()V
+      classdef 106 195 LocalClass$Nested$1Local
+      # Start CLASS LocalClass$Nested$1Local
+        class 112 5 Local false LocalClass$Nested$1Local
+        class 156 6 String false java/lang/String
+        field 163 5 value LocalClass$Nested$1Local
+        methoddef 193 94 getValue ()Ljava/lang/String;
+        # Start METHOD getValue()Ljava/lang/String;
+          class 200 6 String false java/lang/String
+          method 207 8 getValue LocalClass$Nested$1Local getValue ()Ljava/lang/String;
+          field 263 5 value LocalClass$Nested$1Local
+        # End METHOD
+      # End CLASS
+    # End METHOD
+  # End CLASS
+  methoddef 323 239 funA ()V
+  # Start METHOD funA()V
+    method 335 4 funA LocalClass funA ()V
+    classdef 356 167 LocalClass$1Local
+    # Start CLASS LocalClass$1Local
+      class 362 5 Local false LocalClass$1Local
+      class 398 6 String false java/lang/String
+      field 405 5 value LocalClass$1Local
+      methoddef 431 82 getValue ()Ljava/lang/String;
+      # Start METHOD getValue()Ljava/lang/String;
+        class 438 6 String false java/lang/String
+        method 445 8 getValue LocalClass$1Local getValue ()Ljava/lang/String;
+        field 493 5 value LocalClass$1Local
+      # End METHOD
+    # End CLASS
+    class 537 5 Local false LocalClass$1Local
+    method 545 8 getValue LocalClass$1Local getValue ()Ljava/lang/String;
+  # End METHOD
+  methoddef 568 239 funB ()V
+  # Start METHOD funB()V
+    method 580 4 funB LocalClass funB ()V
+    classdef 601 167 LocalClass$2Local
+    # Start CLASS LocalClass$2Local
+      class 607 5 Local false LocalClass$2Local
+      class 643 6 String false java/lang/String
+      field 650 5 value LocalClass$2Local
+      methoddef 676 82 getValue ()Ljava/lang/String;
+      # Start METHOD getValue()Ljava/lang/String;
+        class 683 6 String false java/lang/String
+        method 690 8 getValue LocalClass$2Local getValue ()Ljava/lang/String;
+        field 738 5 value LocalClass$2Local
+      # End METHOD
+    # End CLASS
+    class 782 5 Local false LocalClass$2Local
+    method 790 8 getValue LocalClass$2Local getValue ()Ljava/lang/String;
+  # End METHOD
+  interfacedef 813 181 LocalClass$ITest
+  # Start INTERFACE LocalClass$ITest
+    class 830 5 ITest false LocalClass$ITest
+    methoddef 846 142 inFoo ()V
+    # Start METHOD inFoo()V
+      method 859 5 inFoo LocalClass$ITest inFoo ()V
+      classdef 879 67 LocalClass$ITest$1Target
+      # Start CLASS LocalClass$ITest$1Target
+        class 885 6 Target false LocalClass$ITest$1Target
+        methoddef 909 25 test ()Ljava/lang/Object;
+        # Start METHOD test()Ljava/lang/Object;
+          method 911 4 test LocalClass$ITest$1Target test ()Ljava/lang/Object;
+        # End METHOD
+      # End CLASS
+      class 961 6 Target false LocalClass$ITest$1Target
+      class 968 6 String false java/lang/String
+    # End METHOD
+  # End INTERFACE
+# End CLASS
+end
