@@ -1,0 +1,18 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+
+import java.util.Vector;
+
+@Mixin(Vector.class)
+public class ShadowField {
+  @Shadow
+  private int elementCount;
+  
+  @Shadow(remap = false)
+  private int capacityIncrement;
+  
+  void test() {
+	this.elementCount++;
+	this.capacityIncrement++;
+  }
+}

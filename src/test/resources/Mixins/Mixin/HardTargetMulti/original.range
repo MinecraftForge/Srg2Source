@@ -1,0 +1,9 @@
+start 1 HardTargetMulti.java 7a6c75fdb490d1ecb9287b04de35c14c
+classdef 95 71 HardTargetMulti
+# Start CLASS HardTargetMulti
+  class 96 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 103 10 Collection false java/util/Collection
+  class 121 4 List false java/util/List
+  class 147 15 HardTargetMulti false HardTargetMulti
+# End CLASS
+end

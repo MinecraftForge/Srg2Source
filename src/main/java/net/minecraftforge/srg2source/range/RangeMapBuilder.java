@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import net.minecraftforge.srg2source.range.entries.ClassLiteral;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
 import net.minecraftforge.srg2source.range.entries.FieldReference;
 import net.minecraftforge.srg2source.range.entries.MethodReference;
@@ -123,6 +124,10 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
 
     public void addClassReference(int start, int length, String text, String internal, boolean qualified) {
         addCode(ClassReference.create(start, length, text, internal, qualified));
+    }
+
+    public void addClassLiteral(int start, int length, String text, String internal) {
+        addCode(ClassLiteral.create(start, length, text, internal));
     }
 
     public void addFieldReference(int start, int length, String text, String owner) {

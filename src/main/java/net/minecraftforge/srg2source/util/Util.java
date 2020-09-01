@@ -52,11 +52,17 @@ public class Util {
         return filename;
     }
 
-    private static void transferTo(InputStream input, OutputStream output) throws IOException {
+    public static int transferTo(InputStream input, OutputStream output) throws IOException {
         byte[] buf = new byte[1024];
+        int total = 0;
         int cnt;
-        while ((cnt = input.read(buf)) > 0)
+
+        while ((cnt = input.read(buf)) > 0) {
             output.write(buf, 0, cnt);
+            total += cnt;
+        }
+
+        return total;
     }
 
     public static byte[] readStream(InputStream input) throws IOException {
@@ -84,7 +90,7 @@ public class Util {
      */
     public static String quote(String data) {
         if (data.indexOf(' ') != -1 || data.indexOf('"') == 0)
-            data = '"' + data.replaceAll("\"", "\\\"") + '"';
+            data = '"' + data.replaceAll("\"", "\\\\\"") + '"';
         return data;
     }
 
@@ -106,23 +112,20 @@ public class Util {
                 ret.add(data.substring(0, idx));
                 data = data.substring(idx + 1);
             } else {
-                int end = 1;
                 int idx = data.indexOf('"', 1);
-                while (idx != -1 && data.charAt(idx - 1) == '\\') {
-                    end = idx;
+                while (idx != -1 && data.charAt(idx - 1) == '\\')
                     idx = data.indexOf('"', idx + 1);
-                }
 
                 if (idx == -1 || data.charAt(idx -1) == '\\')
                     throw new IllegalArgumentException("Improperly quoted string: " + data);
 
                 idx = data.indexOf(' ', idx);
-                ret.add(data.substring(1, end - 1).replace("\\\"", "\""));
+                ret.add(data.substring(1, idx - 1).replace("\\\"", "\""));
                 if (idx == -1) {
                     data = null;
                     break;
                 } else
-                    data = data.substring(idx);
+                    data = data.substring(idx + 1);
             }
         }
         if (data != null)

@@ -1,0 +1,19 @@
+start 1 ShadowField.java 57d80bce25fcb9233d95b007ea9d30ca
+classdef 112 220 ShadowField
+# Start CLASS ShadowField
+  class 113 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 119 6 Vector false java/util/Vector
+  class 146 11 ShadowField false ShadowField
+  class 163 6 Shadow false org/spongepowered/asm/mixin/Shadow
+  field 184 17 capacityIncrement java/util/Vector
+  class 209 6 Shadow false org/spongepowered/asm/mixin/Shadow
+  method 216 5 remap org/spongepowered/asm/mixin/Shadow remap ()Z
+  field 245 12 elementCount java/util/Vector
+  methoddef 264 66 test ()V
+  # Start METHOD test()V
+    method 269 4 test ShadowField test ()V
+    field 284 17 capacityIncrement java/util/Vector
+    field 311 12 elementCount java/util/Vector
+  # End METHOD
+# End CLASS
+end

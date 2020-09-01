@@ -1,0 +1,42 @@
+start 1 ShadowMethod.java e148f7ef498beba2c12b8f442a38dc71
+classdef 112 489 ShadowMethod
+# Start CLASS ShadowMethod
+  class 113 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 119 6 Vector false java/util/Vector
+  class 146 12 ShadowMethod false ShadowMethod
+  methoddef 163 62 ensureCapacityHelper (I)V
+  # Start METHOD ensureCapacityHelper(I)V
+    class 164 6 Shadow false org/spongepowered/asm/mixin/Shadow
+    method 195 20 ensureCapacityHelper java/util/Vector ensureCapacityHelper (I)V
+    parameter 220 3 cap ShadowMethod ensureCapacityHelper (I)V 0
+  # End METHOD
+  methoddef 231 62 grow (I)V
+  # Start METHOD grow(I)V
+    class 232 6 Shadow false org/spongepowered/asm/mixin/Shadow
+    method 239 5 remap org/spongepowered/asm/mixin/Shadow remap ()Z
+    method 278 4 grow java/util/Vector grow (I)V
+    parameter 287 4 size ShadowMethod grow (I)V 0
+  # End METHOD
+  methoddef 299 69 shadow$ensureCapacityHelper (I)V
+  # Start METHOD shadow$ensureCapacityHelper(I)V
+    class 300 6 Shadow false org/spongepowered/asm/mixin/Shadow
+    method 338 20 ensureCapacityHelper java/util/Vector ensureCapacityHelper (I)V
+    parameter 363 3 cap ShadowMethod shadow$ensureCapacityHelper (I)V 0
+  # End METHOD
+  methoddef 374 83 foo$ensureCapacityHelper (I)V
+  # Start METHOD foo$ensureCapacityHelper(I)V
+    class 375 6 Shadow false org/spongepowered/asm/mixin/Shadow
+    method 382 6 prefix org/spongepowered/asm/mixin/Shadow prefix ()Ljava/lang/String;
+    method 427 20 ensureCapacityHelper java/util/Vector ensureCapacityHelper (I)V
+    parameter 452 3 cap ShadowMethod foo$ensureCapacityHelper (I)V 0
+  # End METHOD
+  methoddef 463 136 test ()V
+  # Start METHOD test()V
+    method 468 4 test ShadowMethod test ()V
+    method 483 20 ensureCapacityHelper java/util/Vector ensureCapacityHelper (I)V
+    method 514 4 grow java/util/Vector grow (I)V
+    method 536 20 ensureCapacityHelper java/util/Vector ensureCapacityHelper (I)V
+    method 571 20 ensureCapacityHelper java/util/Vector ensureCapacityHelper (I)V
+  # End METHOD
+# End CLASS
+end

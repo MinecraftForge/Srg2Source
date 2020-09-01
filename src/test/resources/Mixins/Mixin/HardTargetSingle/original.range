@@ -1,0 +1,8 @@
+start 1 HardTargetSingle.java 4ac2c970ba4672b578773366c737ced7
+classdef 66 52 HardTargetSingle
+# Start CLASS HardTargetSingle
+  class 67 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 73 4 List false java/util/List
+  class 98 16 HardTargetSingle false HardTargetSingle
+# End CLASS
+end

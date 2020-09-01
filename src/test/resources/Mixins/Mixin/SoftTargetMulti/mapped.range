@@ -1,0 +1,10 @@
+start 1 SoftTargetMulti.java 109c27b8a4cf2b81dc5319724cf0af87
+classdef 43 95 SoftTargetSingle
+# Start CLASS SoftTargetSingle
+  class 44 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  method 50 7 targets org/spongepowered/asm/mixin/Mixin targets ()[Ljava/lang/String;
+  class_literal 61 18 "\"java/util/Vector\"" java/util/Vector
+  class_literal 81 21 "\"java.util.ArrayList\"" java/util/ArrayList
+  class 118 16 SoftTargetSingle false SoftTargetSingle
+# End CLASS
+end

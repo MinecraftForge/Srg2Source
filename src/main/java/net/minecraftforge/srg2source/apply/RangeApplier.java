@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 import net.minecraftforge.srg2source.api.InputSupplier;
 import net.minecraftforge.srg2source.api.OutputSupplier;
 import net.minecraftforge.srg2source.range.RangeMap;
+import net.minecraftforge.srg2source.range.entries.ClassLiteral;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
 import net.minecraftforge.srg2source.range.entries.FieldReference;
 import net.minecraftforge.srg2source.range.entries.MethodReference;
@@ -115,10 +116,6 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         this.keepImports = value;
     }
 
-    public void annotate(boolean value) {
-        this.annotate = value;
-    }
-
     public void run() throws IOException {
         if (input == null)
             throw new IllegalStateException("Missing Range Apply input");
@@ -150,7 +147,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
             stream.close();
 
             // process
-            List<String> out = processJavaSourceFile(filePath, data, range.get(filePath), annotate);
+            List<String> out = processJavaSourceFile(filePath, data, range.get(filePath));
             filePath = out.get(0);
             data = out.get(1);
 
@@ -170,7 +167,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         output.close();
     }
 
-    private List<String> processJavaSourceFile(String fileName, String data, RangeMap rangeList, boolean shouldAnnotate) throws IOException {
+    private List<String> processJavaSourceFile(String fileName, String data, RangeMap rangeList) throws IOException {
         StringBuilder outData = new StringBuilder();
         outData.append(data);
 
@@ -251,6 +248,16 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 case PARAMETER: {
                     ParameterReference ref = (ParameterReference)info;
                     newName = mapParam(ref.getOwner(), ref.getName(), ref.getDescriptor(), ref.getIndex(), oldName);
+                    break;
+                }
+                case CLASS_LITERAL: {
+                    ClassLiteral ref = (ClassLiteral)info;
+                    newName = '"' + mapClass(ref.getClassName()) + '"';
+                    //Convert this to names used in code. Can either be internal, or source.
+                    //It can also technically be some other encoded format...
+                    //Should we care about changing text names/escape characters?
+                    if (ref.getText().indexOf('.') != -1)
+                        newName = newName.replace('/', '.'); // Source names.
                     break;
                 }
                 default:
@@ -389,8 +396,8 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 }
 
                 if (!old.equals(newClass)) { // Got renamed
-                    data.replace(cStart, cEnd, newClass);
-                    nextIndex = nextIndex + (old.length() - newClass.length());
+                    data.replace(lastIndex + cStart, lastIndex + cEnd, newClass);
+                    nextIndex = nextIndex - (old.length() - newClass.length());
                 }
             } else if (sawImports && !addedNewImports) {
                 filterImports(newImports);

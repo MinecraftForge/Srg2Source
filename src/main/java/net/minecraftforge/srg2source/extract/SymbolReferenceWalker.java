@@ -41,6 +41,7 @@ public class SymbolReferenceWalker {
     private final String className;
     private final RangeExtractor extractor;
     private final SymbolReferenceWalker parent;
+    private final MixinProcessor mixins;
     private HashMap<String, ParamInfo> parameterInfo = new HashMap<>();
     private int anonCount = 0; // Number off encountered anonymous classes
 
@@ -49,6 +50,7 @@ public class SymbolReferenceWalker {
         this.builder = builder;
         this.className = null;
         this.parent = null;
+        this.mixins = new MixinProcessor(this);
     }
 
     private SymbolReferenceWalker(SymbolReferenceWalker parent, String className) {
@@ -56,6 +58,7 @@ public class SymbolReferenceWalker {
         this.builder = parent.builder;
         this.className = className;
         this.parent = parent;
+        this.mixins = parent.mixins;
     }
 
     /**
@@ -92,14 +95,14 @@ public class SymbolReferenceWalker {
             acceptChild(child);
     }
 
-    private String getInternalName(ITypeBinding binding, ASTNode node) {
+    String getInternalName(ITypeBinding binding, ASTNode node) {
         String name = binding.getErasure().getBinaryName().replace('.', '/'); // Binary name is a mix and includes . and $, so convert to actual binary name
         if (name == null || name.isEmpty())
             throw new IllegalArgumentException("Could not get Binary name! " + builder.getFilename() + " @ " + node.getStartPosition());
         return name;
     }
 
-    private String getDescriptor(IMethodBinding method) {
+    String getDescriptor(IMethodBinding method) {
         StringBuilder buf = new StringBuilder();
         buf.append('(');
         if (method.isConstructor()) { //Synthetic args
@@ -118,7 +121,7 @@ public class SymbolReferenceWalker {
 
     private static final String PRIMITIVE_TYPES = "ZCBSIJFDV";
     // Get the full binary name, including L; wrappers around class names
-    private String getTypeSignature(ITypeBinding type) {
+    String getTypeSignature(ITypeBinding type) {
         String ret = type.getErasure().getBinaryName().replace('.', '/');
 
         int aidx = ret.lastIndexOf('[');
@@ -197,18 +200,22 @@ public class SymbolReferenceWalker {
     }
 
     @SuppressWarnings("unused")
-    private void log(String message) {
+    void log(String message) {
         this.extractor.log("# " + message);
     }
 
-    private void error(String message) {
+    void error(String message) {
         this.extractor.error("# " + message);
     }
 
-    private void error(ASTNode node, String message) {
+    void error(ASTNode node, String message) {
         String error = "ERROR: " + builder.getFilename() + " @ " + node.getStartPosition() + ": " + message;
         error(error);
         throw new IllegalStateException(error); //TODO: Non-Fatal
+    }
+
+    RangeMapBuilder getBuilder() {
+        return this.builder;
     }
     /* ===================================================================================================== */
 
@@ -368,8 +375,11 @@ public class SymbolReferenceWalker {
             case IBinding.VARIABLE:
                 IVariableBinding var = (IVariableBinding)bind;
                 if (var.isField()) { //Fields and Enum Constants
-                    if (var.getDeclaringClass() != null) // Things like array.lenth is a Field reference, but has no declaring class.
-                        builder.addFieldReference(node.getStartPosition(), node.getLength(), node.toString(), getInternalName(var.getDeclaringClass(), node));
+                    if (var.getDeclaringClass() != null) { // Things like array.lenth is a Field reference, but has no declaring class.
+                        String owner = getInternalName(var.getDeclaringClass(), node);
+                        owner = this.mixins.getFieldOwner(owner, node.toString(), getTypeSignature(var.getType()));
+                        builder.addFieldReference(node.getStartPosition(), node.getLength(), node.toString(), owner);
+                    }
                 } else if (var.isParameter()) {
                     ParamInfo info = findParameter(var.getKey());
                     if (info == null)
@@ -388,9 +398,11 @@ public class SymbolReferenceWalker {
                 return true;
             case IBinding.METHOD:
                 IMethodBinding mtd = findRoot((IMethodBinding)bind);
-                //TODO: Resolve overrides?
-                builder.addMethodReference(node.getStartPosition(), node.getLength(), node.toString(),
-                        getInternalName(mtd.getDeclaringClass(), node), mtd.isConstructor() ? "<init>" : mtd.getName(), getDescriptor(mtd.getMethodDeclaration()));
+                String owner = getInternalName(mtd.getDeclaringClass(), node);
+                String name = mtd.isConstructor() ? "<init>" : mtd.getName();
+                String desc = getDescriptor(mtd.getMethodDeclaration());
+                if (!this.mixins.processMethodReference(node, mtd, owner, name, desc))
+                    builder.addMethodReference(node.getStartPosition(), node.getLength(), node.toString(), owner, name, desc);
                 return true;
             // These I have not tested, so assume it will walk correctly.
             //case IBinding.PACKAGE:
@@ -519,7 +531,7 @@ public class SymbolReferenceWalker {
     }
 
     /*
-     * Sometimes inner classes can he initialized indirectly with references to the outer class.
+     * Sometimes inner classes can be initialized indirectly with references to the outer class.
      * In these cases, the import for the inner class is not needed, because it is qualified by the outer instance.
      * However, the name itself is not a qualified name, so our normal name printing does not know it doesn't need a import.
      *
@@ -547,6 +559,29 @@ public class SymbolReferenceWalker {
         */
     }
 
+    /*
+     * There are a few known annotations in the Minecraft community that reference source bindings.
+     * Currently we only support a subset of the Mixin (https://github.com/SpongePowered/Mixin) library.
+     * TODO: Move this to a generic annotation processor system?
+     */
+    private boolean process(NormalAnnotation node) {
+        String name = getInternalName((ITypeBinding)node.getTypeName().resolveBinding(), node.getTypeName());
+        this.mixins.process(node, name);
+        return true;
+    }
+
+    private boolean process(SingleMemberAnnotation node) {
+        String name = getInternalName((ITypeBinding)node.getTypeName().resolveBinding(), node.getTypeName());
+        this.mixins.process(node, name);
+        return true;
+    }
+
+    private boolean process(MarkerAnnotation node) {
+        String name = getInternalName((ITypeBinding)node.getTypeName().resolveBinding(), node.getTypeName());
+        this.mixins.process(node, name);
+        return true;
+    }
+
     private static class ParamInfo {
         private final String owner;
         private final String name;
@@ -554,8 +589,6 @@ public class SymbolReferenceWalker {
         private final int index;
 
         private ParamInfo(String owner, String name, String desc, int index) {
-            if (owner==null)
-                System.currentTimeMillis();
             this.owner = owner;
             this.name = name;
             this.desc = desc;
@@ -612,7 +645,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(LabeledStatement                node) { return process(node); }
         @Override public boolean visit(LambdaExpression                node) { return process(node); }
         @Override public boolean visit(LineComment                     node) { return true; }
-        @Override public boolean visit(MarkerAnnotation                node) { return true; }
+        @Override public boolean visit(MarkerAnnotation                node) { return process(node); }
         @Override public boolean visit(MethodDeclaration               node) { return process(node); }
         @Override public boolean visit(MethodInvocation                node) { return true; }
         @Override public boolean visit(MemberRef                       node) { return true; }
@@ -623,7 +656,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(ModuleDeclaration               node) { return true; }
         @Override public boolean visit(ModuleModifier                  node) { return true; }
         @Override public boolean visit(NameQualifiedType               node) { return true; }
-        @Override public boolean visit(NormalAnnotation                node) { return true; }
+        @Override public boolean visit(NormalAnnotation                node) { return process(node); }
         @Override public boolean visit(NullLiteral                     node) { return true; }
         @Override public boolean visit(NumberLiteral                   node) { return true; }
         @Override public boolean visit(OpensDirective                  node) { return true; }
@@ -640,7 +673,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(ReturnStatement                 node) { return true; }
         @Override public boolean visit(SimpleName                      node) { return process(node); }
         @Override public boolean visit(SimpleType                      node) { return true; }
-        @Override public boolean visit(SingleMemberAnnotation          node) { return true; }
+        @Override public boolean visit(SingleMemberAnnotation          node) { return process(node); }
         @Override public boolean visit(SingleVariableDeclaration       node) { return true; }
         @Override public boolean visit(StringLiteral                   node) { return true; }
         @Override public boolean visit(SuperConstructorInvocation      node) { return true; }

@@ -1,0 +1,5 @@
+import org.spongepowered.asm.mixin.Mixin;
+
+@Mixin(targets = "java.util.ArrayList")
+public class SoftTargetSingle {
+}

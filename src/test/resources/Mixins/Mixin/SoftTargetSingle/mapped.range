@@ -1,0 +1,9 @@
+start 1 SoftTargetSingle.java a110f4da1fda9f24fba39cc7910afd72
+classdef 43 73 SoftTargetSingle
+# Start CLASS SoftTargetSingle
+  class 44 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  method 50 7 targets org/spongepowered/asm/mixin/Mixin targets ()[Ljava/lang/String;
+  class_literal 60 21 "\"java.util.ArrayList\"" java/util/ArrayList
+  class 96 16 SoftTargetSingle false SoftTargetSingle
+# End CLASS
+end

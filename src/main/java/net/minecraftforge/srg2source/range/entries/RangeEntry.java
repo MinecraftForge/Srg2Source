@@ -33,6 +33,7 @@ public abstract class RangeEntry implements IRange {
         FIELD(FieldReference::read),
         METHOD(MethodReference::read),
         PARAMETER(ParameterReference::read),
+        CLASS_LITERAL(ClassLiteral::read),
         ;
 
         private Factory<?> factory;

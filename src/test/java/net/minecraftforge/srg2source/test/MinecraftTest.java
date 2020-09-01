@@ -188,7 +188,6 @@ public class MinecraftTest {
                     .srg(mcp_to_srg)
                     .exc(exc)
                     .keepImports()
-                    .annotate(false)
                     .logger(log);
 
                 long startTime = System.currentTimeMillis();

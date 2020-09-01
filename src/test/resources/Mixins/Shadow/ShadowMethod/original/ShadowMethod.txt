@@ -1,0 +1,26 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+
+import java.util.Vector;
+
+@Mixin(Vector.class)
+public class ShadowMethod {
+  @Shadow
+  private abstract void ensureCapacityHelper(int cap);
+  
+  @Shadow(remap = false)
+  private abstract void grow(int size);
+  
+  @Shadow
+  private abstract void shadow$ensureCapacityHelper(int cap);
+  
+  @Shadow(prefix = "foo$")
+  private abstract void foo$ensureCapacityHelper(int cap);
+  
+  void test() {
+	this.ensureCapacityHelper(1);
+	this.grow(1);
+	this.shadow$ensureCapacityHelper(1);
+	this.foo$ensureCapacityHelper(1);
+  }
+}

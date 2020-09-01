@@ -46,7 +46,6 @@ public class RangeApplierBuilder {
     private List<Consumer<RangeApplier>> srgs = new ArrayList<>();
     private List<Consumer<RangeApplier>> excs = new ArrayList<>();
     private boolean keepImports = false;
-    private boolean annotate = false;
 
     public RangeApplierBuilder logger(PrintStream value) {
         this.logStd = value;
@@ -130,11 +129,6 @@ public class RangeApplierBuilder {
         return this;
     }
 
-    public RangeApplierBuilder annotate(boolean value) {
-        this.annotate = value;
-        return this;
-    }
-
     public RangeApplier build() {
         if (output == null)
             throw new IllegalStateException("Builder State Exception: Missing Output");
@@ -156,7 +150,6 @@ public class RangeApplierBuilder {
         srgs.forEach(e -> e.accept(ret));
         excs.forEach(e -> e.accept(ret));
 
-        ret.annotate(annotate);
         ret.keepImports(keepImports);
 
         return ret;

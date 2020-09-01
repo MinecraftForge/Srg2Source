@@ -1,0 +1,42 @@
+start 1 ShadowMethod.java 1b0162a095376e981b92dd9cfd6b7ce0
+classdef 112 425 ShadowMethod
+# Start CLASS ShadowMethod
+  class 113 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 119 6 Vector false java/util/Vector
+  class 146 12 ShadowMethod false ShadowMethod
+  methoddef 163 46 grow (I)V
+  # Start METHOD grow(I)V
+    class 164 6 Shadow false org/spongepowered/asm/mixin/Shadow
+    method 195 4 grow java/util/Vector grow (I)V
+    parameter 204 3 cap ShadowMethod grow (I)V 0
+  # End METHOD
+  methoddef 215 78 ensureCapacityHelper (I)V
+  # Start METHOD ensureCapacityHelper(I)V
+    class 216 6 Shadow false org/spongepowered/asm/mixin/Shadow
+    method 223 5 remap org/spongepowered/asm/mixin/Shadow remap ()Z
+    method 262 20 ensureCapacityHelper java/util/Vector ensureCapacityHelper (I)V
+    parameter 287 4 size ShadowMethod ensureCapacityHelper (I)V 0
+  # End METHOD
+  methoddef 299 53 shadow$grow (I)V
+  # Start METHOD shadow$grow(I)V
+    class 300 6 Shadow false org/spongepowered/asm/mixin/Shadow
+    method 338 4 grow java/util/Vector grow (I)V
+    parameter 347 3 cap ShadowMethod shadow$grow (I)V 0
+  # End METHOD
+  methoddef 358 67 foo$grow (I)V
+  # Start METHOD foo$grow(I)V
+    class 359 6 Shadow false org/spongepowered/asm/mixin/Shadow
+    method 366 6 prefix org/spongepowered/asm/mixin/Shadow prefix ()Ljava/lang/String;
+    method 411 4 grow java/util/Vector grow (I)V
+    parameter 420 3 cap ShadowMethod foo$grow (I)V 0
+  # End METHOD
+  methoddef 431 104 test ()V
+  # Start METHOD test()V
+    method 436 4 test ShadowMethod test ()V
+    method 451 4 grow java/util/Vector grow (I)V
+    method 466 20 ensureCapacityHelper java/util/Vector ensureCapacityHelper (I)V
+    method 504 4 grow java/util/Vector grow (I)V
+    method 523 4 grow java/util/Vector grow (I)V
+  # End METHOD
+# End CLASS
+end

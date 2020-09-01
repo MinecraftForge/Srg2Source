@@ -48,7 +48,7 @@ configurations {
 
 dependencies {
     testCompile 'junit:junit:4.12'
-	testCompile 'com.google.jimfs:jimfs:1.1'
+    testCompile 'com.google.jimfs:jimfs:1.1'
 
     compile 'org.ow2.asm:asm:6.2.1'
     compile 'org.ow2.asm:asm-tree:6.2.1'
@@ -59,9 +59,9 @@ dependencies {
     
     //We use this to patch the JDT at runtime
     compile 'cpw.mods:modlauncher:1.1.+'
-	
-	//Because tons of projects all paarsing SRG files is annoying
-	compile 'net.minecraftforge:srgutils:0.2.+'
+    
+    //Because tons of projects all paarsing SRG files is annoying
+    compile 'net.minecraftforge:srgutils:0.2.+'
 }
 
 repositories {
@@ -88,8 +88,8 @@ jar {
 
 
 license {
-	header = file('LICENSE-header.txt')
-	include 'net/minecraftforge/'
+    header = file('LICENSE-header.txt')
+    include 'net/minecraftforge/'
 }
 
 import java.util.zip.*
@@ -299,9 +299,9 @@ publishing {
 
                 licenses {
                     license {
-						name = 'LGPL 2.1'
-						url = 'https://github.com/MinecraftForge/Srg2Source/blob/master/LICENSE'
-						distribution = 'repo'
+                        name = 'LGPL 2.1'
+                        url = 'https://github.com/MinecraftForge/Srg2Source/blob/master/LICENSE'
+                        distribution = 'repo'
                     }
                 }
 

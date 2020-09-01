@@ -1,0 +1,7 @@
+import org.spongepowered.asm.mixin.Mixin;
+import java.util.Collection;
+import java.util.List;
+
+@Mixin({Collection.class, List.class})
+public class HardTargetMulti {
+}
