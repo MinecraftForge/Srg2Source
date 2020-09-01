@@ -95,45 +95,8 @@ public class SymbolReferenceWalker {
             acceptChild(child);
     }
 
-    String getInternalName(ITypeBinding binding, ASTNode node) {
-        String name = binding.getErasure().getBinaryName().replace('.', '/'); // Binary name is a mix and includes . and $, so convert to actual binary name
-        if (name == null || name.isEmpty())
-            throw new IllegalArgumentException("Could not get Binary name! " + builder.getFilename() + " @ " + node.getStartPosition());
-        return name;
-    }
-
-    String getDescriptor(IMethodBinding method) {
-        StringBuilder buf = new StringBuilder();
-        buf.append('(');
-        if (method.isConstructor()) { //Synthetic args
-            ITypeBinding type = method.getDeclaringClass();
-            if (type.isEnum())
-                buf.append("Ljava/lang/String;I");
-            else if (type.isNested() && type.isClass() && ((type.getModifiers() & Opcodes.ACC_STATIC) == 0))
-                buf.append(getTypeSignature(type.getDeclaringClass()));
-        }
-        for (ITypeBinding param : method.getParameterTypes())
-            buf.append(getTypeSignature(param));
-        buf.append(')');
-        buf.append(getTypeSignature(method.getReturnType()));
-        return buf.toString();
-    }
-
-    private static final String PRIMITIVE_TYPES = "ZCBSIJFDV";
-    // Get the full binary name, including L; wrappers around class names
-    String getTypeSignature(ITypeBinding type) {
-        String ret = type.getErasure().getBinaryName().replace('.', '/');
-
-        int aidx = ret.lastIndexOf('[');
-        String prefix = null;
-        if (aidx != -1) {
-            prefix = ret.substring(0, aidx + 1);
-            ret = ret.substring(aidx + 1);
-        }
-
-        if (!PRIMITIVE_TYPES.contains(ret) && (ret.charAt(0) != 'L' || ret.charAt(ret.length() - 1) != ';'))
-            ret = 'L' + ret + ';';
-        return prefix == null ? ret : prefix + ret;
+    private String getInternalName(ITypeBinding binding, ASTNode node) {
+        return ExtractUtil.getInternalName(builder.getFilename(), binding, node);
     }
 
     private void trackParameters(String name, String desc, IMethodBinding mtd, List<VariableDeclaration> params, int synthetics) {
@@ -214,7 +177,7 @@ public class SymbolReferenceWalker {
         throw new IllegalStateException(error); //TODO: Non-Fatal
     }
 
-    RangeMapBuilder getBuilder() {
+    public RangeMapBuilder getBuilder() {
         return this.builder;
     }
     /* ===================================================================================================== */
@@ -291,7 +254,7 @@ public class SymbolReferenceWalker {
         //This isn't the real signature, it doesn't include the prefixed synthetic arguments... TODO: Figure out somethinf for this.
         IMethodBinding mtd = node.resolveMethodBinding();
         String name = mtd.isConstructor() ? "<init>" : mtd.getName();
-        String desc = getDescriptor(mtd);
+        String desc = ExtractUtil.getDescriptor(mtd);
         builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), "lambda[" + name + ']', desc);
 
         @SuppressWarnings("unchecked")
@@ -330,7 +293,7 @@ public class SymbolReferenceWalker {
     private boolean process(MethodDeclaration node) {
         IMethodBinding mtd = node.resolveBinding();
         String name = mtd.isConstructor() ? "<init>" : mtd.getName();
-        String desc = getDescriptor(mtd);
+        String desc = ExtractUtil.getDescriptor(mtd);
         builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), name, desc);
 
         @SuppressWarnings("unchecked")
@@ -377,7 +340,7 @@ public class SymbolReferenceWalker {
                 if (var.isField()) { //Fields and Enum Constants
                     if (var.getDeclaringClass() != null) { // Things like array.lenth is a Field reference, but has no declaring class.
                         String owner = getInternalName(var.getDeclaringClass(), node);
-                        owner = this.mixins.getFieldOwner(owner, node.toString(), getTypeSignature(var.getType()));
+                        owner = this.mixins.getFieldOwner(owner, node.toString(), ExtractUtil.getTypeSignature(var.getType()));
                         builder.addFieldReference(node.getStartPosition(), node.getLength(), node.toString(), owner);
                     }
                 } else if (var.isParameter()) {
@@ -400,7 +363,7 @@ public class SymbolReferenceWalker {
                 IMethodBinding mtd = findRoot((IMethodBinding)bind);
                 String owner = getInternalName(mtd.getDeclaringClass(), node);
                 String name = mtd.isConstructor() ? "<init>" : mtd.getName();
-                String desc = getDescriptor(mtd.getMethodDeclaration());
+                String desc = ExtractUtil.getDescriptor(mtd.getMethodDeclaration());
                 if (!this.mixins.processMethodReference(node, mtd, owner, name, desc))
                     builder.addMethodReference(node.getStartPosition(), node.getLength(), node.toString(), owner, name, desc);
                 return true;
