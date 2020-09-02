@@ -1,0 +1,33 @@
+start 1 FieldGetterNamed.java 20cff37e0f49578e7e9d8f002880174b
+classdef 117 417 FieldGetterNamed
+# Start CLASS FieldGetterNamed
+  class 118 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 124 6 Vector false java/util/Vector
+  class 151 16 FieldGetterNamed false FieldGetterNamed
+  methoddef 172 63 getSomething ()I
+  # Start METHOD getSomething()I
+    class 173 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    field_literal 182 14 "\"elementCount\"" java/util/Vector elementCount
+    method 220 12 getSomething FieldGetterNamed getSomething ()I
+  # End METHOD
+  methoddef 241 64 getOther ()I
+  # Start METHOD getOther()I
+    class 242 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    field_literal 251 19 "\"capacityIncrement\"" java/util/Vector capacityIncrement
+    method 294 8 getOther FieldGetterNamed getOther ()I
+  # End METHOD
+  methoddef 311 56 isBob ()I
+  # Start METHOD isBob()I
+    class 312 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    field_literal 321 14 "\"elementCount\"" java/util/Vector elementCount
+    method 359 5 isBob FieldGetterNamed isBob ()I
+  # End METHOD
+  methoddef 446 86 test ()V
+  # Start METHOD test()V
+    method 458 4 test FieldGetterNamed test ()V
+    method 483 12 getSomething FieldGetterNamed getSomething ()I
+    method 503 8 getOther FieldGetterNamed getOther ()I
+    method 520 5 isBob FieldGetterNamed isBob ()I
+  # End METHOD
+# End CLASS
+end

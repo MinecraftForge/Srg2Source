@@ -1,0 +1,33 @@
+start 1 FactoryImply.java 6b4ee5d059bee933ee1627145ad15e8f
+# Start Meta
+  meta mixin_accessor FactoryImply newVector (I)Ljava/util/Vector; java/util/Vector <init> (I)V new
+  meta mixin_accessor FactoryImply createVector (I)Ljava/util/Vector; java/util/Vector <init> (I)V create
+# End Meta
+classdef 117 252 FactoryImply
+# Start CLASS FactoryImply
+  class 118 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 124 6 Vector false java/util/Vector
+  class 151 12 FactoryImply false FactoryImply
+  methoddef 168 54 newVector (I)Ljava/util/Vector;
+  # Start METHOD newVector(I)Ljava/util/Vector;
+    class 169 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    class 196 6 Vector false java/util/Vector
+    method 203 9 newVector FactoryImply newVector (I)Ljava/util/Vector;
+    parameter 217 3 cap FactoryImply newVector (I)Ljava/util/Vector; 0
+  # End METHOD
+  methoddef 228 73 createVector (I)Ljava/util/Vector;
+  # Start METHOD createVector(I)Ljava/util/Vector;
+    class 229 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method 237 5 remap org/spongepowered/asm/mixin/gen/Invoker remap ()Z
+    class 271 6 Vector false java/util/Vector
+    method 278 12 createVector FactoryImply createVector (I)Ljava/util/Vector;
+    parameter 295 4 size FactoryImply createVector (I)Ljava/util/Vector; 0
+  # End METHOD
+  methoddef 307 60 test ()V
+  # Start METHOD test()V
+    method 312 4 test FactoryImply test ()V
+    method 327 9 newVector FactoryImply newVector (I)Ljava/util/Vector;
+    method 347 12 createVector FactoryImply createVector (I)Ljava/util/Vector;
+  # End METHOD
+# End CLASS
+end

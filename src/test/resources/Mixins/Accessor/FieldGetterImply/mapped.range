@@ -1,0 +1,35 @@
+start 1 FieldGetterImply.java f25fcc4f135507bd42136884417b27f3
+# Start Meta
+  meta mixin_accessor FieldGetterImply getCapacityIncrement ()I java/util/Vector capacityIncrement I get
+  meta mixin_accessor FieldGetterImply getElementCount ()I java/util/Vector elementCount I get
+  meta mixin_accessor FieldGetterImply isCapacityIncrement ()I java/util/Vector capacityIncrement I is
+# End Meta
+classdef 117 422 FieldGetterImply
+# Start CLASS FieldGetterImply
+  class 118 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 124 6 Vector false java/util/Vector
+  class 151 16 FieldGetterImply false FieldGetterImply
+  methoddef 172 55 getCapacityIncrement ()I
+  # Start METHOD getCapacityIncrement()I
+    class 173 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    method 204 20 getCapacityIncrement FieldGetterImply getCapacityIncrement ()I
+  # End METHOD
+  methoddef 233 50 getElementCount ()I
+  # Start METHOD getElementCount()I
+    class 234 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    method 265 15 getElementCount FieldGetterImply getElementCount ()I
+  # End METHOD
+  methoddef 289 54 isCapacityIncrement ()I
+  # Start METHOD isCapacityIncrement()I
+    class 290 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    method 321 19 isCapacityIncrement FieldGetterImply isCapacityIncrement ()I
+  # End METHOD
+  methoddef 422 115 test ()V
+  # Start METHOD test()V
+    method 434 4 test FieldGetterImply test ()V
+    method 459 20 getCapacityIncrement FieldGetterImply getCapacityIncrement ()I
+    method 487 15 getElementCount FieldGetterImply getElementCount ()I
+    method 511 19 isCapacityIncrement FieldGetterImply isCapacityIncrement ()I
+  # End METHOD
+# End CLASS
+end

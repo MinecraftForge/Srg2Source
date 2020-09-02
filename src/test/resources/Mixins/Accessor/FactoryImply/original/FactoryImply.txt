@@ -1,0 +1,18 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
+
+import java.util.Vector;
+
+@Mixin(Vector.class)
+public class FactoryImply {
+  @Invoker
+  private abstract Vector newVector(int cap);
+  
+  @Invoker(remap = false)
+  private abstract Vector createVector(int size);
+  
+  void test() {
+	this.newVector(1);
+	this.createVector(2);
+  }
+}

@@ -45,7 +45,9 @@ import net.minecraftforge.srg2source.api.OutputSupplier;
 import net.minecraftforge.srg2source.range.RangeMap;
 import net.minecraftforge.srg2source.range.entries.ClassLiteral;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
+import net.minecraftforge.srg2source.range.entries.FieldLiteral;
 import net.minecraftforge.srg2source.range.entries.FieldReference;
+import net.minecraftforge.srg2source.range.entries.MethodLiteral;
 import net.minecraftforge.srg2source.range.entries.MethodReference;
 import net.minecraftforge.srg2source.range.entries.ParameterReference;
 import net.minecraftforge.srg2source.range.entries.RangeEntry;
@@ -64,7 +66,8 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
     private InputSupplier input = null;
     private OutputSupplier output = null;
     private Map<String, RangeMap> range = new HashMap<>();
-    private boolean annotate = false;
+    private ClassMeta meta = null;
+
 
     public void readSrg(Path srg) {
         try (InputStream in = Files.newInputStream(srg)) {
@@ -124,6 +127,8 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         if (range == null)
             throw new IllegalStateException("Missing Range Apply range");
 
+        meta = ClassMeta.create(this, range);
+
         List<String> paths = new ArrayList<>(range.keySet());
         Collections.sort(paths);
 
@@ -147,7 +152,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
             stream.close();
 
             // process
-            List<String> out = processJavaSourceFile(filePath, data, range.get(filePath));
+            List<String> out = processJavaSourceFile(filePath, data, range.get(filePath), meta);
             filePath = out.get(0);
             data = out.get(1);
 
@@ -167,7 +172,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         output.close();
     }
 
-    private List<String> processJavaSourceFile(String fileName, String data, RangeMap rangeList) throws IOException {
+    private List<String> processJavaSourceFile(String fileName, String data, RangeMap rangeList, ClassMeta meta) throws IOException {
         StringBuilder outData = new StringBuilder();
         outData.append(data);
 
@@ -260,6 +265,16 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                         newName = newName.replace('/', '.'); // Source names.
                     break;
                 }
+                case FIELD_LITERAL: {
+                    FieldLiteral ref = (FieldLiteral)info;
+                    newName = '"' + mapField(ref.getOwner(), ref.getName()) + '"';
+                    break;
+                }
+                case METHOD_LITERAL: {
+                    MethodLiteral ref = (MethodLiteral)info;
+                    newName = '"' + mapMethod(ref.getOwner(), ref.getName(), ref.getDescriptor()) + '"';
+                    break;
+                }
                 default:
                     throw new IllegalArgumentException("Unknown RangeEntry type: " + info);
             }
@@ -310,11 +325,13 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         imports.add(reference.replace('/', '.').replace('$', '.'));
     }
 
-    // Parse the existing imports and find out where to add ours
-    // TODO: Make RangeExtract pull import segments and remap in line? Can we support more layouts?
-    // Imports syntax CAN be very complicated, we only support the most common layout:
-    // import\w+[static]\w+(ClassName);
-    // We can not support comments before the import.. anyone wanna try it?
+    /*
+     * Parse the existing imports and find out where to add ours
+     * TODO: Make RangeExtract pull import segments and remap in line? Can we support more layouts?
+     * Imports syntax CAN be very complicated, we only support the most common layout:
+     * import\w+[static]\w+(ClassName);
+     * We can not support comments before the import.. anyone wanna try it?
+     */
     private String updateImports(StringBuilder data, Set<String> newImports) {
         int lastIndex = 0;
         int nextIndex = getNextIndex(data.indexOf("\n"), data.length(), lastIndex);
@@ -477,7 +494,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
 
     // TODO: Decide how I want to manage multiple srg files? Chain them? Merge them?
     //Current usecase is Forge adding extra SRG lines. But honestly that shouldn't happen anymore.
-    private String mapClass(String name) {
+    String mapClass(String name) {
         for (IMappingFile srg : srgs) {
             IMappingFile.IClass cls = srg.getClass(name);
             if (cls != null)
@@ -486,7 +503,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         return name;
     }
 
-    private String mapField(String owner, String name) {
+    String mapField(String owner, String name) {
         for (IMappingFile srg : srgs) {
             IMappingFile.IClass cls = srg.getClass(owner);
             if (cls != null) {
@@ -498,7 +515,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         return name;
     }
 
-    private String mapMethod(String owner, String name, String desc) {
+    String mapMethod(String owner, String name, String desc) {
         if ("<init>".equals(name)) {
             String newName = mapClass(owner);
             int idx = newName.lastIndexOf('$');
@@ -514,7 +531,9 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                     return newName;
             }
         }
-        return name;
+
+        //There was no mapping for this specific method, so lets see if this is something in the metadata
+        return meta == null ? name : meta.mapMethod(owner, name, desc);
     }
 
     private String mapParam(String owner, String name, String desc, int index, String old) {

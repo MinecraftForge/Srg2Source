@@ -43,4 +43,19 @@ public class MixinTests extends SimpleTestBase {
         @Test public void testShadowField()  { testClass("ShadowField"); }
         @Test public void testShadowMethod() { testClass("ShadowMethod"); }
     }
+
+    public static class Accessor extends MixinTests {
+        @Override protected String getPrefix() { return super.getPrefix() + "/Accessor"; }
+
+        @Test public void testFieldGetterImply() { testClass("FieldGetterImply"); }
+        @Test public void testFieldSetterImply() { testClass("FieldSetterImply"); }
+        @Test public void testFieldGetterNamed() { testClass("FieldGetterNamed"); }
+        @Test public void testFieldSetterNamed() { testClass("FieldSetterNamed"); }
+
+        @Test public void testMethodProxyImply() { testClass("MethodProxyImply"); }
+        @Test public void testMethodProxyNamed() { testClass("MethodProxyNamed"); }
+
+        @Test public void testFactoryImply()     { testClass("FactoryImply");     }
+        @Test public void testFactoryNamed()     { testClass("FactoryNamed");     }
+    }
 }

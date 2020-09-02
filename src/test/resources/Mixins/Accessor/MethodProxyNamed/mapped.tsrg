@@ -1,0 +1,3 @@
+java/util/Vector java/util/Vector
+	grow (I)V ensureCapacityHelper
+	ensureCapacityHelper (I)V grow

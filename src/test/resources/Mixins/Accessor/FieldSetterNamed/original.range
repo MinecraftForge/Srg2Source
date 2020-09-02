@@ -1,0 +1,28 @@
+start 1 FieldSetterNamed.java 06f6a27d4a894a393a87afdab221ef0d
+classdef 117 259 FieldSetterNamed
+# Start CLASS FieldSetterNamed
+  class 118 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 124 6 Vector false java/util/Vector
+  class 151 16 FieldSetterNamed false FieldSetterNamed
+  methoddef 172 67 setFoo (I)V
+  # Start METHOD setFoo(I)V
+    class 173 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    field_literal 182 14 "\"elementCount\"" java/util/Vector elementCount
+    method 221 6 setFoo FieldSetterNamed setFoo (I)V
+    parameter 232 5 value FieldSetterNamed setFoo (I)V 0
+  # End METHOD
+  methoddef 245 72 setBar (I)V
+  # Start METHOD setBar(I)V
+    class 246 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    field_literal 255 19 "\"capacityIncrement\"" java/util/Vector capacityIncrement
+    method 299 6 setBar FieldSetterNamed setBar (I)V
+    parameter 310 5 value FieldSetterNamed setBar (I)V 0
+  # End METHOD
+  methoddef 323 51 test ()V
+  # Start METHOD test()V
+    method 335 4 test FieldSetterNamed test ()V
+    method 348 6 setFoo FieldSetterNamed setFoo (I)V
+    method 360 6 setBar FieldSetterNamed setBar (I)V
+  # End METHOD
+# End CLASS
+end

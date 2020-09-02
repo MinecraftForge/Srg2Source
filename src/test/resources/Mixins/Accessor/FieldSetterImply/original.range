@@ -1,0 +1,30 @@
+start 1 FieldSetterImply.java 25812664c4307c0bc9d5b2005b760d29
+# Start Meta
+  meta mixin_accessor FieldSetterImply setElementCount (I)V java/util/Vector elementCount I set
+  meta mixin_accessor FieldSetterImply setCapacityIncrement (I)V java/util/Vector capacityIncrement I set
+# End Meta
+classdef 117 268 FieldSetterImply
+# Start CLASS FieldSetterImply
+  class 118 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 124 6 Vector false java/util/Vector
+  class 151 16 FieldSetterImply false FieldSetterImply
+  methoddef 172 60 setElementCount (I)V
+  # Start METHOD setElementCount(I)V
+    class 173 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    method 205 15 setElementCount FieldSetterImply setElementCount (I)V
+    parameter 225 5 value FieldSetterImply setElementCount (I)V 0
+  # End METHOD
+  methoddef 238 65 setCapacityIncrement (I)V
+  # Start METHOD setCapacityIncrement(I)V
+    class 239 8 Accessor false org/spongepowered/asm/mixin/gen/Accessor
+    method 271 20 setCapacityIncrement FieldSetterImply setCapacityIncrement (I)V
+    parameter 296 5 value FieldSetterImply setCapacityIncrement (I)V 0
+  # End METHOD
+  methoddef 309 74 test ()V
+  # Start METHOD test()V
+    method 321 4 test FieldSetterImply test ()V
+    method 334 15 setElementCount FieldSetterImply setElementCount (I)V
+    method 355 20 setCapacityIncrement FieldSetterImply setCapacityIncrement (I)V
+  # End METHOD
+# End CLASS
+end

@@ -1,0 +1,31 @@
+start 1 MethodProxyImply.java 5c557aa003ee22c4685799b7a45693cb
+# Start Meta
+  meta mixin_accessor MethodProxyImply callEnsureCapacityHelper (I)V java/util/Vector ensureCapacityHelper (I)V call
+  meta mixin_accessor MethodProxyImply invokeGrow (I)V java/util/Vector grow (I)V invoke
+# End Meta
+classdef 117 278 MethodProxyImply
+# Start CLASS MethodProxyImply
+  class 118 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 124 6 Vector false java/util/Vector
+  class 151 16 MethodProxyImply false MethodProxyImply
+  methoddef 172 67 callEnsureCapacityHelper (I)V
+  # Start METHOD callEnsureCapacityHelper(I)V
+    class 173 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method 205 24 callEnsureCapacityHelper MethodProxyImply callEnsureCapacityHelper (I)V
+    parameter 234 3 cap MethodProxyImply callEnsureCapacityHelper (I)V 0
+  # End METHOD
+  methoddef 245 69 invokeGrow (I)V
+  # Start METHOD invokeGrow(I)V
+    class 246 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method 254 5 remap org/spongepowered/asm/mixin/gen/Invoker remap ()Z
+    method 293 10 invokeGrow MethodProxyImply invokeGrow (I)V
+    parameter 308 4 size MethodProxyImply invokeGrow (I)V 0
+  # End METHOD
+  methoddef 320 73 test ()V
+  # Start METHOD test()V
+    method 325 4 test MethodProxyImply test ()V
+    method 340 24 callEnsureCapacityHelper MethodProxyImply callEnsureCapacityHelper (I)V
+    method 375 10 invokeGrow MethodProxyImply invokeGrow (I)V
+  # End METHOD
+# End CLASS
+end

@@ -1,0 +1,30 @@
+start 1 MethodProxyNamed.java 28638eb32552ef375176eb4df4981613
+classdef 117 282 MethodProxyNamed
+# Start CLASS MethodProxyNamed
+  class 118 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 124 6 Vector false java/util/Vector
+  class 151 16 MethodProxyNamed false MethodProxyNamed
+  methoddef 172 74 callFoo (I)V
+  # Start METHOD callFoo(I)V
+    class 173 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method_literal 181 22 "\"ensureCapacityHelper\"" java/util/Vector ensureCapacityHelper (I)V
+    method 229 7 callFoo MethodProxyNamed callFoo (I)V
+    parameter 241 3 cap MethodProxyNamed callFoo (I)V 0
+  # End METHOD
+  methoddef 252 84 invokeBar (I)V
+  # Start METHOD invokeBar(I)V
+    class 253 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method 261 5 remap org/spongepowered/asm/mixin/gen/Invoker remap ()Z
+    method 276 5 value org/spongepowered/asm/mixin/gen/Invoker value ()Ljava/lang/String;
+    method_literal 284 6 "\"grow\"" java/util/Vector grow (I)V
+    method 316 9 invokeBar MethodProxyNamed invokeBar (I)V
+    parameter 330 4 size MethodProxyNamed invokeBar (I)V 0
+  # End METHOD
+  methoddef 342 55 test ()V
+  # Start METHOD test()V
+    method 347 4 test MethodProxyNamed test ()V
+    method 362 7 callFoo MethodProxyNamed callFoo (I)V
+    method 380 9 invokeBar MethodProxyNamed invokeBar (I)V
+  # End METHOD
+# End CLASS
+end

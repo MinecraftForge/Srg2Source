@@ -1,0 +1,22 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
+import java.util.Vector;
+
+@Mixin(Vector.class)
+public class FieldGetterNamed {
+  @Accessor("capacityIncrement")
+  public abstract int getSomething();
+  
+  @Accessor("elementCount")
+  public abstract int getOther();
+  
+  @Accessor("capacityIncrement")
+  public abstract int isBob(); // 'is' is usually for booleans, but Vector doesn't have a boolean field
+  
+  public void test() {
+    int x = 
+	  getSomething() +
+	  getOther() + 
+	  isBob();
+  }
+}

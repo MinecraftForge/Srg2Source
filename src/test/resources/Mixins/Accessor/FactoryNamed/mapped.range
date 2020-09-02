@@ -1,0 +1,50 @@
+start 1 FactoryNamed.java ce2a5619bd175dea558f00eadbf84646
+classdef 120 507 FactoryNamed
+# Start CLASS FactoryNamed
+  class 121 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 127 9 ArrayList false java/util/ArrayList
+  class 157 12 FactoryNamed false FactoryNamed
+  methoddef 174 64 newFoo (I)Ljava/util/ArrayList;
+  # Start METHOD newFoo(I)Ljava/util/ArrayList;
+    class 175 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    class 212 9 ArrayList false java/util/ArrayList
+    method 222 6 newFoo FactoryNamed newFoo (I)Ljava/util/ArrayList;
+    parameter 233 3 cap FactoryNamed newFoo (I)Ljava/util/ArrayList; 0
+  # End METHOD
+  methoddef 244 77 newBar (I)Ljava/util/ArrayList;
+  # Start METHOD newBar(I)Ljava/util/ArrayList;
+    class 245 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    class_literal 253 21 "\"java.util.ArrayList\"" java/util/ArrayList
+    class 295 9 ArrayList false java/util/ArrayList
+    method 305 6 newBar FactoryNamed newBar (I)Ljava/util/ArrayList;
+    parameter 316 3 cap FactoryNamed newBar (I)Ljava/util/ArrayList; 0
+  # End METHOD
+  methoddef 327 91 createFoo (I)Ljava/util/ArrayList;
+  # Start METHOD createFoo(I)Ljava/util/ArrayList;
+    class 328 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method 336 5 remap org/spongepowered/asm/mixin/gen/Invoker remap ()Z
+    method 351 5 value org/spongepowered/asm/mixin/gen/Invoker value ()Ljava/lang/String;
+    class 388 9 ArrayList false java/util/ArrayList
+    method 398 9 createFoo FactoryNamed createFoo (I)Ljava/util/ArrayList;
+    parameter 412 4 size FactoryNamed createFoo (I)Ljava/util/ArrayList; 0
+  # End METHOD
+  methoddef 424 104 createBar (I)Ljava/util/ArrayList;
+  # Start METHOD createBar(I)Ljava/util/ArrayList;
+    class 425 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method 433 5 remap org/spongepowered/asm/mixin/gen/Invoker remap ()Z
+    method 448 5 value org/spongepowered/asm/mixin/gen/Invoker value ()Ljava/lang/String;
+    class_literal 456 21 "\"java/util/ArrayList\"" java/util/ArrayList
+    class 498 9 ArrayList false java/util/ArrayList
+    method 508 9 createBar FactoryNamed createBar (I)Ljava/util/ArrayList;
+    parameter 522 4 size FactoryNamed createBar (I)Ljava/util/ArrayList; 0
+  # End METHOD
+  methoddef 534 91 test ()V
+  # Start METHOD test()V
+    method 539 4 test FactoryNamed test ()V
+    method 554 6 newFoo FactoryNamed newFoo (I)Ljava/util/ArrayList;
+    method 571 6 newBar FactoryNamed newBar (I)Ljava/util/ArrayList;
+    method 588 9 createFoo FactoryNamed createFoo (I)Ljava/util/ArrayList;
+    method 608 9 createBar FactoryNamed createBar (I)Ljava/util/ArrayList;
+  # End METHOD
+# End CLASS
+end

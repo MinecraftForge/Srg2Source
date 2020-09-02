@@ -1,0 +1,18 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
+
+import java.util.ArrayList;
+
+@Mixin(ArrayList.class)
+public class FactoryImply {
+  @Invoker
+  private abstract ArrayList newArrayList(int cap);
+  
+  @Invoker(remap = false)
+  private abstract ArrayList createArrayList(int size);
+  
+  void test() {
+	this.newArrayList(1);
+	this.createArrayList(2);
+  }
+}

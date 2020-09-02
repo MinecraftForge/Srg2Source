@@ -35,7 +35,9 @@ import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import net.minecraftforge.srg2source.range.entries.MetaEntry;
 import net.minecraftforge.srg2source.range.entries.RangeEntry;
+import net.minecraftforge.srg2source.range.entries.StructuralEntry;
 import net.minecraftforge.srg2source.util.Util;
 
 public class RangeMap {
@@ -88,14 +90,17 @@ public class RangeMap {
     private final String hash;
     private final List<RangeEntry> entries;
     private final List<StructuralEntry> structures;
+    private final List<MetaEntry> meta;
 
     private RangeMap(int spec, String filename, String hash, List<String> lines, int start, int end) {
         this.filename = filename;
         this.hash = hash;
         final List<RangeEntry> entries = new ArrayList<>();
         final List<StructuralEntry> structures = new ArrayList<>();
+        final List<MetaEntry> meta = new ArrayList<>();
         this.entries = Collections.unmodifiableList(entries);
         this.structures = Collections.unmodifiableList(structures);
+        this.meta = Collections.unmodifiableList(meta);
 
         for (int x = start; x < end; x++) {
             String line = stripComment(lines.get(x)).trim();
@@ -107,7 +112,9 @@ public class RangeMap {
 
             try {
                 String type = line.substring(0, idx);
-                if (type.endsWith("def")) //Structure
+                if ("meta".equals(type))
+                    meta.add(MetaEntry.read(spec, line.substring(idx + 1)));
+                else if (type.endsWith("def")) //Structure
                     structures.add(StructuralEntry.read(spec, type.substring(0, type.length() - 3), line.substring(idx + 1)));
                 else //entry
                     entries.add(RangeEntry.read(spec, type, line.substring(idx + 1)));
@@ -117,11 +124,12 @@ public class RangeMap {
         }
     }
 
-    RangeMap(String filename, String hash, List<RangeEntry> entries, List<StructuralEntry> structures) {
+    RangeMap(String filename, String hash, List<RangeEntry> entries, List<StructuralEntry> structures, List<MetaEntry> meta) {
         this.filename = filename;
         this.hash = hash;
         this.entries = Collections.unmodifiableList(entries);
         this.structures = Collections.unmodifiableList(structures);
+        this.meta = Collections.unmodifiableList(meta);
     }
 
     public String getFilename() {
@@ -140,9 +148,28 @@ public class RangeMap {
         return this.structures;
     }
 
+    public List<MetaEntry> getMeta() {
+        return this.meta;
+    }
+
     public void write(PrintWriter out, boolean pretty) {
         Writer writer = new Writer(out);
         writer.accept(Util.quote("start", Integer.toString(SPEC), filename, hash));
+
+        if (!meta.isEmpty()) {
+            if (pretty) {
+                writer.accept("# Start Meta");
+                writer.tabs++;
+            }
+
+            for (MetaEntry entry : this.meta)
+                entry.write(writer);
+
+            if (pretty) {
+                writer.tabs--;
+                writer.accept("# End Meta");
+            }
+        }
 
         Stack<StructuralEntry> stack = new Stack<>();
         Iterator<StructuralEntry> segments = structures.iterator();

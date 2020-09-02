@@ -1,0 +1,18 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
+
+import java.util.Vector;
+
+@Mixin(Vector.class)
+public class MethodProxyNamed {
+  @Invoker("ensureCapacityHelper")
+  private abstract void callFoo(int cap);
+  
+  @Invoker(remap = false, value = "grow")
+  private abstract void invokeBar(int size);
+  
+  void test() {
+	this.callFoo(1);
+	this.invokeBar(1);
+  }
+}

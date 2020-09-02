@@ -1,0 +1,17 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
+import java.util.Vector;
+
+@Mixin(Vector.class)
+public class FieldSetterImply {
+  @Accessor
+  public abstract void setCapacityIncrement(int value);
+  
+  @Accessor
+  public abstract void setElementCount(int value);
+  
+  public void test() {
+    setCapacityIncrement(1);
+	setElementCount(2);
+  }
+}

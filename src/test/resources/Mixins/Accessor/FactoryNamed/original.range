@@ -1,0 +1,50 @@
+start 1 FactoryNamed.java 3fc699d47368e3219b50ef9be10a145e
+classdef 117 486 FactoryNamed
+# Start CLASS FactoryNamed
+  class 118 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 124 6 Vector false java/util/Vector
+  class 151 12 FactoryNamed false FactoryNamed
+  methoddef 168 61 newFoo (I)Ljava/util/Vector;
+  # Start METHOD newFoo(I)Ljava/util/Vector;
+    class 169 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    class 206 6 Vector false java/util/Vector
+    method 213 6 newFoo FactoryNamed newFoo (I)Ljava/util/Vector;
+    parameter 224 3 cap FactoryNamed newFoo (I)Ljava/util/Vector; 0
+  # End METHOD
+  methoddef 235 71 newBar (I)Ljava/util/Vector;
+  # Start METHOD newBar(I)Ljava/util/Vector;
+    class 236 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    class_literal 244 18 "\"java.util.Vector\"" java/util/Vector
+    class 283 6 Vector false java/util/Vector
+    method 290 6 newBar FactoryNamed newBar (I)Ljava/util/Vector;
+    parameter 301 3 cap FactoryNamed newBar (I)Ljava/util/Vector; 0
+  # End METHOD
+  methoddef 312 88 createFoo (I)Ljava/util/Vector;
+  # Start METHOD createFoo(I)Ljava/util/Vector;
+    class 313 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method 321 5 remap org/spongepowered/asm/mixin/gen/Invoker remap ()Z
+    method 336 5 value org/spongepowered/asm/mixin/gen/Invoker value ()Ljava/lang/String;
+    class 373 6 Vector false java/util/Vector
+    method 380 9 createFoo FactoryNamed createFoo (I)Ljava/util/Vector;
+    parameter 394 4 size FactoryNamed createFoo (I)Ljava/util/Vector; 0
+  # End METHOD
+  methoddef 406 98 createBar (I)Ljava/util/Vector;
+  # Start METHOD createBar(I)Ljava/util/Vector;
+    class 407 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method 415 5 remap org/spongepowered/asm/mixin/gen/Invoker remap ()Z
+    method 430 5 value org/spongepowered/asm/mixin/gen/Invoker value ()Ljava/lang/String;
+    class_literal 438 18 "\"java/util/Vector\"" java/util/Vector
+    class 477 6 Vector false java/util/Vector
+    method 484 9 createBar FactoryNamed createBar (I)Ljava/util/Vector;
+    parameter 498 4 size FactoryNamed createBar (I)Ljava/util/Vector; 0
+  # End METHOD
+  methoddef 510 91 test ()V
+  # Start METHOD test()V
+    method 515 4 test FactoryNamed test ()V
+    method 530 6 newFoo FactoryNamed newFoo (I)Ljava/util/Vector;
+    method 547 6 newBar FactoryNamed newBar (I)Ljava/util/Vector;
+    method 564 9 createFoo FactoryNamed createFoo (I)Ljava/util/Vector;
+    method 584 9 createBar FactoryNamed createBar (I)Ljava/util/Vector;
+  # End METHOD
+# End CLASS
+end

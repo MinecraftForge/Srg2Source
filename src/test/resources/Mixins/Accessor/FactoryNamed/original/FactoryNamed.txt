@@ -1,0 +1,26 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
+
+import java.util.Vector;
+
+@Mixin(Vector.class)
+public class FactoryNamed {
+  @Invoker("<init>")
+  private abstract Vector newFoo(int cap);
+  
+  @Invoker("java.util.Vector")
+  private abstract Vector newBar(int cap);
+  
+  @Invoker(remap = false, value = "<init>")
+  private abstract Vector createFoo(int size);
+  
+  @Invoker(remap = false, value = "java/util/Vector")
+  private abstract Vector createBar(int size);
+  
+  void test() {
+	this.newFoo(1);
+	this.newBar(2);
+	this.createFoo(3);
+	this.createBar(4);
+  }
+}

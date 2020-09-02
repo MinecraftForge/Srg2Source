@@ -30,10 +30,12 @@ public abstract class RangeEntry implements IRange {
     public enum Type {
         PACKAGE(PackageReference::read),
         CLASS(ClassReference::read),
-        FIELD(FieldReference::read),
-        METHOD(MethodReference::read),
-        PARAMETER(ParameterReference::read),
         CLASS_LITERAL(ClassLiteral::read),
+        FIELD(FieldReference::read),
+        FIELD_LITERAL(FieldLiteral::read),
+        METHOD(MethodReference::read),
+        METHOD_LITERAL(MethodLiteral::read),
+        PARAMETER(ParameterReference::read),
         ;
 
         private Factory<?> factory;

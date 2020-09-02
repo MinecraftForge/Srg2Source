@@ -29,11 +29,8 @@ import javax.annotation.Nullable;
 import net.minecraftforge.srg2source.extract.MixinProcessor;
 
 public enum MixinAnnotation {
-    //DEBUG      ("Debug",                Debug::new),
-    //DYNAMIC    ("Dynamic",              Dynamic::new),
-    //FINAL      ("Final",                Final::new),
-    //ACCESSOR   ("gen/Accessor",         Accessor::new),
-    //INVOKER    ("gen/Invoker",          Invoker::new),
+    ACCESSOR   ("gen/Accessor",         Accessor::new),
+    INVOKER    ("gen/Invoker",          Invoker::new),
     //IMPLEMENTS ("Implements",           Implements::new),
     //AT         ("injection/At",         At::new),
     //COERCE     ("injection/Coerce",     Coerce::new),
@@ -58,13 +55,21 @@ public enum MixinAnnotation {
     //SOFT_OVERRIDE("SoftOverride",       SoftOverride::new),
     //UNIQUE    ("Unique",                Unique::new),
 
-    //Pretty sure these are meta and not public facing
-    //ANNOTATION_TYPE("injection/struct/InjectionInfo$AnnotationType", Annotationtype::new),
-    //HANDLER_PREFIX ("injection/struct/InjectionInfo$HandlerPrefix",  HandlerPrefix::new),
-    //MIXIN_INNER    ("transformer/meta/MixinInner",                   MixinInner::new),
-    //MIXIN_MERGED   ("transformer/meta/MixinMerged",                  MixinMerged::new),
-    //MIXIN_PROXY    ("transformer/meta/MixinProxy",                   MixinProxy::new),
-    //MIXIN_RENAMED  ("transformer/meta/MixinRenamed",                 MixinRenamed::new),
+    /* These annotations are metadata thing that we don't care about during remapping.
+     * We should probably write tests for these for completeness, but I don't think they actually do anything.
+    DEBUG      ("Debug",                Debug::new),
+    DYNAMIC    ("Dynamic",              Dynamic::new),
+    FINAL      ("Final",                Final::new),
+    */
+
+    /* Pretty sure these are meta and not public facing
+    ANNOTATION_TYPE("injection/struct/InjectionInfo$AnnotationType", Annotationtype::new),
+    HANDLER_PREFIX ("injection/struct/InjectionInfo$HandlerPrefix",  HandlerPrefix::new),
+    MIXIN_INNER    ("transformer/meta/MixinInner",                   MixinInner::new),
+    MIXIN_MERGED   ("transformer/meta/MixinMerged",                  MixinMerged::new),
+    MIXIN_PROXY    ("transformer/meta/MixinProxy",                   MixinProxy::new),
+    MIXIN_RENAMED  ("transformer/meta/MixinRenamed",                 MixinRenamed::new),
+    */
     ;
 
     private static final Map<String, MixinAnnotation> values = Arrays.asList(values()).stream().collect(Collectors.toMap(e -> e.getType(), e -> e));

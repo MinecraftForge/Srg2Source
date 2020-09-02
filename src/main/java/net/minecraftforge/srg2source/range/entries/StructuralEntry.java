@@ -17,11 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-package net.minecraftforge.srg2source.range;
+package net.minecraftforge.srg2source.range.entries;
 
 import java.util.Locale;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+
+import net.minecraftforge.srg2source.range.IRange;
 
 public class StructuralEntry implements IRange {
     public enum Type {
@@ -84,7 +86,7 @@ public class StructuralEntry implements IRange {
         return t.read(data);
     }
 
-    private final StructuralEntry.Type type;
+    private final Type type;
     private final int start;
     private final int length;
     private final String name;

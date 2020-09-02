@@ -1,0 +1,33 @@
+start 1 FactoryImply.java e6e5fd5f1c438486a9931a231fe2c553
+# Start Meta
+  meta mixin_accessor FactoryImply newArrayList (I)Ljava/util/ArrayList; java/util/ArrayList <init> (I)V new
+  meta mixin_accessor FactoryImply createArrayList (I)Ljava/util/ArrayList; java/util/ArrayList <init> (I)V create
+# End Meta
+classdef 120 273 FactoryImply
+# Start CLASS FactoryImply
+  class 121 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 127 9 ArrayList false java/util/ArrayList
+  class 157 12 FactoryImply false FactoryImply
+  methoddef 174 60 newArrayList (I)Ljava/util/ArrayList;
+  # Start METHOD newArrayList(I)Ljava/util/ArrayList;
+    class 175 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    class 202 9 ArrayList false java/util/ArrayList
+    method 212 12 newArrayList FactoryImply newArrayList (I)Ljava/util/ArrayList;
+    parameter 229 3 cap FactoryImply newArrayList (I)Ljava/util/ArrayList; 0
+  # End METHOD
+  methoddef 240 79 createArrayList (I)Ljava/util/ArrayList;
+  # Start METHOD createArrayList(I)Ljava/util/ArrayList;
+    class 241 7 Invoker false org/spongepowered/asm/mixin/gen/Invoker
+    method 249 5 remap org/spongepowered/asm/mixin/gen/Invoker remap ()Z
+    class 283 9 ArrayList false java/util/ArrayList
+    method 293 15 createArrayList FactoryImply createArrayList (I)Ljava/util/ArrayList;
+    parameter 313 4 size FactoryImply createArrayList (I)Ljava/util/ArrayList; 0
+  # End METHOD
+  methoddef 325 66 test ()V
+  # Start METHOD test()V
+    method 330 4 test FactoryImply test ()V
+    method 345 12 newArrayList FactoryImply newArrayList (I)Ljava/util/ArrayList;
+    method 368 15 createArrayList FactoryImply createArrayList (I)Ljava/util/ArrayList;
+  # End METHOD
+# End CLASS
+end

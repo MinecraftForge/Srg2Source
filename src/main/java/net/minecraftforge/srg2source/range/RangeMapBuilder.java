@@ -25,16 +25,22 @@ import java.util.List;
 
 import net.minecraftforge.srg2source.range.entries.ClassLiteral;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
+import net.minecraftforge.srg2source.range.entries.FieldLiteral;
 import net.minecraftforge.srg2source.range.entries.FieldReference;
+import net.minecraftforge.srg2source.range.entries.MetaEntry;
+import net.minecraftforge.srg2source.range.entries.MethodLiteral;
 import net.minecraftforge.srg2source.range.entries.MethodReference;
+import net.minecraftforge.srg2source.range.entries.MixinAccessorMeta;
 import net.minecraftforge.srg2source.range.entries.PackageReference;
 import net.minecraftforge.srg2source.range.entries.ParameterReference;
 import net.minecraftforge.srg2source.range.entries.RangeEntry;
+import net.minecraftforge.srg2source.range.entries.StructuralEntry;
 import net.minecraftforge.srg2source.util.io.ConfLogger;
 
 public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
     private final List<RangeEntry> entries = new ArrayList<>();
     private final List<StructuralEntry> structures = new ArrayList<>();
+    private final List<MetaEntry> meta = new ArrayList<>();
 
     private final ConfLogger<?> logger;
     private final String filename;
@@ -62,7 +68,7 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
         Collections.sort(entries, (a, b) -> a.getStart() - b.getStart());
         Collections.sort(structures, (a, b) -> a.getStart() - b.getStart());
         checkOverlaps(entries);
-        return new RangeMap(filename, hash, entries, structures);
+        return new RangeMap(filename, hash, entries, structures, meta);
     }
 
     private void checkOverlaps(List<? extends IRange> lst) {
@@ -81,21 +87,9 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
     }
 
 
-    private void addCode(RangeEntry entry) {
-        entries.add(entry);
-    }
-    @SuppressWarnings("unused")
-    private void LaddCode(RangeEntry entry) {
-        log(entry.toString());
-        addCode(entry);
-    }
+    // Structure Elements
     private void addStructure(StructuralEntry entry) {
         structures.add(entry);
-    }
-    @SuppressWarnings("unused")
-    private void LaddStructure(StructuralEntry entry) {
-        log(entry.toString());
-        addStructure(entry);
     }
 
     public void addAnnotationDeclaration(int start, int length, String name) {
@@ -118,6 +112,11 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
         addStructure(StructuralEntry.createInterface(start, length, name));
     }
 
+    // Code Elements
+    private void addCode(RangeEntry entry) {
+        entries.add(entry);
+    }
+
     public void addPackageReference(int start, int length, String name) {
         addCode(PackageReference.create(start, length, name));
     }
@@ -134,11 +133,28 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
         addCode(FieldReference.create(start, length, text, owner));
     }
 
+    public void addFieldLiteral(int start, int length, String text, String owner, String name) {
+        addCode(FieldLiteral.create(start, length, text, owner, name));
+    }
+
     public void addMethodReference(int start, int length, String text, String owner, String name, String desc) {
         addCode(MethodReference.create(start, length, text, owner, name, desc));
     }
 
+    public void addMethodLiteral(int start, int length, String text, String owner, String name, String desc) {
+        addCode(MethodLiteral.create(start, length, text, owner, name, desc));
+    }
+
     public void addParameterReference(int start, int length, String text, String owner, String name, String desc, int index) {
         addCode(ParameterReference.create(start, length, text, owner, name, desc, index));
+    }
+
+    // Meta Elements
+    private void addMeta(MetaEntry entry) {
+        meta.add(entry);
+    }
+
+    public void addMixinAccessor(String owner, String name, String desc, String targetOwner, String targetName, String targetDesc, String prefix) {
+        addMeta(MixinAccessorMeta.create(owner, name, desc, targetOwner, targetName, targetDesc, prefix));
     }
 }
