@@ -1,0 +1,2 @@
+java/util/AbstractCollection java/util/AbstractCollection
+	contains (Ljava/lang/Object;)Z remove

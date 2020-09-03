@@ -24,13 +24,11 @@ import java.util.List;
 
 import org.junit.Test;
 
-public class MixinTests extends SimpleTestBase {
-    @Override protected String getPrefix() { return "Mixins"; }
+public abstract class MixinTests extends SimpleTestBase {
+    @Override protected String getPrefix() { return "Mixins/" + getClass().getSimpleName(); }
     @Override protected List<String> getLibraries(){ return Arrays.asList("org.spongepowered:mixin:0.8"); }
 
     public static class Mixin extends MixinTests {
-        @Override protected String getPrefix() { return super.getPrefix() + "/Mixin"; }
-
         @Test public void testHardTargetSingle() { testClass("HardTargetSingle"); }
         @Test public void testHardTargetMulti()  { testClass("HardTargetMulti");  }
         @Test public void testSoftTargetSingle() { testClass("SoftTargetSingle"); }
@@ -38,15 +36,11 @@ public class MixinTests extends SimpleTestBase {
     }
 
     public static class Shadow extends MixinTests {
-        @Override protected String getPrefix() { return super.getPrefix() + "/Shadow"; }
-
         @Test public void testShadowField()  { testClass("ShadowField"); }
         @Test public void testShadowMethod() { testClass("ShadowMethod"); }
     }
 
     public static class Accessor extends MixinTests {
-        @Override protected String getPrefix() { return super.getPrefix() + "/Accessor"; }
-
         @Test public void testFieldGetterImply() { testClass("FieldGetterImply"); }
         @Test public void testFieldSetterImply() { testClass("FieldSetterImply"); }
         @Test public void testFieldGetterNamed() { testClass("FieldGetterNamed"); }
@@ -57,5 +51,13 @@ public class MixinTests extends SimpleTestBase {
 
         @Test public void testFactoryImply()     { testClass("FactoryImply");     }
         @Test public void testFactoryNamed()     { testClass("FactoryNamed");     }
+    }
+
+    public static class Implements extends MixinTests {
+        @Test public void testSimpleImplements() { testClass("SimpleImplements"); }
+    }
+
+    public static class Overwrite extends MixinTests {
+        @Test public void testOverwriteImply() { testClass("OverwriteImply"); }
     }
 }

@@ -1,0 +1,17 @@
+start 1 SimpleImplements.java 4462a3db4ddaada946c653b8178fbf19
+classdef 188 144 SimpleImplements
+# Start CLASS SimpleImplements
+  class 189 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 195 6 Vector false java/util/Vector
+  class 210 10 Implements false org/spongepowered/asm/mixin/Implements
+  class 223 9 Interface false org/spongepowered/asm/mixin/Interface
+  method 233 5 iface org/spongepowered/asm/mixin/Interface iface ()Ljava/lang/Class;
+  class 241 9 Closeable false java/io/Closeable
+  method 258 6 prefix org/spongepowered/asm/mixin/Interface prefix ()Ljava/lang/String;
+  class 290 16 SimpleImplements false SimpleImplements
+  methoddef 311 19 pre$close ()V
+  # Start METHOD pre$close()V
+    method 320 5 close java/io/Closeable close ()V
+  # End METHOD
+# End CLASS
+end

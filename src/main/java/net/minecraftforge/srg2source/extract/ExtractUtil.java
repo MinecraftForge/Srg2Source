@@ -19,16 +19,21 @@
 
 package net.minecraftforge.srg2source.extract;
 
+import javax.annotation.Nullable;
+
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.objectweb.asm.Opcodes;
 
 public class ExtractUtil {
-    public static String getInternalName(String filename, ITypeBinding binding, ASTNode node) {
+    public static String getInternalName(ITypeBinding binding) {
+        return getInternalName("{unknown}", binding, null);
+    }
+    public static String getInternalName(String filename, ITypeBinding binding, @Nullable ASTNode node) {
         String name = binding.getErasure().getBinaryName().replace('.', '/'); // Binary name is a mix and includes . and $, so convert to actual binary name
         if (name == null || name.isEmpty())
-            throw new IllegalArgumentException("Could not get Binary name! " + filename + " @ " + node.getStartPosition());
+            throw new IllegalArgumentException("Could not get Binary name! " + filename + (node == null ? "" : " @ " + node.getStartPosition()));
         return name;
     }
 
@@ -64,5 +69,63 @@ public class ExtractUtil {
         if (!PRIMITIVE_TYPES.contains(ret) && (ret.charAt(0) != 'L' || ret.charAt(ret.length() - 1) != ';'))
             ret = 'L' + ret + ';';
         return prefix == null ? ret : prefix + ret;
+    }
+
+    @Nullable
+    public static IMethodBinding findRoot(ITypeBinding type, String name, String desc) {
+        for (IMethodBinding bind : type.getDeclaredMethods()) {
+            if (bind.getName().equals(name) && getDescriptor(bind).equals(desc))
+                return findRoot(bind);
+        }
+
+        IMethodBinding root = findRoot(type.getSuperclass(), name, desc);
+        if (root != null)
+            return root;
+
+        for (ITypeBinding intf : type.getInterfaces()) {
+            root = findRoot(intf, name, desc);
+            if (root != null)
+                return root;
+        }
+
+        return null;
+    }
+
+    public static IMethodBinding findRoot(IMethodBinding mtd) {
+        ITypeBinding clazz = mtd.getDeclaringClass();
+        if (clazz == null)
+            return mtd;
+        IMethodBinding root = findRoot(mtd, clazz.getSuperclass());
+        if (root != null)
+            return root.getMethodDeclaration();
+
+        for (ITypeBinding intf : clazz.getInterfaces()) {
+            root = findRoot(mtd, intf);
+            if (root != null)
+                return root.getMethodDeclaration();
+        }
+        return mtd;
+    }
+
+    @Nullable
+    private static IMethodBinding findRoot(IMethodBinding target, @Nullable ITypeBinding type) {
+        if (type == null || target.isConstructor())
+            return target;
+
+        for (IMethodBinding mtd : type.getDeclaredMethods())
+            if (target.overrides(mtd))
+                return findRoot(mtd);
+
+        IMethodBinding root = findRoot(target, type.getSuperclass());
+        if (root != null)
+            return root;
+
+        for (ITypeBinding intf : type.getInterfaces()) {
+            root = findRoot(target, intf);
+            if (root != null)
+                return root;
+        }
+
+        return null;
     }
 }

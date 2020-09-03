@@ -62,15 +62,12 @@ public class Accessor extends AnnotationBase {
 
     private MethodDeclaration getMethod(ASTNode node) {
         ASTNode parent = node.getParent();
-        if (parent.getNodeType() != ASTNode.METHOD_DECLARATION) // It should only be valid on these things.
-            throw new IllegalStateException("Found " + typeName + " annotation on non-method declaration: " + node.toString());
+        if (parent.getNodeType() != ASTNode.METHOD_DECLARATION) { // It should only be valid on these things.
+            error(parent, "Found " + typeName + " annotation on non-method declaration: " + node.toString());
+            return null;
+        }
 
         return (MethodDeclaration)parent;
-    }
-
-    private MixinInfo getInfo(IMethodBinding bind, ASTNode node) {
-        String owner = ExtractUtil.getInternalName(getFilename(), bind.getDeclaringClass(), node);
-        return getInfo(owner, "Invalid " + typeName + " on " + bind.getName() + ExtractUtil.getDescriptor(bind) + " owner " + owner + " has no @Mixin");
     }
 
     @Override
@@ -84,11 +81,11 @@ public class Accessor extends AnnotationBase {
                     break;
                 case "value":
                     if (mvp.getValue().getNodeType() != Expression.STRING_LITERAL)
-                        throw new IllegalArgumentException("Unknown " + typeName + " value type: " + mvp.getValue().toString());
+                        return error(node, "Unknown " + typeName + " value type: " + mvp.getValue().toString());
                     value = (StringLiteral)mvp.getValue();
                     break;
                 default:
-                    throw new IllegalArgumentException("Unknown " + typeName + " member: " + node.toString());
+                    return error(node, "Unknown " + typeName + " member: " + node.toString());
             }
         }
 
@@ -98,7 +95,7 @@ public class Accessor extends AnnotationBase {
     @Override
     public boolean process(SingleMemberAnnotation node) {
         if (node.getValue().getNodeType() != Expression.STRING_LITERAL)
-            throw new IllegalArgumentException("Unknown " + typeName + " value type: " + node.getValue().toString());
+            return error(node, "Unknown " + typeName + " value type: " + node.getValue().toString());
 
         return process(getMethod(node), (StringLiteral)node.getValue());
     }
@@ -109,8 +106,13 @@ public class Accessor extends AnnotationBase {
     }
 
     private boolean process(MethodDeclaration mtd, @Nullable StringLiteral value) {
+        if (mtd == null)
+            return true;
         IMethodBinding bind = mtd.resolveBinding();
-        MixinInfo info = getInfo(bind, mtd);
+        String owner = ExtractUtil.getInternalName(getFilename(), bind.getDeclaringClass(), mtd);
+        MixinInfo info = getInfo(owner);
+        if (info == null)
+            return error(mtd, "Invalid " + typeName + " on " + bind.getName() + ExtractUtil.getDescriptor(bind) + " owner " + owner + " has no @Mixin");
         AccessorName name = AccessorName.from(mtd.getName().toString(), info.getOwner(), value == null ? null : value.getLiteralValue());
         String desc = ExtractUtil.getDescriptor(bind);
 
@@ -118,7 +120,7 @@ public class Accessor extends AnnotationBase {
             return true; // Not a single target, exit off and hope for the best.
 
         if (name == null)
-            throw new IllegalArgumentException("Invalid " + typeName + " on " + info.getOwner() + '.' + bind.getName() + desc + " Does not match valid nameing format.");
+            return error(value, "Invalid " + typeName + " on " + info.getOwner() + '.' + bind.getName() + desc + " Does not match valid nameing format.");
 
         switch (name.getType()) {
             case GETTER:

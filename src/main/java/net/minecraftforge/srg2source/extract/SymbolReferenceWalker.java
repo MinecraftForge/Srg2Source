@@ -22,8 +22,6 @@ package net.minecraftforge.srg2source.extract;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 import org.eclipse.jdt.core.dom.*;
 import org.objectweb.asm.Opcodes;
 
@@ -124,54 +122,16 @@ public class SymbolReferenceWalker {
         return parent == null ? null : parent.findParameter(key);
     }
 
-    private IMethodBinding findRoot(IMethodBinding mtd) {
-        ITypeBinding clazz = mtd.getDeclaringClass();
-        if (clazz == null)
-            return mtd;
-        IMethodBinding root = findRoot(mtd, clazz.getSuperclass());
-        if (root != null)
-            return root.getMethodDeclaration();
-
-        for (ITypeBinding intf : clazz.getInterfaces()) {
-            root = findRoot(mtd, intf);
-            if (root != null)
-                return root.getMethodDeclaration();
-        }
-        return mtd;
-    }
-
-    @Nullable
-    private IMethodBinding findRoot(IMethodBinding target, @Nullable ITypeBinding type) {
-        if (type == null || target.isConstructor())
-            return target;
-
-        for (IMethodBinding mtd : type.getDeclaredMethods())
-            if (target.overrides(mtd))
-                return findRoot(mtd);
-
-        IMethodBinding root = findRoot(target, type.getSuperclass());
-        if (root != null)
-            return root;
-
-        for (ITypeBinding intf : type.getInterfaces()) {
-            root = findRoot(target, intf);
-            if (root != null)
-                return root;
-        }
-
-        return null;
-    }
-
     @SuppressWarnings("unused")
-    void log(String message) {
+    public void log(String message) {
         this.extractor.log("# " + message);
     }
 
-    void error(String message) {
+    public void error(String message) {
         this.extractor.error("# " + message);
     }
 
-    void error(ASTNode node, String message) {
+    public void error(ASTNode node, String message) {
         String error = "ERROR: " + builder.getFilename() + " @ " + node.getStartPosition() + ": " + message;
         error(error);
         throw new IllegalStateException(error); //TODO: Non-Fatal
@@ -360,7 +320,7 @@ public class SymbolReferenceWalker {
                 }
                 return true;
             case IBinding.METHOD:
-                IMethodBinding mtd = findRoot((IMethodBinding)bind);
+                IMethodBinding mtd = ExtractUtil.findRoot((IMethodBinding)bind);
                 String owner = getInternalName(mtd.getDeclaringClass(), node);
                 String name = mtd.isConstructor() ? "<init>" : mtd.getName();
                 String desc = ExtractUtil.getDescriptor(mtd.getMethodDeclaration());
@@ -529,20 +489,17 @@ public class SymbolReferenceWalker {
      */
     private boolean process(NormalAnnotation node) {
         String name = getInternalName((ITypeBinding)node.getTypeName().resolveBinding(), node.getTypeName());
-        this.mixins.process(node, name);
-        return true;
+        return this.mixins.process(node, name);
     }
 
     private boolean process(SingleMemberAnnotation node) {
         String name = getInternalName((ITypeBinding)node.getTypeName().resolveBinding(), node.getTypeName());
-        this.mixins.process(node, name);
-        return true;
+        return this.mixins.process(node, name);
     }
 
     private boolean process(MarkerAnnotation node) {
         String name = getInternalName((ITypeBinding)node.getTypeName().resolveBinding(), node.getTypeName());
-        this.mixins.process(node, name);
-        return true;
+        return this.mixins.process(node, name);
     }
 
     private static class ParamInfo {

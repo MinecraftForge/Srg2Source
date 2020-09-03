@@ -21,14 +21,18 @@ package net.minecraftforge.srg2source.mixin;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.ArrayInitializer;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
@@ -62,9 +66,10 @@ public class Mixin extends AnnotationBase {
     public boolean process(NormalAnnotation node) {
         ASTNode parent = node.getParent();
         if (!(parent instanceof AbstractTypeDeclaration)) // It should only be valid on these things.
-            throw new IllegalStateException("Found @Mixin annotation on non-type declaration: " + node.toString());
-        String owner = ExtractUtil.getInternalName(getFilename(), ((AbstractTypeDeclaration)parent).resolveBinding(), parent);
+            return error(node, "Found @Mixin annotation on non-type declaration: " + node.toString());
+        ITypeBinding owner = ((AbstractTypeDeclaration)parent).resolveBinding();
         Set<String> targets = new HashSet<>();
+        Map<String, ITypeBinding> types = new HashMap<>();
 
         for (MemberValuePair mvp : ((List<MemberValuePair>)node.values())) {
             switch (mvp.getName().toString()) {
@@ -72,34 +77,36 @@ public class Mixin extends AnnotationBase {
                 case "remap":
                     break;
                 case "value": // We don't print this out, but we have to resolve them to track Mixin structure.
-                    targets.addAll(readClassReferences(mvp.getValue()));
+                    targets.addAll(readClassReferences(mvp.getValue(), types));
                     break;
                 case "targets":
-                    if (mvp.getValue().getNodeType() == Expression.STRING_LITERAL) {
+                    if (mvp.getValue().getNodeType() == ASTNode.STRING_LITERAL) {
                         StringLiteral literal = (StringLiteral)mvp.getValue();
                         String target = literal.getLiteralValue().replace('.', '/');
                         getBuilder().addClassLiteral(literal.getStartPosition(), literal.getLength(), literal.getEscapedValue(), target);
                         targets.add(target);
-                    } else if (mvp.getValue().getNodeType() == Expression.ARRAY_INITIALIZER) {
+                    } else if (mvp.getValue().getNodeType() == ASTNode.ARRAY_INITIALIZER) {
                         ArrayInitializer init = (ArrayInitializer)mvp.getValue();
                         for (Expression exp : ((List<Expression>)init.expressions())) {
-                            if (exp.getNodeType() == Expression.STRING_LITERAL) {
+                            if (exp.getNodeType() == ASTNode.STRING_LITERAL) {
                                 StringLiteral literal = (StringLiteral)exp;
                                 String target = literal.getLiteralValue().replace('.', '/');
                                 getBuilder().addClassLiteral(literal.getStartPosition(), literal.getLength(), literal.getEscapedValue(), target);
                                 targets.add(target);
                             } else
-                                throw new IllegalArgumentException("Unknown @Mixin member: " + node.toString());
+                                return error(node, "Unknown @Mixin member: " + node.toString());
                         }
                     } else
-                        throw new IllegalArgumentException("Unknown @Mixin member: " + node.toString());
+                        return error(node, "Unknown @Mixin member: " + node.toString());
                     break;
                 default:
-                    throw new IllegalArgumentException("Unknown @Mixin member: " + node.toString());
+                    return error(node, "Unknown @Mixin member: " + node.toString());
             }
         }
 
-        processor.setInfo(owner, new MixinInfo(owner, targets));
+        MixinInfo info  = processor.getOrCreateInfo(owner);
+        types.forEach(info::addTarget);
+        targets.forEach(info::addTarget);
 
         return true;
     }
@@ -109,32 +116,46 @@ public class Mixin extends AnnotationBase {
     public boolean process(SingleMemberAnnotation node) {
         ASTNode parent = node.getParent();
         if (!(parent instanceof AbstractTypeDeclaration)) // It should only be valid on these things.
-            throw new IllegalStateException("Found @Mixin annotation on non-type declaration: " + node.toString());
-        String owner = ExtractUtil.getInternalName(getFilename(), ((AbstractTypeDeclaration)parent).resolveBinding(), parent);
-        Set<String> targets = new HashSet<>(readClassReferences(node.getValue()));
-        processor.setInfo(owner, new MixinInfo(owner, targets));
+            return error(node, "Found @Mixin annotation on non-type declaration: " + node.toString());
+
+        ITypeBinding owner = ((AbstractTypeDeclaration)parent).resolveBinding();
+        Map<String, ITypeBinding> types = new HashMap<>();
+        Collection<String> targets = readClassReferences(node.getValue(), types);
+
+        MixinInfo info  = processor.getOrCreateInfo(owner);
+        types.forEach(info::addTarget);
+        targets.forEach(info::addTarget);
 
         return true;
     }
 
     @SuppressWarnings("unchecked")
-    private Collection<String> readClassReferences(Expression node) {
-        if (node.getNodeType() == Expression.TYPE_LITERAL) {
+    private Collection<String> readClassReferences(Expression node, Map<String, ITypeBinding> types) {
+        if (node.getNodeType() == ASTNode.TYPE_LITERAL) {
             TypeLiteral literal = (TypeLiteral)node;
-            return Arrays.asList(ExtractUtil.getInternalName(getFilename(), literal.getType().resolveBinding(), literal.getType()));
-        } else if (node.getNodeType() == Expression.ARRAY_INITIALIZER) {
+            ITypeBinding bind = literal.getType().resolveBinding();
+            String name = ExtractUtil.getInternalName(getFilename(), bind, literal.getType());
+            types.put(name, bind);
+            return Arrays.asList(name);
+        } else if (node.getNodeType() == ASTNode.ARRAY_INITIALIZER) {
             ArrayInitializer init = (ArrayInitializer)node;
             Set<String> ret = new HashSet<>();
             for (Expression exp : ((List<Expression>)init.expressions())) {
-                if (exp.getNodeType() == Expression.TYPE_LITERAL) {
+                if (exp.getNodeType() == ASTNode.TYPE_LITERAL) {
                     TypeLiteral literal = (TypeLiteral)exp;
-                    ret.add(ExtractUtil.getInternalName(getFilename(), literal.getType().resolveBinding(), literal.getType()));
-                } else
-                    throw new IllegalArgumentException("Unknown @Mixin member: " + node.toString());
+                    ITypeBinding bind = literal.getType().resolveBinding();
+                    String name = ExtractUtil.getInternalName(getFilename(), bind, literal.getType());
+                    types.put(name, bind);
+                    ret.add(name);
+                } else {
+                    error(node, "Unknown @Mixin member: " + node.toString());
+                    return Collections.emptySet();
+                }
             }
             return ret;
-        } else
-            throw new IllegalArgumentException("Unknown @Mixin member: " + node.toString());
-
+        } else {
+            error(node, "Unknown @Mixin member: " + node.toString());
+            return Collections.emptySet();
+        }
     }
 }

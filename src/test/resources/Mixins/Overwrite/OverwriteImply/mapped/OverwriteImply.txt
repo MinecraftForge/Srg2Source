@@ -1,0 +1,10 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+
+import java.util.Vector;
+
+@Mixin(Vector.class)
+public class OverwriteImply {
+  @Overwrite
+  public boolean contains(Object e) {}
+}

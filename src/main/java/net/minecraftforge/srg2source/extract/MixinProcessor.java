@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -33,6 +34,7 @@ import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
 import net.minecraftforge.srg2source.mixin.IAnnotationProcessor;
 import net.minecraftforge.srg2source.mixin.MixinAnnotation;
 import net.minecraftforge.srg2source.mixin.MixinInfo;
+import net.minecraftforge.srg2source.mixin.MixinInfo.InterfaceInfo;
 import net.minecraftforge.srg2source.mixin.MixinInfo.ShadowInfo;
 import net.minecraftforge.srg2source.range.RangeMapBuilder;
 
@@ -72,8 +74,9 @@ public class MixinProcessor {
         return this.mixins.get(owner);
     }
 
-    public void setInfo(String owner, MixinInfo info) {
-        this.mixins.put(owner, info);
+    public MixinInfo getOrCreateInfo(ITypeBinding owner) {
+        String name = ExtractUtil.getInternalName(getBuilder().getFilename(), owner, null);
+        return this.mixins.computeIfAbsent(name, k -> new MixinInfo(name, owner));
     }
 
     public SymbolReferenceWalker getWalker() {
@@ -105,16 +108,33 @@ public class MixinProcessor {
        MixinInfo info = this.mixins.get(owner);
        if (info == null || info.getTarget() == null)
            return false;
+
+       if (info.isOverwrite(name, desc)) {
+           IMethodBinding mtd = ExtractUtil.findRoot(info.getTargetType(), name, desc);
+           String towner = ExtractUtil.getInternalName("{unknown}", mtd.getDeclaringClass(), node);
+           getBuilder().addMethodReference(node.getStartPosition(), node.getLength(), node.toString(), towner, name, desc);
+           return true;
+       }
+
        ShadowInfo shadow = info.getShadow(name, desc);
-       if (shadow == null)
-           return false;
+       if (shadow != null) {
+           int offset = 0;
+           if (shadow.getPrefix() != null && name.startsWith(shadow.getPrefix()))
+               offset = shadow.getPrefix().length();
 
-       int offset = 0;
-       if (shadow.getPrefix() != null && name.startsWith(shadow.getPrefix()))
-           offset = shadow.getPrefix().length();
+           getBuilder().addMethodReference(node.getStartPosition() + offset, node.getLength() - offset, node.toString().substring(offset), info.getTarget(), name.substring(offset), desc);
+           return true;
+       }
 
-       walker.getBuilder().addMethodReference(node.getStartPosition() + offset, node.getLength() - offset, node.toString().substring(offset), info.getTarget(), name.substring(offset), desc);
+       for (InterfaceInfo iinfo : info.getInterfaces()) {
+           String iowner = iinfo.findOwner(name, desc);
+           if (iowner != null) {
+               int offset = name.startsWith(iinfo.getPrefix()) ? iinfo.getPrefix().length() : 0;
+               getBuilder().addMethodReference(node.getStartPosition() + offset, node.getLength() - offset, node.toString().substring(offset), iowner, name.substring(offset), desc);
+               return true;
+           }
+       }
 
-       return true;
+       return false;
    }
 }

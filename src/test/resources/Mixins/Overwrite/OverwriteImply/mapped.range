@@ -1,0 +1,15 @@
+start 1 OverwriteImply.java 6f453ad575d1418cb0e4e3891ddafb84
+classdef 115 104 OverwriteImply
+# Start CLASS OverwriteImply
+  class 116 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 122 6 Vector false java/util/Vector
+  class 149 14 OverwriteImply false OverwriteImply
+  methoddef 168 49 contains (Ljava/lang/Object;)Z
+  # Start METHOD contains(Ljava/lang/Object;)Z
+    class 169 9 Overwrite false org/spongepowered/asm/mixin/Overwrite
+    method 196 8 contains java/util/AbstractCollection contains (Ljava/lang/Object;)Z
+    class 205 6 Object false java/lang/Object
+    parameter 212 1 e OverwriteImply contains (Ljava/lang/Object;)Z 0
+  # End METHOD
+# End CLASS
+end

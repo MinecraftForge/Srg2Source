@@ -19,8 +19,11 @@
 
 package net.minecraftforge.srg2source.mixin;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -30,30 +33,74 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.Type;
+
+import net.minecraftforge.srg2source.extract.ExtractUtil;
+
 public class MixinInfo {
     private final String owner;
-    @Nullable
-    private final String target;
-    private final Set<String> targets;
-    private final Map<String, ShadowInfo> shadows = new HashMap<>();
+    private final ITypeBinding ownerType;
 
-    MixinInfo(String owner, Set<String> targets) {
+    @Nullable
+    private String target;
+    private final Set<String> targets = new HashSet<>();
+    private final Map<String, ITypeBinding> targetTypes = new HashMap<>();
+    private final Map<String, ShadowInfo> shadows = new HashMap<>();
+    private final List<InterfaceInfo> interfaces = new ArrayList<>();
+    private final Set<String> overwrites = new HashSet<>();
+
+    public MixinInfo(String owner, ITypeBinding ownerType) {
         this.owner = owner;
-        this.targets = targets;
-        this.target = targets.size() == 1 ? targets.iterator().next() : null;
+        this.ownerType = ownerType;
+    }
+
+    public boolean isValid() {
+        return !this.targets.isEmpty();
     }
 
     public String getOwner() {
         return owner;
     }
 
+    public ITypeBinding getOwnerType() {
+        return this.ownerType;
+    }
+
     @Nullable
     public String getTarget() {
-        return this.target;
+        return this.targets.size() == 1 ? this.target : null;
+    }
+
+    @Nullable
+    public ITypeBinding getTargetType() {
+        return this.targets.size() == 1 ? getTargetType(this.target) : null;
+    }
+
+    @Nullable
+    public ITypeBinding getTargetType(String target) {
+        return this.targetTypes.computeIfAbsent(target, t -> {
+            return null; //TODO: Try and resolve?
+        });
     }
 
     public Set<String> getTargets() {
         return this.targets;
+    }
+
+    public void addTarget(String name) {
+        addTarget(name, null);
+    }
+
+    public void addTarget(String name, @Nullable ITypeBinding bind) {
+        targets.add(name);
+
+        if (bind != null)
+            targetTypes.put(name, bind);
+
+        if (this.target == null)
+            this.target = name;
     }
 
     public void addShadow(String name, String desc, String prefix) {
@@ -65,8 +112,24 @@ public class MixinInfo {
         return this.shadows.get(name + ' ' + desc);
     }
 
+    public void addInterface(String prefix, Type type) {
+        this.interfaces.add(new InterfaceInfo(prefix, type));
+    }
+
+    public List<InterfaceInfo> getInterfaces() {
+        return this.interfaces;
+    }
+
     public String getShadedOwner(String name, String desc) {
         return this.target != null && this.shadows.containsKey(name + ' ' + desc) ? this.target : null;
+    }
+
+    public void addOverwrite(String name, String desc) {
+        this.overwrites.add(name + desc);
+    }
+
+    public boolean isOverwrite(String name, String desc) {
+        return this.overwrites.contains(name + desc);
     }
 
     @Override
@@ -188,6 +251,55 @@ public class MixinInfo {
                     ",method=" + this.methodName +
                     ",target=" + this.target +
                     ",prefix=" + this.prefix + ']';
+        }
+    }
+
+    public class InterfaceInfo {
+        private final String target;
+        private final ITypeBinding type;
+        private final String prefix;
+        private final Map<String, String> methods;
+
+        private InterfaceInfo(String prefix, Type type) {
+            this.prefix = prefix;
+            this.type = type.resolveBinding();
+            this.target = ExtractUtil.getInternalName(this.type);
+            this.methods = buildMethods(this.type, new HashMap<>());
+        }
+
+        private Map<String, String> buildMethods(ITypeBinding binding, Map<String, String> ret) {
+            for (IMethodBinding bind : binding.getDeclaredMethods()) {
+                String key = bind.getName() + ExtractUtil.getDescriptor(bind);
+                if (!ret.containsKey(key))
+                    ret.put(key, ExtractUtil.getInternalName(ExtractUtil.findRoot(bind).getDeclaringClass()));
+            }
+
+            for (ITypeBinding bind : binding.getInterfaces())
+                buildMethods(bind, ret);
+            return ret;
+        }
+
+        public String getTarget() {
+            return this.target;
+        }
+
+        public ITypeBinding getType() {
+            return this.type;
+        }
+
+        public String getPrefix() {
+            return this.prefix;
+        }
+
+        @Override
+        public String toString() {
+            return "Interface[" + getTarget() + ", " + getPrefix() + ']';
+        }
+
+        @Nullable
+        public String findOwner(String name, String desc) {
+            String key = (name.startsWith(prefix) ? name.substring(prefix.length()) : name) + desc;
+            return this.methods.get(key);
         }
     }
 }

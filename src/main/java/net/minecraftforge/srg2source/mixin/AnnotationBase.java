@@ -21,6 +21,8 @@ package net.minecraftforge.srg2source.mixin;
 
 import javax.annotation.Nullable;
 
+import org.eclipse.jdt.core.dom.ASTNode;
+
 import net.minecraftforge.srg2source.extract.MixinProcessor;
 import net.minecraftforge.srg2source.extract.SymbolReferenceWalker;
 import net.minecraftforge.srg2source.range.RangeMapBuilder;
@@ -56,10 +58,8 @@ public abstract class AnnotationBase implements IAnnotationProcessor {
         return processor.getInfo(owner);
     }
 
-    protected MixinInfo getInfo(String owner, String error) {
-        MixinInfo ret = getInfo(owner);
-        if (ret == null)
-            throw new IllegalStateException(error);
-        return ret;
+    protected boolean error(ASTNode node, String message) {
+        getWalker().error(node, message);
+        return true;
     }
 }

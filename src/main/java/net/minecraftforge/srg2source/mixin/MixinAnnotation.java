@@ -31,7 +31,7 @@ import net.minecraftforge.srg2source.extract.MixinProcessor;
 public enum MixinAnnotation {
     ACCESSOR   ("gen/Accessor",         Accessor::new),
     INVOKER    ("gen/Invoker",          Invoker::new),
-    //IMPLEMENTS ("Implements",           Implements::new),
+    INTERFACE  ("Interface",            Interface::new),
     //AT         ("injection/At",         At::new),
     //COERCE     ("injection/Coerce",     Coerce::new),
     //CONSTANT   ("injection/Constant",   Constant::new),
@@ -45,21 +45,21 @@ public enum MixinAnnotation {
     //REDIRECT   ("injection/Redirect",   Redirect::new),
     //SLICE      ("injection/Slice",      Slice::new),
     //SURROGATE  ("injection/Surrogate",  Surrogate::new),
-    //INTERFACE  ("Interface",            Interface::new),
     //INTRINSIC  ("Intrinsic",            Intrinsic:new),
     MIXIN      ("Mixin",                Mixin::new),
-    //MUTABLE    ("Mutable",              Mutable::new),
-    //OVERWRITE  ("Overwrite",            Overwrite::new),
+    OVERWRITE  ("Overwrite",            Overwrite::new),
     //PSUEDO     ("Psuedo",               Psuedo::new),
     SHADOW     ("Shadow",               Shadow::new),
     //SOFT_OVERRIDE("SoftOverride",       SoftOverride::new),
-    //UNIQUE    ("Unique",                Unique::new),
 
     /* These annotations are metadata thing that we don't care about during remapping.
      * We should probably write tests for these for completeness, but I don't think they actually do anything.
     DEBUG      ("Debug",                Debug::new),
     DYNAMIC    ("Dynamic",              Dynamic::new),
     FINAL      ("Final",                Final::new),
+    IMPLEMENTS ("Implements",           Implements::new), - This one just wraps a bunch of @Interface
+    MUTABLE    ("Mutable",              Mutable::new),
+    UNIQUE     ("Unique",               Unique::new),
     */
 
     /* Pretty sure these are meta and not public facing

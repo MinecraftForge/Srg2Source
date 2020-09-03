@@ -21,7 +21,6 @@ package net.minecraftforge.srg2source.mixin;
 
 import java.util.List;
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -66,7 +65,9 @@ public class Shadow extends AnnotationBase {
                 String owner = ExtractUtil.getInternalName(getFilename(), bind.getDeclaringClass(), parent);
                 String name = bind.getName().toString();
                 String desc = ExtractUtil.getTypeSignature(bind.getType());
-                MixinInfo info = getInfo(owner, "Invalid @Sadow on " + name + " owner " + owner + " has no @Mixin");
+                MixinInfo info = getInfo(owner);
+                if (info == null)
+                    return error(node, "Invalid @Sadow on " + name + " owner " + owner + " has no @Mixin");
                 info.addShadow(name, desc, "shadow$");
             }
         } else if (parent.getNodeType() == ASTNode.METHOD_DECLARATION) {
@@ -75,11 +76,12 @@ public class Shadow extends AnnotationBase {
             String owner = ExtractUtil.getInternalName(getFilename(), bind.getDeclaringClass(), parent);
             String name = bind.getName().toString();
             String desc = ExtractUtil.getDescriptor(bind);
-            MixinInfo info = getInfo(owner, "Invalid @Sadow on " + name + desc + " owner " + owner + " has no @Mixin");
+            MixinInfo info = getInfo(owner);
+            if (info == null)
+                return error(node, "Invalid @Sadow on " + name + desc + " owner " + owner + " has no @Mixin");
             info.addShadow(name, desc, "shadow$");
-        } else {
-            throw new IllegalArgumentException("Invalid @Shadow target: " + parent.getClass().getName());
-        }
+        } else
+            return error(node, "Invalid @Shadow target: " + parent.getClass().getName());
 
         return true;
     }
@@ -95,13 +97,13 @@ public class Shadow extends AnnotationBase {
                 case "aliases":
                     break;
                 case "prefix":
-                    if (mvp.getValue().getNodeType() == Expression.STRING_LITERAL)
+                    if (mvp.getValue().getNodeType() == ASTNode.STRING_LITERAL)
                         prefix = ((StringLiteral)mvp.getValue()).getLiteralValue();
                     else
-                        throw new IllegalArgumentException("Unknown @Shadow member: " + node.toString());
+                        return error(node, "Unknown @Shadow member: " + node.toString());
                     break;
                 default:
-                    throw new IllegalArgumentException("Unknown @Shadow member: " + node.toString());
+                    return error(node, "Unknown @Shadow member: " + node.toString());
             }
         }
 
@@ -113,7 +115,9 @@ public class Shadow extends AnnotationBase {
                 String owner = ExtractUtil.getInternalName(getFilename(), bind.getDeclaringClass(), parent);
                 String type = ExtractUtil.getTypeSignature(bind.getType());
                 String name = bind.getName().toString();
-                MixinInfo info = getInfo(owner, "Invalid @Sadow on " + name + " owner " + owner + " has no @Mixin");
+                MixinInfo info = getInfo(owner);
+                if (info == null)
+                    return error(node, "Invalid @Sadow on " + name + " owner " + owner + " has no @Mixin");
                 info.addShadow(name, type, prefix);
             }
         } else if (parent.getNodeType() == ASTNode.METHOD_DECLARATION) {
@@ -122,11 +126,12 @@ public class Shadow extends AnnotationBase {
             String owner = ExtractUtil.getInternalName(getFilename(), bind.getDeclaringClass(), parent);
             String name = bind.getName().toString();
             String desc = ExtractUtil.getDescriptor(bind);
-            MixinInfo info = getInfo(owner, "Invalid @Sadow on " + name + desc + " owner " + owner + " has no @Mixin");
+            MixinInfo info = getInfo(owner);
+            if (info == null)
+                return error(node, "Invalid @Sadow on " + name + desc + " owner " + owner + " has no @Mixin");
             info.addShadow(name, desc, prefix);
-        } else {
-            throw new IllegalArgumentException("Invalid @Shadow target: " + parent.getClass().getName());
-        }
+        } else
+            return error(node, "Invalid @Shadow target: " + parent.getClass().getName());
         return true;
     }
 }

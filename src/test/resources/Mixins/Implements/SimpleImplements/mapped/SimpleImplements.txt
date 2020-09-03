@@ -1,0 +1,12 @@
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Implements;
+import org.spongepowered.asm.mixin.Interface;
+
+import java.util.Vector;
+import java.io.Closeable;
+
+@Mixin(Vector.class)
+@Implements({@Interface(iface = Closeable.class, prefix = "pre$")})
+public class SimpleImplements {
+  void pre$close() {}
+}
