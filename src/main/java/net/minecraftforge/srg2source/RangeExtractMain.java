@@ -55,6 +55,8 @@ public class RangeExtractMain {
         OptionSpec<Path> inputArg = parser.acceptsAll(Arrays.asList("in", "input")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER).required();
         OptionSpec<Path> outputArg = parser.acceptsAll(Arrays.asList("out", "output")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER).required();
         OptionSpec<Boolean> batch = parser.accepts("batch").withOptionalArg().ofType(Boolean.class).defaultsTo(true);
+        OptionSpec<Boolean> mixins = parser.accepts("mixins").withOptionalArg().ofType(Boolean.class).defaultsTo(true);
+        OptionSpec<Boolean> mixins_fatal = parser.accepts("fatalmixins").withOptionalArg().ofType(Boolean.class).defaultsTo(false);
         //TODO: Encoding argument
         OptionSpec<SourceVersion> jversionArg = parser.acceptsAll(Arrays.asList("sc", "source-compatibility")).withRequiredArg().ofType(SourceVersion.class).defaultsTo(SourceVersion.JAVA_1_8)
             .withValuesConvertedBy(new ValueConverter<SourceVersion>() {
@@ -81,9 +83,13 @@ public class RangeExtractMain {
 
         try {
             OptionSet options = parser.parse(args);
+            boolean enableMixins = options.has(mixins) && options.valueOf(mixins);
+            boolean fatalMixins = enableMixins && (options.has(mixins_fatal) && options.valueOf(mixins_fatal));
             System.out.println("Compat: " + options.valueOf(jversionArg));
             System.out.println("Output: " + options.valueOf(outputArg));
             System.out.println("Batch:  " + options.valueOf(batch));
+            System.out.println("Mixins: " + enableMixins);
+            System.out.println("Fatal:  " + fatalMixins);
 
             RangeExtractorBuilder builder = new RangeExtractorBuilder()
                 .sourceCompatibility(options.valueOf(jversionArg))
@@ -101,6 +107,11 @@ public class RangeExtractMain {
                 System.out.println("Input:  " + v);
                 builder.input(v);
             });
+
+            if (enableMixins)
+                builder.enableMixins();
+            if (fatalMixins)
+                builder.fatalMixins();
 
             builder.build().run();
         } catch (OptionException e) {

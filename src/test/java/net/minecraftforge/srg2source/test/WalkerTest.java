@@ -60,7 +60,7 @@ public class WalkerTest {
     @Test
     public void testWalkerOverrides() {
         Set<String> needed = getMethods(ASTVisitor.class);
-        Set<String> has = getMethods(new SymbolReferenceWalker(null, null).getVisitor().getClass());
+        Set<String> has = getMethods(new SymbolReferenceWalker(null, null, false).getVisitor().getClass());
         needed.removeAll(has);
         String code = needed.stream().sorted().collect(Collectors.joining("\n"));
         System.out.println(code);

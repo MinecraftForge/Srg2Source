@@ -43,12 +43,12 @@ public class SymbolReferenceWalker {
     private HashMap<String, ParamInfo> parameterInfo = new HashMap<>();
     private int anonCount = 0; // Number off encountered anonymous classes
 
-    public SymbolReferenceWalker(RangeExtractor extractor, RangeMapBuilder builder) {
+    public SymbolReferenceWalker(RangeExtractor extractor, RangeMapBuilder builder, boolean enableMixins) {
         this.extractor = extractor;
         this.builder = builder;
         this.className = null;
         this.parent = null;
-        this.mixins = new MixinProcessor(this);
+        this.mixins = enableMixins ? new MixinProcessor(this) : null;
     }
 
     private SymbolReferenceWalker(SymbolReferenceWalker parent, String className) {
@@ -139,6 +139,10 @@ public class SymbolReferenceWalker {
 
     public RangeMapBuilder getBuilder() {
         return this.builder;
+    }
+
+    public RangeExtractor getExtractor() {
+        return this.extractor;
     }
     /* ===================================================================================================== */
 
@@ -300,7 +304,8 @@ public class SymbolReferenceWalker {
                 if (var.isField()) { //Fields and Enum Constants
                     if (var.getDeclaringClass() != null) { // Things like array.lenth is a Field reference, but has no declaring class.
                         String owner = getInternalName(var.getDeclaringClass(), node);
-                        owner = this.mixins.getFieldOwner(owner, node.toString(), ExtractUtil.getTypeSignature(var.getType()));
+                        if (this.mixins != null)
+                            owner = this.mixins.getFieldOwner(owner, node.toString(), ExtractUtil.getTypeSignature(var.getType()));
                         builder.addFieldReference(node.getStartPosition(), node.getLength(), node.toString(), owner);
                     }
                 } else if (var.isParameter()) {
@@ -324,7 +329,7 @@ public class SymbolReferenceWalker {
                 String owner = getInternalName(mtd.getDeclaringClass(), node);
                 String name = mtd.isConstructor() ? "<init>" : mtd.getName();
                 String desc = ExtractUtil.getDescriptor(mtd.getMethodDeclaration());
-                if (!this.mixins.processMethodReference(node, mtd, owner, name, desc))
+                if (this.mixins == null || !this.mixins.processMethodReference(node, mtd, owner, name, desc))
                     builder.addMethodReference(node.getStartPosition(), node.getLength(), node.toString(), owner, name, desc);
                 return true;
             // These I have not tested, so assume it will walk correctly.
@@ -488,16 +493,22 @@ public class SymbolReferenceWalker {
      * TODO: Move this to a generic annotation processor system?
      */
     private boolean process(NormalAnnotation node) {
+        if (mixins == null)
+            return true;
         String name = getInternalName((ITypeBinding)node.getTypeName().resolveBinding(), node.getTypeName());
         return this.mixins.process(node, name);
     }
 
     private boolean process(SingleMemberAnnotation node) {
+        if (mixins == null)
+            return true;
         String name = getInternalName((ITypeBinding)node.getTypeName().resolveBinding(), node.getTypeName());
         return this.mixins.process(node, name);
     }
 
     private boolean process(MarkerAnnotation node) {
+        if (mixins == null)
+            return true;
         String name = getInternalName((ITypeBinding)node.getTypeName().resolveBinding(), node.getTypeName());
         return this.mixins.process(node, name);
     }

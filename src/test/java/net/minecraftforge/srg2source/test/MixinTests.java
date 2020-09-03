@@ -24,9 +24,12 @@ import java.util.List;
 
 import org.junit.Test;
 
+import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
+
 public abstract class MixinTests extends SimpleTestBase {
     @Override protected String getPrefix() { return "Mixins/" + getClass().getSimpleName(); }
     @Override protected List<String> getLibraries(){ return Arrays.asList("org.spongepowered:mixin:0.8"); }
+    @Override protected RangeExtractorBuilder customize(RangeExtractorBuilder builder) { return builder.enableMixins().fatalMixins(); };
 
     public static class Mixin extends MixinTests {
         @Test public void testHardTargetSingle() { testClass("HardTargetSingle"); }

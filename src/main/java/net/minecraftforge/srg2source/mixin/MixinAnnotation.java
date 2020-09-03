@@ -32,10 +32,11 @@ public enum MixinAnnotation {
     ACCESSOR   ("gen/Accessor",         Accessor::new),
     INVOKER    ("gen/Invoker",          Invoker::new),
     INTERFACE  ("Interface",            Interface::new),
+    /*
+     *  All these remaining types use the 'selector' system of Mixin, which is super complex
+     *  and I have no good idea right now how to manage them.
+     */
     //AT         ("injection/At",         At::new),
-    //COERCE     ("injection/Coerce",     Coerce::new),
-    //CONSTANT   ("injection/Constant",   Constant::new),
-    //GROUP      ("injection/Group",      Group::new),
     //INJECT     ("injection/Inject",     Inject::new),
     //AT_CODE    ("injection/InjectionPoint$AtCode", AtCode::new),
     //MODIFY_ARG ("injection/ModifyArg",  ModifyArg::new),
@@ -43,24 +44,31 @@ public enum MixinAnnotation {
     //MODIFY_CONSTANT("injection/ModifyConstant", ModifyConstant::new),
     //MODIFY_VARIABLE("injection/ModifyVariable", ModifyVariable::new),
     //REDIRECT   ("injection/Redirect",   Redirect::new),
-    //SLICE      ("injection/Slice",      Slice::new),
-    //SURROGATE  ("injection/Surrogate",  Surrogate::new),
-    //INTRINSIC  ("Intrinsic",            Intrinsic:new),
     MIXIN      ("Mixin",                Mixin::new),
     OVERWRITE  ("Overwrite",            Overwrite::new),
-    //PSUEDO     ("Psuedo",               Psuedo::new),
     SHADOW     ("Shadow",               Shadow::new),
-    //SOFT_OVERRIDE("SoftOverride",       SoftOverride::new),
 
     /* These annotations are metadata thing that we don't care about during remapping.
      * We should probably write tests for these for completeness, but I don't think they actually do anything.
+    COERCE     ("injection/Coerce",     Coerce::new),
+    CONSTANT   ("injection/Constant",   Constant::new),
     DEBUG      ("Debug",                Debug::new),
     DYNAMIC    ("Dynamic",              Dynamic::new),
     FINAL      ("Final",                Final::new),
+    GROUP      ("injection/Group",      Group::new),
     IMPLEMENTS ("Implements",           Implements::new), - This one just wraps a bunch of @Interface
+    INTRINSIC  ("Intrinsic",            Intrinsic:new),
     MUTABLE    ("Mutable",              Mutable::new),
     UNIQUE     ("Unique",               Unique::new),
+    SLICE      ("injection/Slice",      Slice::new),
+    SURROGATE  ("injection/Surrogate",  Surrogate::new),
     */
+
+    /* These are markers for things that do not exist on the class path, so there is no way for us to resolve.
+     * We just have to hope the user knows what they are doing
+    PSUEDO       ("Psuedo",             Psuedo::new),
+    SOFT_OVERRIDE("SoftOverride",       SoftOverride::new),
+     */
 
     /* Pretty sure these are meta and not public facing
     ANNOTATION_TYPE("injection/struct/InjectionInfo$AnnotationType", Annotationtype::new),

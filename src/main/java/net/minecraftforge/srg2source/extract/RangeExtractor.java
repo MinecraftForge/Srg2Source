@@ -67,6 +67,8 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
 
     private Map<String, RangeMap> file_cache = new HashMap<>();
     private int cache_hits = 0;
+    private boolean enableMixins = false;
+    private boolean fatalMixins = false;
 
     public RangeExtractor(){}
 
@@ -80,6 +82,17 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
 
     public void setBatchASTs(boolean value) {
         this.enableBatchedASTs = value;
+    }
+
+    public void enableMixins() {
+        this.enableMixins = true;
+    }
+
+    public void fatalMixins() {
+        this.fatalMixins = true;
+    }
+    public boolean areMixinsFatal() {
+        return this.fatalMixins;
     }
 
     public void addLibrary(File value) {
@@ -158,7 +171,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
                         if (cu.getProblems() != null && cu.getProblems().length > 0)
                             Arrays.stream(cu.getProblems()).filter(p -> !p.isWarning()).forEach(p -> log("   Compile Error! " + p.toString()));
 
-                        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, builder);
+                        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, builder, enableMixins);
                         walker.safeWalk(cu);
                     }
 
@@ -211,7 +224,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
                         if (cu.getProblems() != null && cu.getProblems().length > 0)
                             Arrays.stream(cu.getProblems()).filter(p -> !p.isWarning()).forEach(p -> log("   Compile Error! " + p.toString()));
 
-                        SymbolReferenceWalker walker = new SymbolReferenceWalker(RangeExtractor.this, builder);
+                        SymbolReferenceWalker walker = new SymbolReferenceWalker(RangeExtractor.this, builder, enableMixins);
                         walker.safeWalk(cu);
                     }
 

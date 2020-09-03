@@ -60,6 +60,8 @@ public abstract class SimpleTestBase {
 
     protected abstract String getPrefix();
     protected abstract List<String> getLibraries();
+    protected RangeExtractorBuilder customize(RangeExtractorBuilder builder) { return builder; };
+    protected RangeApplierBuilder customize(RangeApplierBuilder builder) { return builder; };
 
     private Path getRoot() {
         URL url = this.getClass().getResource("/test.marker");
@@ -133,7 +135,7 @@ public abstract class SimpleTestBase {
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         ByteArrayOutputStream logs = new ByteArrayOutputStream();
 
-        RangeExtractor extractor = new RangeExtractorBuilder()
+        RangeExtractor extractor = customize(new RangeExtractorBuilder())
             .sourceCompatibility(SourceVersion.JAVA_1_8)
             .input(new TestFolderSupplier(src))
             .logger(new PrintStream(logs))
@@ -154,7 +156,7 @@ public abstract class SimpleTestBase {
         try (FileSystem imfs = Jimfs.newFileSystem(Configuration.unix())) {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             Path out = imfs.getPath("/");
-            RangeApplier applier = new RangeApplierBuilder()
+            RangeApplier applier = customize(new RangeApplierBuilder())
                 .logger(new PrintStream(bos))
                 .input(new TestFolderSupplier(mapped))
                 .output(out)

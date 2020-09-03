@@ -59,7 +59,10 @@ public abstract class AnnotationBase implements IAnnotationProcessor {
     }
 
     protected boolean error(ASTNode node, String message) {
-        getWalker().error(node, message);
+        String error = "ERROR: " + getFilename() + " @ " + node.getStartPosition() + ": " + message;
+        getWalker().error(error);
+        if (getWalker().getExtractor().areMixinsFatal())
+            throw new IllegalStateException(error);
         return true;
     }
 }
