@@ -341,7 +341,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         int packageLine = -1;
 
         while (nextIndex > -1) {
-            String line = data.substring(lastIndex, nextIndex);
+            String line = data.substring(lastIndex, nextIndex).trim();
             int comment = line.indexOf("//");
 
             while ((comment == -1 ? line : line.substring(0, comment)).trim().isEmpty()) {
@@ -349,7 +349,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 nextIndex = getNextIndex(data.indexOf("\n", lastIndex), data.length(), lastIndex);
                 if (nextIndex == -1) //EOF
                     break;
-                line = data.substring(lastIndex, nextIndex);
+                line = data.substring(lastIndex, nextIndex).trim();
                 comment = line.indexOf("//");
             }
 
