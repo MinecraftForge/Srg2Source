@@ -364,6 +364,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 Matcher match = IMPORT.matcher(line);
                 if (!match.matches()) {
                     error("Error: Invalid import line: " + line); //Do we want to error out?
+                    lastIndex = nextIndex + 1;
                     nextIndex = getNextIndex(data.indexOf("\n", nextIndex + 1), data.length(), nextIndex + 1);
                     continue;
                 }

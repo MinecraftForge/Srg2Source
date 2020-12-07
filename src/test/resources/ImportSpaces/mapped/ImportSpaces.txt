@@ -7,6 +7,8 @@ import java.util.Date; //And a comment on the end
 
 import java.io.*; //Test Wildcards
 
+import java.util.Map ; // import matcher fails there
+
 public class ImportSpaces {
   public static void main(String[] args) {
     List<Date> tmp = Collections.emptyList();
