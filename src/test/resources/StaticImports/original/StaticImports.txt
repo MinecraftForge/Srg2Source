@@ -1,0 +1,13 @@
+import static java.lang.Math.sqrt;
+import static java.lang.Integer.MAX_VALUE; // static field
+import static java.lang.Math.pow; // static method
+import static java.lang.Integer.SIZE;
+
+public class StaticImports {
+  public static void main(String[] args) {
+    Double sqrt = sqrt(4);
+    Double pow = pow(2,2);
+    Integer integerSize = SIZE;
+    Integer maxInteger = MAX_VALUE;
+  }
+}

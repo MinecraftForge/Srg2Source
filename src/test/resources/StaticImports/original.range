@@ -1,0 +1,20 @@
+start 1 StaticImports.java 3730c0a11622567a5f82160d4d7b815f
+classdef 184 199 StaticImports
+# Start CLASS StaticImports
+  class 197 13 StaticImports false StaticImports
+  methoddef 215 166 main ([Ljava/lang/String;)V
+  # Start METHOD main([Ljava/lang/String;)V
+    method 234 4 main StaticImports main ([Ljava/lang/String;)V
+    class 239 6 String false java/lang/String
+    parameter 248 4 args StaticImports main ([Ljava/lang/String;)V 0
+    class 260 6 Double false java/lang/Double
+    method 274 4 sqrt java/lang/Math sqrt (D)D
+    class 287 6 Double false java/lang/Double
+    method 300 3 pow java/lang/Math pow (DD)D
+    class 314 7 Integer false java/lang/Integer
+    field 336 4 SIZE java/lang/Integer
+    class 346 7 Integer false java/lang/Integer
+    field 367 9 MAX_VALUE java/lang/Integer
+  # End METHOD
+# End CLASS
+end

@@ -379,7 +379,8 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                         old = old.substring(0, old.length() - 2);
                         cEnd -= 2;
                     } else {
-                        error("Error: Invalid import line: Static Method Imports not supported: " + line); //Do we want to error out?
+                        error("Error: Static imports not supported: " + line); //Do we want to error out?
+                        lastIndex = nextIndex + 1;
                         nextIndex = getNextIndex(data.indexOf("\n", nextIndex + 1), data.length(), nextIndex + 1);
                         continue;
                     }
