@@ -36,7 +36,7 @@ public class MemoryOutputSupplier implements OutputSupplier {
     @Override public void close() throws IOException {}
 
     @Override
-    public OutputStream getOutput(final String relPath)
+    public OutputStream getOutput(final String relPath, boolean override)
     {
         return new ByteArrayOutputStream()
         {

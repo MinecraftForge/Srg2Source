@@ -47,6 +47,7 @@ public class RangeApplyMain {
 
         OptionSpec<File> rangeArg = parser.acceptsAll(a("rm", "range", "srcRangeMap")).withRequiredArg().ofType(File.class).required();
         OptionSpec<Boolean> importArg = parser.acceptsAll(a("keepImports")).withOptionalArg().ofType(Boolean.class).defaultsTo(true);
+        OptionSpec<Boolean> overrideArg = parser.acceptsAll(a("override", "overrideOutput")).withOptionalArg().ofType(Boolean.class).defaultsTo(false);
         //OptionSpec<Boolean> annArg = parser.acceptsAll(a("annotate")).withOptionalArg().ofType(Boolean.class).defaultsTo(false);
 
         try
@@ -60,33 +61,36 @@ public class RangeApplyMain {
 
             File range = options.valueOf(rangeArg);
             Path output = options.valueOf(outArg);
+            boolean overrideOutput = options.has(overrideArg) && options.valueOf(overrideArg);
             boolean keepImports = options.has(importArg) && options.valueOf(importArg);
 
-            System.out.println("Range:   " + range);
-            System.out.println("Output:  " + output);
-            System.out.println("Imports: " + keepImports);
+            System.out.println("Range:     " + range);
+            System.out.println("Output:    " + output);
+            System.out.println("Override:  " + overrideOutput);
+            System.out.println("Imports:   " + keepImports);
 
             RangeApplierBuilder builder = new RangeApplierBuilder()
                 .range(range)
-                .output(output);
+                .output(output)
+                .outputOverride(overrideOutput);
 
             if (options.has(mappingArg))
             {
                 options.valuesOf(mappingArg).forEach(v -> {
-                    System.out.println("Map:     " + v);
+                    System.out.println("Map:       " + v);
                     builder.srg(v);
                 });
             }
 
             options.valuesOf(inputArg).forEach(v -> {
-                System.out.println("Input:   " + v);
+                System.out.println("Input:     " + v);
                 builder.input(v);
             });
 
             if (options.has(excArg))
             {
                 options.valuesOf(excArg).forEach(v -> {
-                    System.out.println("Exc:     " + v);
+                    System.out.println("Exc:       " + v);
                     builder.exc(v);
                 });
             }

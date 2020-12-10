@@ -55,7 +55,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier {
 
     @Override
     @Nullable
-    public OutputStream getOutput(String relPath) {
+    public OutputStream getOutput(String relPath, boolean override) {
         try {
             Path target = root.resolve(relPath);
             if (!Files.exists(target)) {
@@ -63,7 +63,10 @@ public class FolderSupplier implements InputSupplier, OutputSupplier {
                 if (!Files.exists(parent))
                     Files.createDirectories(parent);
             }
-            return Files.newOutputStream(target, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+            if (override)
+                return Files.newOutputStream(target, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            else
+                return Files.newOutputStream(target, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
         } catch (IOException e) {
             return null;
         }

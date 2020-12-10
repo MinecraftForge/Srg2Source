@@ -63,7 +63,7 @@ public class ZipOutputSupplier implements OutputSupplier {
     }
 
     @Override
-    public OutputStream getOutput(String relPath) {
+    public OutputStream getOutput(String relPath, boolean override) {
         if (tempOut != null)
             throw new IllegalStateException("You must close the previous stream before getting a new one!");
 

@@ -28,8 +28,9 @@ public interface OutputSupplier extends Closeable {
     /**
      * Opens an output stream to the specified resource. The resource will be created if it does not already exist. You are expected to close this stream yourself.
      * @param relPath Relative path separated with '/' and having no preceding slash.
+     * @param override Specify if output stream will override existing files in given path
      * @return An output we can stream data to
      */
     @Nullable
-    public OutputStream getOutput(String relPath);
+    public OutputStream getOutput(String relPath, boolean override);
 }

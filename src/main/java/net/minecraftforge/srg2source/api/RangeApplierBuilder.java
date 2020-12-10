@@ -42,6 +42,7 @@ public class RangeApplierBuilder {
     private PrintStream logErr = System.err;
     private List<InputSupplier> inputs = new ArrayList<>();
     private OutputSupplier output = null;
+    private boolean outputOverride = false;
     private Consumer<RangeApplier> range = null;
     private List<Consumer<RangeApplier>> srgs = new ArrayList<>();
     private List<Consumer<RangeApplier>> excs = new ArrayList<>();
@@ -69,7 +70,12 @@ public class RangeApplierBuilder {
         }
         return this;
     }
-    
+
+    public RangeApplierBuilder outputOverride(boolean value) {
+        this.outputOverride = value;
+        return this;
+    }
+
     public RangeApplierBuilder missing(Path value) {
         this.missing = value;
         return this;

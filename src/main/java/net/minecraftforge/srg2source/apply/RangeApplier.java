@@ -68,6 +68,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
     private boolean keepImports = false; // Keep imports that are not referenced anywhere in code.
     private InputSupplier input = null;
     private OutputSupplier output = null;
+    private boolean outputOverride = false; // Override output if exist
     private Map<String, RangeMap> range = new HashMap<>();
     private ClassMeta meta = null;
     
@@ -103,6 +104,10 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
 
     public void setOutput(OutputSupplier value) {
         this.output = value;
+    }
+
+    public void overrideOutput(boolean value) {
+        this.outputOverride = value;
     }
 
     public void readRangeMap(File value) {
@@ -168,7 +173,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
 
             // write.
             if (data != null) {
-                OutputStream outStream = output.getOutput(filePath);
+                OutputStream outStream = output.getOutput(filePath, this.outputOverride);
                 if (outStream == null)
                     throw new IllegalStateException("Could not get output stream form: " + filePath);
                 outStream.write(data.getBytes(encoding));
