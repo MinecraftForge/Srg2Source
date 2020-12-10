@@ -19,6 +19,7 @@
 
 package net.minecraftforge.srg2source.apply;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -54,6 +56,7 @@ import net.minecraftforge.srg2source.range.entries.RangeEntry;
 import net.minecraftforge.srg2source.util.Util;
 import net.minecraftforge.srg2source.util.io.ConfLogger;
 import net.minecraftforge.srgutils.IMappingFile;
+import net.minecraftforge.srgutils.IMappingFile.Format;
 
 @SuppressWarnings("unused")
 public class RangeApplier extends ConfLogger<RangeApplier> {
@@ -67,6 +70,9 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
     private OutputSupplier output = null;
     private Map<String, RangeMap> range = new HashMap<>();
     private ClassMeta meta = null;
+    
+    private Map<String, HashSet<String>> missing = new HashMap<>();
+    private Path missingPath = null;
 
 
     public void readSrg(Path srg) {
@@ -117,6 +123,10 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
 
     public void keepImports(boolean value) {
         this.keepImports = value;
+    }
+    
+    public void printMissing(Path value) {
+        this.missingPath = value;
     }
 
     public void run() throws IOException {
@@ -170,6 +180,22 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         }
 
         output.close();
+
+        // Save missing entries
+        if (this.missingPath != null && !missing.isEmpty()) {
+            String data = "";
+            for (Entry<String, HashSet<String>> entry : missing.entrySet()) {
+                String owner = entry.getKey(); 
+                data += (owner + " " + mapClass(owner) + "\n");
+                for (String line : entry.getValue()) {
+                    data += ("\t" + line + "\n");
+                }
+            }
+
+            // Load mapping from data then save
+            IMappingFile file = IMappingFile.load(new ByteArrayInputStream(data.getBytes()));
+            file.write(this.missingPath, Format.TSRG, false);
+        }
     }
 
     private List<String> processJavaSourceFile(String fileName, String data, RangeMap rangeList, ClassMeta meta) throws IOException {
@@ -494,6 +520,22 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         }
     }
 
+    @Deprecated
+    static String[] ignored = new String[] {
+        "^net\\.(?!minecraft).+",
+        "^com\\.(?!(mojang\\.brigadier\\.tree\\.CommandNode)|(mojang\\.math)).+",
+        "^org\\.(?!bukkit).+",
+        "^it.+",
+        "^io.+",
+        "^jline.+",
+        "^joptsimple.+",
+        "^java.+"
+    };
+
+    static boolean isIgnored(String name) {
+        return Arrays.asList(ignored).stream().anyMatch(e -> name.replace('/', '.').matches(e));
+    }
+
     // TODO: Decide how I want to manage multiple srg files? Chain them? Merge them?
     //Current usecase is Forge adding extra SRG lines. But honestly that shouldn't happen anymore.
     String mapClass(String name) {
@@ -506,6 +548,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
     }
 
     String mapField(String owner, String name) {
+        boolean missed = false;
         for (IMappingFile srg : srgs) {
             IMappingFile.IClass cls = srg.getClass(owner);
             if (cls != null) {
@@ -513,6 +556,22 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 if (newName != name) // This is intentional instance equality. As remap methods return the same instance of not found.
                     return newName;
             }
+            
+            // If we are here, srg does not have a mapping for field
+            if (!isIgnored(owner))
+                missed = true;
+        }
+
+        // Note field mapping is missing
+        if (missed) {
+            HashSet<String> set;
+            if (missing.containsKey(owner)) {
+                set = missing.get(owner);
+            } else {
+                missing.put(owner, set = new HashSet<String>());
+            }
+            
+            set.add(name + " " + " F_" + name);
         }
         return name;
     }
@@ -525,6 +584,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
             return idx == -1 ? newName : newName.substring(idx + 1);
         }
 
+        boolean missed = false;
         for (IMappingFile srg : srgs) {
             IMappingFile.IClass cls = srg.getClass(owner);
             if (cls != null) {
@@ -532,6 +592,22 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 if (newName != name) // This is intentional instance equality. As remap methods return the same instance of not found.
                     return newName;
             }
+
+            // If we are here, srg does not have a mapping for method
+            if (!isIgnored(owner))
+                missed = true;
+        }
+
+        // Note method mapping is missing
+        if (missed) {
+            HashSet<String> set;
+            if (missing.containsKey(owner)) {
+                set = missing.get(owner);
+            } else {
+                missing.put(owner, set = new HashSet<String>());
+            }
+
+            set.add(name + " " + desc + " M_" + name);
         }
 
         //There was no mapping for this specific method, so lets see if this is something in the metadata

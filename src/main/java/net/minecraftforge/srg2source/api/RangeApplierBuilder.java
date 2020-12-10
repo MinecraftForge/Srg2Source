@@ -46,6 +46,7 @@ public class RangeApplierBuilder {
     private List<Consumer<RangeApplier>> srgs = new ArrayList<>();
     private List<Consumer<RangeApplier>> excs = new ArrayList<>();
     private boolean keepImports = false;
+    private Path missing = null;
 
     public RangeApplierBuilder logger(PrintStream value) {
         this.logStd = value;
@@ -66,6 +67,11 @@ public class RangeApplierBuilder {
         } catch (IOException e) {
             throw new IllegalArgumentException("Invalid output: " + value, e);
         }
+        return this;
+    }
+    
+    public RangeApplierBuilder missing(Path value) {
+        this.missing = value;
         return this;
     }
 
@@ -151,6 +157,7 @@ public class RangeApplierBuilder {
         excs.forEach(e -> e.accept(ret));
 
         ret.keepImports(keepImports);
+        ret.printMissing(missing);
 
         return ret;
     }

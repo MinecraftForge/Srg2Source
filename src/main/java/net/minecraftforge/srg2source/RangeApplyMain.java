@@ -42,6 +42,7 @@ public class RangeApplyMain {
         OptionSpec<Path> outArg = parser.acceptsAll(a("out", "output", "outDir")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER).required();
         OptionSpec<Path> excArg = parser.acceptsAll(a("exc", "excFiles")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER);
         OptionSpec<Path> mappingArg = parser.acceptsAll(a("map", "srg", "srgFiles")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER).required();
+        OptionSpec<Path> missingArg = parser.acceptsAll(a("miss", "missing")).withRequiredArg().withValuesConvertedBy(PATH_CONVERTER);
         //TODO: Encoding arguments
 
         OptionSpec<File> rangeArg = parser.acceptsAll(a("rm", "range", "srcRangeMap")).withRequiredArg().ofType(File.class).required();
@@ -88,6 +89,13 @@ public class RangeApplyMain {
                     System.out.println("Exc:     " + v);
                     builder.exc(v);
                 });
+            }
+
+            if (options.has(missingArg))
+            {
+        	Path missing = options.valueOf(missingArg);
+        	System.out.println("Missing: " + missing);
+                builder.missing(missing);
             }
 
             if (keepImports)
