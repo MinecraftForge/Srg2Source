@@ -110,7 +110,7 @@ public class ExtractUtil {
     @Nullable
     private static IMethodBinding findRoot(IMethodBinding target, @Nullable ITypeBinding type) {
         if (type == null || target.isConstructor())
-            return target;
+            return null;
 
         for (IMethodBinding mtd : type.getDeclaredMethods())
             if (target.overrides(mtd))

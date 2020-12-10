@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import net.minecraftforge.srg2source.api.InputSupplier;
 import net.minecraftforge.srg2source.api.OutputSupplier;
@@ -259,15 +260,16 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                         simplename = simplename.substring(idx + 1);
                     }
 
-                    if (ref.isQualified() && oldName.indexOf('.') > 0) { // Top Level Includes package
+                    boolean conflict = false;
+                    if (!ref.isQualified()) {
+                        conflict = !trackImport(importsToAdd, newTopLevelClassFullName, newTopLevelClassFullName,//TODO: pass in inner class names so we can check super?
+                            fullname);
+                    }
+
+                    if (conflict || ref.isQualified() && oldName.indexOf('.') > 0) { // Top Level Includes package
                         newName = fullname.replace('/', '.').replace('$', '.');
                     } else {
                         newName = simplename;
-                        if (!ref.isQualified()) {
-                            trackImport(importsToAdd, newTopLevelClassFullName,
-                                newTopLevelClassFullName, //TODO: pass in inner class names so we can check super?
-                                fullname);
-                        }
                     }
                     break;
                 }
@@ -341,19 +343,32 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         return Arrays.asList(fileName, outString);
     }
 
-    private static void trackImport(Set<String> imports, String topLevel, String self, String reference) {
-        if (reference.startsWith(topLevel)) return; //This is a inner class, nested unknown amounts deep.... Just assume it's qualified correctly in code.
+    /**
+     * @return {@code true} when import does not collide with another
+     */
+    private boolean trackImport(Set<String> imports, String topLevel, String self, String reference) {
+        if (reference.startsWith(topLevel)) return true; //This is a inner class, nested unknown amounts deep.... Just assume it's qualified correctly in code.
 
         int idx = topLevel.lastIndexOf('/');
         String tpkg = idx == -1 ? "" : topLevel.substring(0, idx);
         idx = reference.lastIndexOf('/');
         String rpkg = idx == -1 ? "" : reference.substring(0, idx);
 
-        if (tpkg.equals(rpkg)) return; // We are in the same package, no import needed
+        if (tpkg.equals(rpkg)) return true; // We are in the same package, no import needed
+
+        String imp = reference.replace('/', '.').replace('$', '.');
+        String cls = imp.substring(imp.lastIndexOf('.'));
+
+        List<String> conflicts = imports.stream().filter(e -> !e.equals(imp) && e.endsWith(cls)).collect(Collectors.toList());
+        if (!conflicts.isEmpty()) {
+            log("Cannot import [" + imp + "] because of class name conflict with " + conflicts);
+            return false;
+        }
 
         //This needs to be made better by taking into account inheritance, but I don't know of a simple way to hack inheritance into this,
         //so I think we're gunna have to live with some false positives. We just have to be careful when patching.
-        imports.add(reference.replace('/', '.').replace('$', '.'));
+        imports.add(imp);
+        return true;
     }
 
     /*
