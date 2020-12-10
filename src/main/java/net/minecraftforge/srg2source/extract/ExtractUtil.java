@@ -95,12 +95,18 @@ public class ExtractUtil {
         ITypeBinding clazz = mtd.getDeclaringClass();
         if (clazz == null)
             return mtd;
-        IMethodBinding root = findRoot(mtd, clazz.getSuperclass());
-        if (root != null)
-            return root.getMethodDeclaration();
+
+        ITypeBinding sclazz = clazz.getSuperclass();
+        // If the declaring class overrides Object.class method directly, don't try to find the root in the
+        // Object superclass as mapping a method from Object.class is pointless
+        if (sclazz != null && !sclazz.getBinaryName().equals("java.lang.Object")) {
+            IMethodBinding root = findRoot(mtd, sclazz);
+            if (root != null)
+                return root.getMethodDeclaration();
+        }
 
         for (ITypeBinding intf : clazz.getInterfaces()) {
-            root = findRoot(mtd, intf);
+            IMethodBinding root = findRoot(mtd, intf);
             if (root != null)
                 return root.getMethodDeclaration();
         }
