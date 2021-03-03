@@ -36,6 +36,7 @@ public abstract class RangeEntry implements IRange {
         METHOD(MethodReference::read),
         METHOD_LITERAL(MethodLiteral::read),
         PARAMETER(ParameterReference::read),
+        LOCAL_VARIABLE(LocalVariableReference::read),
         ;
 
         private Factory<?> factory;

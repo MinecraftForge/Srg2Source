@@ -34,13 +34,17 @@ public class SymbolReferenceWalker {
     //Copies of the JSL constants, to quiet deprecation warnings
     @SuppressWarnings("deprecation") private static final int JLS2 = AST.JLS2;
     @SuppressWarnings("deprecation") private static final int JLS3 = AST.JLS3;
+    @SuppressWarnings("deprecation") private static final int JLS8 = AST.JLS8;
 
     private final RangeMapBuilder builder;
     private final String className;
+    private final String methodName;
+    private final String methodDesc;
     private final RangeExtractor extractor;
     private final SymbolReferenceWalker parent;
     private final MixinProcessor mixins;
     private HashMap<String, ParamInfo> parameterInfo = new HashMap<>();
+    private HashMap<String, LocalInfo> localVarInfo = new HashMap<>();
     private int anonCount = 0; // Number off encountered anonymous classes
 
     public SymbolReferenceWalker(RangeExtractor extractor, RangeMapBuilder builder, boolean enableMixins) {
@@ -49,12 +53,16 @@ public class SymbolReferenceWalker {
         this.className = null;
         this.parent = null;
         this.mixins = enableMixins ? new MixinProcessor(this) : null;
+        this.methodName = null;
+        this.methodDesc = null;
     }
 
-    private SymbolReferenceWalker(SymbolReferenceWalker parent, String className) {
+    private SymbolReferenceWalker(SymbolReferenceWalker parent, String className, String methodName, String methodDesc) {
         this.extractor = parent.extractor;
         this.builder = parent.builder;
         this.className = className;
+        this.methodName = methodName;
+        this.methodDesc = methodDesc;
         this.parent = parent;
         this.mixins = parent.mixins;
     }
@@ -97,12 +105,23 @@ public class SymbolReferenceWalker {
         return ExtractUtil.getInternalName(builder.getFilename(), binding, node);
     }
 
-    private void trackParameters(String name, String desc, IMethodBinding mtd, List<VariableDeclaration> params, int synthetics) {
+    private void trackLocalVariable(SimpleName name, IVariableBinding binding) {
+        localVarInfo.put(name.resolveBinding().getKey(), new LocalInfo(className, methodName, methodDesc, binding.getVariableId(), ExtractUtil.getTypeSignature(binding.getType())));
+    }
+
+    private LocalInfo findLocal(String key) {
+        LocalInfo ret = localVarInfo.get(key);
+        if (ret != null)
+            return ret;
+        return parent == null ? null : parent.findLocal(key);
+    }
+
+    private void trackParameters(IMethodBinding mtd, List<VariableDeclaration> params, int synthetics) {
         //ITypeBinding[] args = mtd.getParameterTypes();
         int index = synthetics; //Modifier.isStatic(mtd.getModifiers()) ? 0 : 1;
         for (int x = 0; x < params.size(); x++) {
             String key = params.get(x).getName().resolveBinding().getKey();
-            parameterInfo.put(key, new ParamInfo(className, name, desc, index));
+            parameterInfo.put(key, new ParamInfo(className, methodName, methodDesc, index));
 
             index++; // We output the arguments in source indexs. Not Bytecode indexs. Because the applier has no idea if a method is static/synthetic/whatever.
             /*
@@ -156,9 +175,14 @@ public class SymbolReferenceWalker {
      * the source. We also use a child walker so that it has context of what class it is in.
      * TODO: Rewrite to use a stack system for the structure we are in instead of child walkers?
      */
+    private int getAnonIndex() {
+        if (this.methodName != null)
+            return this.parent.getAnonIndex();
+        return ++anonCount;
+    }
     private boolean process(AnonymousClassDeclaration node) {
-        String name = this.className + "$" + ++anonCount;
-        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, name);
+        String name = this.className + "$" + getAnonIndex();
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, name, null, null);
         builder.addClassDeclaration(node.getStartPosition(), node.getLength(), name);
         walker.acceptChildren(node.bodyDeclarations());
         return false; //We manually walk so don't do so on this visitor
@@ -191,7 +215,7 @@ public class SymbolReferenceWalker {
         String name = getInternalName(node.resolveBinding(), node);
         builder.addEnumDeclaration(node.getStartPosition(), node.getLength(), name);
 
-        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, name);
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, name, null, null);
         walker.acceptChild(node.getJavadoc());
         walker.acceptChildren(node.modifiers());
         walker.acceptChild(node.getName());
@@ -215,15 +239,15 @@ public class SymbolReferenceWalker {
      * We need to gather all parameters so we can try and provide a proper bytecode index for identification.
      */
     private boolean process(LambdaExpression node) {
-        //This isn't the real signature, it doesn't include the prefixed synthetic arguments... TODO: Figure out somethinf for this.
+        //This isn't the real signature, it doesn't include the prefixed synthetic arguments... TODO: Figure out something for this.
         IMethodBinding mtd = node.resolveMethodBinding();
         String name = mtd.isConstructor() ? "<init>" : mtd.getName();
+        name = "lambda[" + name + ']';
         String desc = ExtractUtil.getDescriptor(mtd);
-        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), "lambda[" + name + ']', desc);
 
         @SuppressWarnings("unchecked")
         List<VariableDeclaration> params = (List<VariableDeclaration>)node.parameters();
-        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), name, desc);
+        SymbolReferenceWalker walker;
 
         if (!params.isEmpty()) {
             /*
@@ -243,22 +267,32 @@ public class SymbolReferenceWalker {
             // If return type is Object, we need to find the end of it, if it's primitive just add one
             desc = mtdKey.substring(0, (mtdKey.charAt(idx + 1) == 'L' ? mtdKey.indexOf(';', idx) : idx) + 1);
 
+            walker = new SymbolReferenceWalker(this, className, name, desc);
 
             ITypeBinding[] args = mtd.getParameterTypes();
-            trackParameters(name, desc, mtd, params, args.length - params.size());
-        }
+            walker.trackParameters(mtd, params, args.length - params.size());
+        } else
+            walker = new SymbolReferenceWalker(this, className, name, desc);
 
-        return true;
+        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), name, desc);
+
+        walker.acceptChildren(params);
+        walker.acceptChild(node.getBody());
+
+        return false;
     }
 
     /*
      * We need to gather all parameters so we can try and provide a proper bytecode index for identification.
      */
+    @SuppressWarnings("deprecation")
     private boolean process(MethodDeclaration node) {
         IMethodBinding mtd = node.resolveBinding();
         String name = mtd.isConstructor() ? "<init>" : mtd.getName();
         String desc = ExtractUtil.getDescriptor(mtd);
         builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), name, desc);
+
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, className, name, desc);
 
         @SuppressWarnings("unchecked")
         List<VariableDeclaration> params = (List<VariableDeclaration>)node.parameters();
@@ -271,9 +305,43 @@ public class SymbolReferenceWalker {
                 else if (type.isNested() && type.isClass() && ((type.getModifiers() & Opcodes.ACC_STATIC) == 0))
                     synthetic = 1; //Outer class
             }
-            trackParameters(name, desc, mtd, params, synthetic);
+            walker.trackParameters(mtd, params, synthetic);
         }
-        return true;
+
+        walker.acceptChild(node.getJavadoc());
+        if (node.getAST().apiLevel() == JLS2) {
+            walker.acceptChild(node.getReturnType());
+        } else {
+            walker.acceptChildren(node.modifiers());
+            walker.acceptChildren(node.typeParameters());
+            walker.acceptChild(node.getReturnType2());
+        }
+        walker.acceptChild(node.getName());
+        if (node.getAST().apiLevel() >= JLS8) {
+            walker.acceptChild(node.getReceiverType());
+            walker.acceptChild(node.getReceiverQualifier());
+        }
+        walker.acceptChildren(node.parameters());
+        if (node.getAST().apiLevel() >= JLS8) {
+            walker.acceptChildren(node.extraDimensions());
+            walker.acceptChildren(node.thrownExceptionTypes());
+        } else
+            walker.acceptChildren(node.thrownExceptions());
+        walker.acceptChild(node.getBody());
+
+        return false;
+    }
+
+    private boolean process(Initializer node) {
+        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), "<cinit>", "()V");
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, className, "<cinit>", "()V");
+
+        walker.acceptChild(node.getJavadoc());
+        if (node.getAST().apiLevel() >= JLS3)
+            walker.acceptChildren(node.modifiers());
+        walker.acceptChild(node.getBody());
+
+        return false;
     }
 
     private boolean process(SimpleName node) {
@@ -293,8 +361,6 @@ public class SymbolReferenceWalker {
                 if (type.isTypeVariable()) //Generic type names can't be remapped at this time.. should we allow it?
                     return false;
 
-                if (className != null && className.endsWith("ViewFrustum") && node.toString().equals("ChunkRender"))
-                    System.currentTimeMillis();
                 String clsName = getInternalName(type, node);
                 builder.addClassReference(node.getStartPosition(), node.getLength(), node.toString(), clsName, false);
                 return true; //There currently arn't any children for SimpleNames, so this return does nothing.
@@ -322,6 +388,11 @@ public class SymbolReferenceWalker {
                      *  As well as defining removal of local variables...
                      *  Honestly this would be cool, but it's out of scope of Minecraft and a lot of work so I'm putting it off.
                      */
+                    LocalInfo info = findLocal(var.getKey());
+                    if (info == null)
+                        error(node, "Illegal Local Variable: " + var.getKey());
+                    else
+                        builder.addLocalVariableReference(node.getStartPosition(), node.getLength(), node.toString(), info.getOwner(), info.getMethodName(), info.getMethodDesc(), info.getIndex(), info.getType());
                 }
                 return true;
             case IBinding.METHOD:
@@ -410,7 +481,7 @@ public class SymbolReferenceWalker {
         else
             builder.addClassDeclaration(node.getStartPosition(), node.getLength(), name);
 
-        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, name);
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, name, null, null);
 
         if (node.getAST().apiLevel() == JLS2) {
             //walker.acceptChild(node.getJavadoc()); - Don't care
@@ -506,6 +577,16 @@ public class SymbolReferenceWalker {
         return this.mixins.process(node, name);
     }
 
+    private boolean process(SingleVariableDeclaration node) {
+        trackLocalVariable(node.getName(), node.resolveBinding());
+        return true;
+    }
+
+    private boolean process(VariableDeclarationFragment node) {
+        trackLocalVariable(node.getName(), node.resolveBinding());
+        return true;
+    }
+
     private boolean process(MarkerAnnotation node) {
         if (mixins == null)
             return true;
@@ -525,6 +606,22 @@ public class SymbolReferenceWalker {
             this.desc = desc;
             this.index = index;
         }
+
+        public String getOwner()      { return this.owner; }
+        public String getMethodName() { return this.name;  }
+        public String getMethodDesc() { return this.desc;  }
+        public int    getIndex()      { return this.index; }
+    }
+
+    private static class LocalInfo extends ParamInfo {
+        private final String type;
+
+        private LocalInfo(String owner, String name, String desc, int index, String type) {
+            super(owner, name, desc, index);
+            this.type = type;
+        }
+
+        public String getType() { return this.type; }
     }
 
     public ASTVisitor getVisitor() {
@@ -569,7 +666,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(IfStatement                     node) { return true; }
         @Override public boolean visit(ImportDeclaration               node) { return process(node); }
         @Override public boolean visit(InfixExpression                 node) { return true; }
-        @Override public boolean visit(Initializer                     node) { return true; }
+        @Override public boolean visit(Initializer                     node) { return process(node); }
         @Override public boolean visit(InstanceofExpression            node) { return true; }
         @Override public boolean visit(IntersectionType                node) { return true; }
         @Override public boolean visit(Javadoc                         node) { return true; }
@@ -605,7 +702,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(SimpleName                      node) { return process(node); }
         @Override public boolean visit(SimpleType                      node) { return true; }
         @Override public boolean visit(SingleMemberAnnotation          node) { return process(node); }
-        @Override public boolean visit(SingleVariableDeclaration       node) { return true; }
+        @Override public boolean visit(SingleVariableDeclaration       node) { return process(node); }
         @Override public boolean visit(StringLiteral                   node) { return true; }
         @Override public boolean visit(SuperConstructorInvocation      node) { return true; }
         @Override public boolean visit(SuperFieldAccess                node) { return true; }
@@ -625,7 +722,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(TypeMethodReference             node) { return true; }
         @Override public boolean visit(TypeParameter                   node) { return true; }
         @Override public boolean visit(VariableDeclarationExpression   node) { return true; }
-        @Override public boolean visit(VariableDeclarationFragment     node) { return true; }
+        @Override public boolean visit(VariableDeclarationFragment     node) { return process(node); }
         @Override public boolean visit(VariableDeclarationStatement    node) { return true; }
         @Override public boolean visit(UnionType                       node) { return true; }
         @Override public boolean visit(UsesDirective                   node) { return true; }

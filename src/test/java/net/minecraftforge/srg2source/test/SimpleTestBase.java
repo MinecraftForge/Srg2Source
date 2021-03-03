@@ -149,7 +149,7 @@ public abstract class SimpleTestBase {
         String log = logs.toString();
 
         Assert.assertTrue("Failed to do work!", worked);
-        Assert.assertEquals(getFileContents(range), data.toString());
+        Assert.assertEquals(range.getFileName().toString(), getFileContents(range), data.toString());
     }
 
     private void testApply(Path original, Path range, Path mapped, Path srg) {

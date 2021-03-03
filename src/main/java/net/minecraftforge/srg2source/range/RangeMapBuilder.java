@@ -27,6 +27,7 @@ import net.minecraftforge.srg2source.range.entries.ClassLiteral;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
 import net.minecraftforge.srg2source.range.entries.FieldLiteral;
 import net.minecraftforge.srg2source.range.entries.FieldReference;
+import net.minecraftforge.srg2source.range.entries.LocalVariableReference;
 import net.minecraftforge.srg2source.range.entries.MetaEntry;
 import net.minecraftforge.srg2source.range.entries.MethodLiteral;
 import net.minecraftforge.srg2source.range.entries.MethodReference;
@@ -147,6 +148,10 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
 
     public void addParameterReference(int start, int length, String text, String owner, String name, String desc, int index) {
         addCode(ParameterReference.create(start, length, text, owner, name, desc, index));
+    }
+
+    public void addLocalVariableReference(int start, int length, String text, String owner, String name, String desc, int index, String type) {
+        addCode(LocalVariableReference.create(start, length, text, owner, name, desc, index, type));
     }
 
     // Meta Elements

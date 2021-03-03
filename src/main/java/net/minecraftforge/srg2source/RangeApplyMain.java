@@ -48,6 +48,12 @@ public class RangeApplyMain {
         OptionSpec<Boolean> importArg = parser.acceptsAll(a("keepImports")).withOptionalArg().ofType(Boolean.class).defaultsTo(true);
         //OptionSpec<Boolean> annArg = parser.acceptsAll(a("annotate")).withOptionalArg().ofType(Boolean.class).defaultsTo(false);
 
+
+        //Somewhat hacky things that are used for specific usecases
+        OptionSpec<Void> sortImportArg = parser.acceptsAll(a("sortImports"));
+        OptionSpec<Void> guessLambdasArg = parser.acceptsAll(a("guessLambdas"));
+        OptionSpec<Void> guessLocalsArg = parser.acceptsAll(a("guessLocals"));
+
         try
         {
             OptionSet options = parser.parse(args);
@@ -64,10 +70,16 @@ public class RangeApplyMain {
             System.out.println("Range:   " + range);
             System.out.println("Output:  " + output);
             System.out.println("Imports: " + keepImports);
+            System.out.println("Sort:    " + options.has(sortImportArg));
+            System.out.println("Lambdas: " + options.has(guessLambdasArg));
+            System.out.println("Locals:  " + options.has(guessLocalsArg));
 
             RangeApplierBuilder builder = new RangeApplierBuilder()
                 .range(range)
-                .output(output);
+                .output(output)
+                .guessLambdas(options.has(guessLambdasArg))
+                .guessLocals(options.has(guessLocalsArg))
+                .sortImports(options.has(sortImportArg));
 
             if (options.has(mappingArg))
             {

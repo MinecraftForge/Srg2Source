@@ -26,6 +26,7 @@ classdef 0 488 AnonClass
     class 279 6 String false java/lang/String
     parameter 288 4 args AnonClass main ([Ljava/lang/String;)V 0
     class 308 6 Object false java/lang/Object
+    local_variable 315 4 test AnonClass main ([Ljava/lang/String;)V 1 Ljava/lang/Object;
     class 326 6 Object false java/lang/Object
     classdef 343 136 AnonClass$1
     # Start CLASS AnonClass$1

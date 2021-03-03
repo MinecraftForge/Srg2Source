@@ -34,11 +34,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import net.minecraftforge.srg2source.api.InputSupplier;
 import net.minecraftforge.srg2source.api.OutputSupplier;
@@ -47,6 +50,7 @@ import net.minecraftforge.srg2source.range.entries.ClassLiteral;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
 import net.minecraftforge.srg2source.range.entries.FieldLiteral;
 import net.minecraftforge.srg2source.range.entries.FieldReference;
+import net.minecraftforge.srg2source.range.entries.LocalVariableReference;
 import net.minecraftforge.srg2source.range.entries.MethodLiteral;
 import net.minecraftforge.srg2source.range.entries.MethodReference;
 import net.minecraftforge.srg2source.range.entries.ParameterReference;
@@ -67,13 +71,22 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
     private OutputSupplier output = null;
     private Map<String, RangeMap> range = new HashMap<>();
     private ClassMeta meta = null;
-
+    private Map<String, String> guessLambdas = null;
+    private boolean guessLocals = false;
+    private boolean sortImports = false;
 
     public void readSrg(Path srg) {
         try (InputStream in = Files.newInputStream(srg)) {
             IMappingFile map = IMappingFile.load(in);
             srgs.add(map); //TODO: Add merge function to SrgUtils?
-            map.getClasses().forEach(c -> clsSrc2Internal.put(c.getOriginal().replace('/', '.').replace('$', '.'), c.getOriginal()));
+
+            map.getClasses().forEach(cls -> {
+                clsSrc2Internal.put(cls.getOriginal().replace('/', '.').replace('$', '.'), cls.getOriginal());
+
+                cls.getMethods().stream()
+                .flatMap(mtd -> mtd.getParameters().stream())
+                .forEach(p -> this.guessLambdas.put(p.getOriginal(), p.getMapped()));
+            });
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read SRG: " + srg, e);
         }
@@ -89,6 +102,27 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read EXC: " + value, e);
         }
+    }
+
+    public void setGuessLambdas(boolean value) {
+        if (!value) {
+            this.guessLambdas = null;
+        } else {
+            this.guessLambdas = new HashMap<>();
+            this.srgs.stream()
+                .flatMap(srg -> srg.getClasses().stream())
+                .flatMap(cls -> cls.getMethods().stream())
+                .flatMap(mtd -> mtd.getParameters().stream())
+                .forEach(p -> this.guessLambdas.put(p.getOriginal(), p.getMapped()));
+        }
+    }
+
+    public void setGuessLocals(boolean value) {
+        this.guessLocals = value;
+    }
+
+    public void setSortImports(boolean value) {
+        this.sortImports = value;
     }
 
     public void setInput(InputSupplier value) {
@@ -275,6 +309,11 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                     newName = '"' + mapMethod(ref.getOwner(), ref.getName(), ref.getDescriptor()) + '"';
                     break;
                 }
+                case LOCAL_VARIABLE: {
+                    LocalVariableReference ref = (LocalVariableReference)info;
+                    newName = mapLocal(ref.getOwner(), ref.getName(), ref.getDescriptor(), ref.getIndex(), ref.getVarType(), oldName);
+                    break;
+                }
                 default:
                     throw new IllegalArgumentException("Unknown RangeEntry type: " + info);
             }
@@ -339,9 +378,12 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         boolean addedNewImports = false;
         boolean sawImports = false;
         int packageLine = -1;
+        String newline = data.indexOf("\r\n") != -1 ? "\r\n" : "\n";
 
         while (nextIndex > -1) {
             String line = data.substring(lastIndex, nextIndex);
+            if (line.endsWith("\r"))
+                line = line.substring(0, line.length() - 1);
             int comment = line.indexOf("//");
 
             while ((comment == -1 ? line : line.substring(0, comment)).trim().isEmpty()) {
@@ -350,6 +392,8 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 if (nextIndex == -1) //EOF
                     break;
                 line = data.substring(lastIndex, nextIndex);
+                if (line.endsWith("\r"))
+                    line = line.substring(0, line.length() - 1);
                 comment = line.indexOf("//");
             }
 
@@ -364,6 +408,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 Matcher match = IMPORT.matcher(line);
                 if (!match.matches()) {
                     error("Error: Invalid import line: " + line); //Do we want to error out?
+                    lastIndex = nextIndex + 1;
                     nextIndex = getNextIndex(data.indexOf("\n", nextIndex + 1), data.length(), nextIndex + 1);
                     continue;
                 }
@@ -406,8 +451,14 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 if (!wildMatch && !newImports.remove(newClass)) { // New file doesn't need the import, so delete the line.
                     if (this.keepImports)
                         lastIndex = nextIndex + 1;
-                    else
+                    else {
                         data.delete(lastIndex, nextIndex + 1);
+                        if (data.substring(lastIndex > 3 ? lastIndex - 3 : 0, lastIndex).endsWith('\n' + newline) &&
+                            data.substring(lastIndex, lastIndex + newline.length()).equals(newline)) { // Collapse double empty lines
+                            data.delete(lastIndex - newline.length(), lastIndex);
+                            lastIndex -= newline.length();
+                        }
+                    }
                     nextIndex = getNextIndex(data.indexOf("\n", lastIndex), data.length(), lastIndex);
                     continue;
                 }
@@ -427,7 +478,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                     newImports.stream().sorted().forEach(imp -> data.append("import ").append(imp).append(";\n"));
 
                     if (newImports.size() > 0)
-                        data.append('\n');
+                        data.append(newline);
 
                     int change = data.length() - lastIndex; // get changed size
                     lastIndex = data.length(); // reset the end to the actual end..
@@ -457,12 +508,46 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 CharSequence sub = data.subSequence(index, data.length()); // grab the rest of the string.
                 data.setLength(index); // cut off the build there
 
-                newImports.stream().sorted().forEach(imp -> data.append("import ").append(imp).append(";\n"));
+                newImports.stream().sorted().forEach(imp -> data.append(newline).append("import ").append(imp).append(";"));
 
                 if (newImports.size() > 0)
                     data.append('\n');
 
                 data.append(sub); // add on the rest if the string again
+            }
+        }
+
+        if (sortImports && (!newImports.isEmpty() || sawImports)) {
+            int startIndex = data.indexOf("import ");
+            int endIndex = data.indexOf("\n", startIndex);
+            nextIndex = endIndex;
+            if (startIndex != -1) {
+                String line = data.substring(startIndex, endIndex);
+
+                while (true) {
+                    nextIndex = data.indexOf("\n", endIndex + 1);
+                    line = data.substring(endIndex + 1, nextIndex);
+                    if (line.startsWith("import ") || line.replaceAll("\r?\n", "").trim().isEmpty())
+                        endIndex = nextIndex;
+                    else
+                        break;
+                }
+
+                while (data.charAt(endIndex-1) == '\n' || data.charAt(endIndex-1) == '\r')
+                    endIndex--;
+
+                String importData = data.substring(startIndex, endIndex);
+                String imports = Stream.of(importData.split("\r?\n"))
+                    .filter(i -> !i.trim().isEmpty())
+                    .map(i -> {
+                        i = i.substring(7, i.length() - 1);
+                        int idx = i.lastIndexOf('.');
+                        return new String[] { i.substring(0, idx), i.substring(idx + 1) };
+                    })
+                    .sorted((o1, o2) -> o1[0].equals(o2[0]) ? o1[1].compareTo(o2[1]) : o1[0].compareTo(o2[0]))
+                    .map(i -> "import " + i[0] + '.' + i[1] + ';')
+                    .collect(Collectors.joining(newline));
+                data.replace(startIndex, endIndex, imports);
             }
         }
 
@@ -537,7 +622,77 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
     }
 
     private String mapParam(String owner, String name, String desc, int index, String old) {
-        ExceptorClass cls = this.excs.get(owner);
-        return cls == null ? old :  cls.mapParam(name, desc, index, old);
+        ExceptorClass exc = this.excs.get(owner);
+        String ret = exc == null ? null : exc.mapParam(name, desc, index, old);
+        if (ret == null) {
+            for (IMappingFile srg : srgs) {
+                IMappingFile.IClass cls = srg.getClass(owner);
+                if (cls != null) {
+                    IMappingFile.IMethod mtd = cls.getMethod(name, desc);
+                    if (mtd != null) {
+                        String mapped = mtd.remapParameter(index, old);
+                        if (mapped != old) {
+                            ret = mapped;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (ret == null && this.guessLambdas != null && name.startsWith("lambda$"))
+            ret = this.guessLambdas.get(old);
+
+        return ret == null ? old : ret;
+    }
+
+    // Guess JAD style local variables, and some Fernflower quarks
+    private String mapLocal(String owner, String name, String desc, int index, String type, String old) {
+        if (!guessLocals || type.indexOf(';') == -1)
+            return old;
+
+        String prefix = "";
+
+        // Arrays are 'a' + type name
+        if (type.charAt(0) == '[') {
+            prefix = "a";
+            type = type.substring(type.indexOf('L') + 1, type.length() - 1);
+        } else
+            type = type.substring(1, type.length() - 1);
+
+
+        // Typically it's the simple class name, including the outer class if the type is an inner
+        int idx = type.lastIndexOf('/');
+        String expected = prefix + (idx == -1 ? type : type.substring(idx + 1)).toLowerCase(Locale.ENGLISH);
+
+        String newClass = mapClass(type);
+        if (newClass.equals(type))
+            return old;
+
+        idx = newClass.lastIndexOf('/');
+        if (idx != -1)
+            newClass = newClass.substring(idx + 1);
+
+        if (!old.startsWith(expected)) {
+            idx = expected.lastIndexOf('$');
+            int nidx = newClass.lastIndexOf('$');
+            if (idx == -1 || nidx == -1)
+                return old;
+
+            String inner = prefix + expected.substring(idx + 1);
+            String outer = expected.substring(0, idx);
+
+            // Sometimes it's JUST the inner class name
+            if (old.startsWith(inner)) {
+                newClass = newClass.substring(nidx + 1);
+                expected = inner;
+            //I don't know why this happens, but BlockModelDefinition has a local var named the outer class instead of inner..
+            } else if (old.startsWith(outer)) {
+                newClass = newClass.substring(0, nidx);
+                expected = outer;
+            } else
+                return old;
+        }
+
+        return prefix + newClass.toLowerCase(Locale.ENGLISH) + old.substring(expected.length());
     }
 }

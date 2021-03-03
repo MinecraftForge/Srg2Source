@@ -17,6 +17,7 @@ classdef 68 488 GenericClasses
     method 207 4 func GenericClasses func (Ljava/util/Collection;)Ljava/util/concurrent/Callable;
     class 212 10 Collection false java/util/Collection
     parameter 226 3 par GenericClasses func (Ljava/util/Collection;)Ljava/util/concurrent/Callable; 0
+    local_variable 252 1 t GenericClasses func (Ljava/util/Collection;)Ljava/util/concurrent/Callable; 1 Ljava/util/concurrent/Callable;
     parameter 256 3 par GenericClasses func (Ljava/util/Collection;)Ljava/util/concurrent/Callable; 0
   # End METHOD
   methoddef 294 260 main ()V
@@ -24,6 +25,7 @@ classdef 68 488 GenericClasses
     method 313 4 main GenericClasses main ()V
     class 334 4 IFoo false GenericClasses$IFoo
     class 339 6 String false java/lang/String
+    local_variable 347 4 fizz GenericClasses main ()V 0 LGenericClasses$IFoo;
     class 358 4 IFoo false GenericClasses$IFoo
     class 363 6 String false java/lang/String
     classdef 381 110 GenericClasses$1
@@ -36,8 +38,10 @@ classdef 68 488 GenericClasses
         parameter 420 3 arg GenericClasses$1 bar (Ljava/lang/String;)Ljava/lang/String; 0
       # End METHOD
     # End CLASS
+    local_variable 501 4 fizz GenericClasses main ()V 0 LGenericClasses$IFoo;
     method 506 3 bar GenericClasses$IFoo bar (Ljava/lang/Object;)Ljava/lang/Object;
     class 527 4 IFoo false GenericClasses$IFoo
+    local_variable 532 4 fizz GenericClasses main ()V 0 LGenericClasses$IFoo;
     method 538 3 bar GenericClasses$IFoo bar (Ljava/lang/Object;)Ljava/lang/Object;
   # End METHOD
 # End CLASS

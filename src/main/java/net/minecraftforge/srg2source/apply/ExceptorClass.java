@@ -118,11 +118,11 @@ public class ExceptorClass {
             this.exceptions = null;
     }
 
-
+    @Nullable
     public String mapParam(String name, String desc, int index, String old) {
         String[] args = this.params.get(name + desc);
         if (args == null || index >= args.length)
-            return old;
+            return null;
         return args[index];
     }
 }

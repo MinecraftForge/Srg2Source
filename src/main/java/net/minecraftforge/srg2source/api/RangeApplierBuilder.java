@@ -46,6 +46,9 @@ public class RangeApplierBuilder {
     private List<Consumer<RangeApplier>> srgs = new ArrayList<>();
     private List<Consumer<RangeApplier>> excs = new ArrayList<>();
     private boolean keepImports = false;
+    private boolean guessLambdas = false;
+    private boolean guessLocals = false;
+    private boolean sortImports = false;
 
     public RangeApplierBuilder logger(PrintStream value) {
         this.logStd = value;
@@ -82,6 +85,33 @@ public class RangeApplierBuilder {
 
     public RangeApplierBuilder input(Path value) {
         return input(value, StandardCharsets.UTF_8);
+    }
+
+    public RangeApplierBuilder guessLambdas() {
+        return guessLambdas(true);
+    }
+
+    public RangeApplierBuilder guessLambdas(boolean value) {
+        this.guessLambdas = value;
+        return this;
+    }
+
+    public RangeApplierBuilder guessLocals() {
+        return guessLocals(true);
+    }
+
+    public RangeApplierBuilder guessLocals(boolean value) {
+        this.guessLocals = value;
+        return this;
+    }
+
+    public RangeApplierBuilder sortImports() {
+        return sortImports(true);
+    }
+
+    public RangeApplierBuilder sortImports(boolean value) {
+        this.sortImports = value;
+        return this;
     }
 
     @SuppressWarnings("resource")
@@ -146,6 +176,10 @@ public class RangeApplierBuilder {
 
         ret.setOutput(output);
         range.accept(ret);
+
+        ret.setGuessLambdas(guessLambdas);
+        ret.setGuessLocals(guessLocals);
+        ret.setSortImports(sortImports);
 
         srgs.forEach(e -> e.accept(ret));
         excs.forEach(e -> e.accept(ret));

@@ -63,7 +63,7 @@ public class FolderSupplier implements InputSupplier, OutputSupplier {
                 if (!Files.exists(parent))
                     Files.createDirectories(parent);
             }
-            return Files.newOutputStream(target, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+            return Files.newOutputStream(target);
         } catch (IOException e) {
             return null;
         }

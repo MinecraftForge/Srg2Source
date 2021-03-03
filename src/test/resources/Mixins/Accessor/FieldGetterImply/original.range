@@ -27,6 +27,7 @@ classdef 117 412 FieldGetterImply
   methoddef 417 110 test ()V
   # Start METHOD test()V
     method 429 4 test FieldGetterImply test ()V
+    local_variable 446 1 x FieldGetterImply test ()V 0 I
     method 454 15 getElementCount FieldGetterImply getElementCount ()I
     method 477 20 getCapacityIncrement FieldGetterImply getCapacityIncrement ()I
     method 506 14 isElementCount FieldGetterImply isElementCount ()I

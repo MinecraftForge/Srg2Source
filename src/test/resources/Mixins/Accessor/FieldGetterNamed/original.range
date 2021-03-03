@@ -25,6 +25,7 @@ classdef 117 417 FieldGetterNamed
   methoddef 446 86 test ()V
   # Start METHOD test()V
     method 458 4 test FieldGetterNamed test ()V
+    local_variable 475 1 x FieldGetterNamed test ()V 0 I
     method 483 12 getSomething FieldGetterNamed getSomething ()I
     method 503 8 getOther FieldGetterNamed getOther ()I
     method 520 5 isBob FieldGetterNamed isBob ()I

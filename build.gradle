@@ -58,10 +58,10 @@ dependencies {
     compile 'org.eclipse.jdt:org.eclipse.jdt.core:3.14.0'
     
     //We use this to patch the JDT at runtime
-    compile 'cpw.mods:modlauncher:1.1.+'
+    compile 'cpw.mods:modlauncher:8.0.9'
     
     //Because tons of projects all paarsing SRG files is annoying
-    compile 'net.minecraftforge:srgutils:0.2.+'
+    compile 'net.minecraftforge:srgutils:0.4.1'
 }
 
 repositories {
