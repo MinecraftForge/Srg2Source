@@ -333,8 +333,8 @@ public class SymbolReferenceWalker {
     }
 
     private boolean process(Initializer node) {
-        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), "<cinit>", "()V");
-        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, className, "<cinit>", "()V");
+        builder.addMethodDeclaration(node.getStartPosition(), node.getLength(), "<clinit>", "()V");
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, className, "<clinit>", "()V");
 
         walker.acceptChild(node.getJavadoc());
         if (node.getAST().apiLevel() >= JLS3)
