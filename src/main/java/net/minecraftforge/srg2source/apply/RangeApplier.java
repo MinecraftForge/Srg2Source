@@ -420,13 +420,17 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                 boolean wildMatch = false;
 
                 if (isStatic) {
-                    if (old.endsWith(".*")) { //Wildcard, but we just want to rename the class
-                        old = old.substring(0, old.length() - 2);
-                        cEnd -= 2;
+                    int idx = old.lastIndexOf('.');
+                    cEnd -= old.length() - idx;
+                    String name = old.substring(idx + 1);
+                    old = old.substring(0, idx);
+
+                    if ("*".equals(name)) {
+                        ; //Wildcard, but we just want to rename the class
                     } else {
-                        error("Error: Invalid import line: Static Method Imports not supported: " + line); //Do we want to error out?
+                        error("Warning: Static Method/Field Imports not supported: " + line); //Do we want to error out?
+                        lastIndex = nextIndex;
                         nextIndex = getNextIndex(data.indexOf("\n", nextIndex + 1), data.length(), nextIndex + 1);
-                        continue;
                     }
                 } else if (old.endsWith(".*")) {
                     Set<String> remove = new HashSet<>();
@@ -448,7 +452,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
 
                 //log("Import: " + newClass);
 
-                if (!wildMatch && !newImports.remove(newClass)) { // New file doesn't need the import, so delete the line.
+                if (!wildMatch && !newImports.remove(newClass) && !isStatic) { // New file doesn't need the import, so delete the line.
                     if (this.keepImports)
                         lastIndex = nextIndex + 1;
                     else {

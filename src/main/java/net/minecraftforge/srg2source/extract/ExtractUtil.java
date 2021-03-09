@@ -31,10 +31,10 @@ public class ExtractUtil {
         return getInternalName("{unknown}", binding, null);
     }
     public static String getInternalName(String filename, ITypeBinding binding, @Nullable ASTNode node) {
-        String name = binding.getErasure().getBinaryName().replace('.', '/'); // Binary name is a mix and includes . and $, so convert to actual binary name
+        String name = binding.getErasure().getBinaryName();
         if (name == null || name.isEmpty())
             throw new IllegalArgumentException("Could not get Binary name! " + filename + (node == null ? "" : " @ " + node.getStartPosition()));
-        return name;
+        return name.replace('.', '/'); // Binary name is a mix and includes . and $, so convert to actual binary name;
     }
 
     public static String getDescriptor(IMethodBinding method) {

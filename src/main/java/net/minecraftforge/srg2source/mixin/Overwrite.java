@@ -45,7 +45,6 @@ public class Overwrite extends AnnotationBase {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public boolean process(NormalAnnotation node) {
         if (node.getParent().getNodeType() != ASTNode.METHOD_DECLARATION)
             return error(node, "Invalid @Overwrite, Must be attached to a method declaration");

@@ -51,7 +51,6 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FileASTRequestor;
 
-@SuppressWarnings("unchecked")
 public class RangeExtractor extends ConfLogger<RangeExtractor> {
     private static RangeExtractor INSTANCE = null;
 

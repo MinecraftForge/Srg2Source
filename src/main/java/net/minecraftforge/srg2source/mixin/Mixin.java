@@ -112,7 +112,6 @@ public class Mixin extends AnnotationBase {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public boolean process(SingleMemberAnnotation node) {
         ASTNode parent = node.getParent();
         if (!(parent instanceof AbstractTypeDeclaration)) // It should only be valid on these things.
