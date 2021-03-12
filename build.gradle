@@ -31,7 +31,7 @@ apply plugin: 'maven-publish'
 group = 'net.minecraftforge'
 archivesBaseName = 'srg2source'
 version = gitVersion()
-targetCompatibility = sourceCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 def gitVersion() {
     def desc = grgit.describe(longDescr: true).split('-') as List
