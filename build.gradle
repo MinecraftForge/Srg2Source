@@ -192,7 +192,7 @@ task patchJDT(type: PatchJDTClasses, dependsOn: jar) {
     targets.add(PatchJDTClasses.COMPILATION_UNIT_RESOLVER)
     targets.add(PatchJDTClasses.RANGE_EXTRACTOR)
     libraries.from(jar.archiveFile)
-    libraries.from(configurations.compile.filter{ !it.isDirectory() })
+    libraries.from(configurations.implementation.filter{ !it.isDirectory() })
     output = project.layout.buildDirectory.file("patch_jdt.jar")
 }
 
@@ -202,7 +202,7 @@ task shadowJar (type: Jar, dependsOn: patchJDT) {
     with jar
     
     from zipTree(patchJDT.output)
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { configurations.implementation.collect { it.isDirectory() ? it : zipTree(it) } }
     exclude 'about_files/**'
     exclude 'ant_tasks/**'
     exclude 'META-INF/versions/**'
