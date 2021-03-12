@@ -43,7 +43,6 @@ def gitVersion() {
 }
 
 configurations {
-    deployerJars
     implementation.canBeResolved = true
 }
 
