@@ -59,6 +59,9 @@ dependencies {
     
     //We use this to patch the JDT at runtime
     implementation 'cpw.mods:modlauncher:8.0.9'
+
+    // ModLauncher has this on runtime scope
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
     
     //Because tons of projects all paarsing SRG files is annoying
     implementation 'net.minecraftforge:srgutils:0.4.1'
