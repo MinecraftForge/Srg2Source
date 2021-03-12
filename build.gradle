@@ -44,6 +44,7 @@ def gitVersion() {
 
 configurations {
     deployerJars
+    implementation.canBeResolved = true
 }
 
 dependencies {
@@ -106,24 +107,16 @@ class PatchJDTClasses extends DefaultTask {
     def RESOLVE_METHOD = 'resolve([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Lorg/eclipse/jdt/core/dom/FileASTRequestor;ILjava/util/Map;I)V'
     def GET_CONTENTS = 'org/eclipse/jdt/internal/compiler/util/Util.getFileCharContent(Ljava/io/File;Ljava/lang/String;)[C'
     def HOOK_DESC_RESOLVE = '(Ljava/lang/String;Ljava/lang/String;)[C'
-    
-    @Input def targets = [] as Set
-    @Input def libraries = [] as Set
-    @OutputFile File output
-    
-    void target(String value) {
-        targets.add(value)
-    }
-    
-    void library(File value) {
-        libraries.add(value)
-    }
+
+    @Input SetProperty<String> targets = project.objects.setProperty(String.class)
+    @Input ConfigurableFileCollection libraries = project.objects.fileCollection()
+    @OutputFile RegularFileProperty output = project.objects.fileProperty()
     
     @TaskAction
     void patchClass() {
-        def toProcess = targets.collect()
-        new ZipOutputStream(new FileOutputStream(output)).withCloseable{ zout ->
-            libraries.stream().filter{ !it.isDirectory() }.each { lib ->
+        def toProcess = targets.get().collect()
+        new ZipOutputStream(new FileOutputStream(output.get().getAsFile())).withCloseable{ zout ->
+            libraries.getFiles().stream().filter{ !it.isDirectory() }.each { lib ->
                 new ZipFile(lib).withCloseable { zin -> 
                     def remove = []
                     toProcess.each{ target -> 
@@ -196,11 +189,11 @@ class PatchJDTClasses extends DefaultTask {
 }
 
 task patchJDT(type: PatchJDTClasses, dependsOn: jar) {
-    target PatchJDTClasses.COMPILATION_UNIT_RESOLVER
-    target PatchJDTClasses.RANGE_EXTRACTOR
-    library jar.archivePath
-    configurations.compile.filter{ !it.isDirectory() }.each { library it }
-    output file('build/patch_jdt.jar')
+    targets.add(PatchJDTClasses.COMPILATION_UNIT_RESOLVER)
+    targets.add(PatchJDTClasses.RANGE_EXTRACTOR)
+    libraries.from(jar.archiveFile)
+    libraries.from(configurations.compile.filter{ !it.isDirectory() })
+    output = project.layout.buildDirectory.file("patch_jdt.jar")
 }
 
 task shadowJar (type: Jar, dependsOn: patchJDT) {
