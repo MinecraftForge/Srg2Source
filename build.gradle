@@ -47,21 +47,21 @@ configurations {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
-    testCompile 'com.google.jimfs:jimfs:1.1'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'com.google.jimfs:jimfs:1.1'
 
-    compile 'org.ow2.asm:asm:6.2.1'
-    compile 'org.ow2.asm:asm-tree:6.2.1'
-    compile 'net.sf.jopt-simple:jopt-simple:5.0.4' // easy CLI parsing
+    implementation 'org.ow2.asm:asm:6.2.1'
+    implementation 'org.ow2.asm:asm-tree:6.2.1'
+    implementation 'net.sf.jopt-simple:jopt-simple:5.0.4' // easy CLI parsing
 
     // necessary eclipse AST stuff
-    compile 'org.eclipse.jdt:org.eclipse.jdt.core:3.14.0'
+    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.14.0'
     
     //We use this to patch the JDT at runtime
-    compile 'cpw.mods:modlauncher:8.0.9'
+    implementation 'cpw.mods:modlauncher:8.0.9'
     
     //Because tons of projects all paarsing SRG files is annoying
-    compile 'net.minecraftforge:srgutils:0.4.1'
+    implementation 'net.minecraftforge:srgutils:0.4.1'
 }
 
 repositories {
