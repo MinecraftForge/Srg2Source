@@ -83,9 +83,11 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
             map.getClasses().forEach(cls -> {
                 clsSrc2Internal.put(cls.getOriginal().replace('/', '.').replace('$', '.'), cls.getOriginal());
 
-                cls.getMethods().stream()
-                .flatMap(mtd -> mtd.getParameters().stream())
-                .forEach(p -> this.guessLambdas.put(p.getOriginal(), p.getMapped()));
+                if (guessLambdas != null) {
+                    cls.getMethods().stream()
+                    .flatMap(mtd -> mtd.getParameters().stream())
+                    .forEach(p -> this.guessLambdas.put(p.getOriginal(), p.getMapped()));
+                }
             });
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read SRG: " + srg, e);
