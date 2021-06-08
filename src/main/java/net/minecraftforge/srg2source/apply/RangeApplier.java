@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -85,7 +86,9 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
 
                 if (guessLambdas != null) {
                     cls.getMethods().stream()
+                    .filter(Objects::nonNull)
                     .flatMap(mtd -> mtd.getParameters().stream())
+                    .filter(Objects::nonNull)
                     .forEach(p -> this.guessLambdas.put(p.getOriginal(), p.getMapped()));
                 }
             });
@@ -528,16 +531,18 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
             int endIndex = data.indexOf("\n", startIndex);
             nextIndex = endIndex;
             if (startIndex != -1) {
-                String line = data.substring(startIndex, endIndex);
+                String line;
 
-                while (true) {
+                while (endIndex != -1) {
                     nextIndex = data.indexOf("\n", endIndex + 1);
-                    line = data.substring(endIndex + 1, nextIndex);
+                    line = data.substring(endIndex + 1, nextIndex == -1 ? data.length() : nextIndex);
                     if (line.startsWith("import ") || line.replaceAll("\r?\n", "").trim().isEmpty())
                         endIndex = nextIndex;
                     else
                         break;
                 }
+                if (endIndex == -1)
+                    endIndex = data.length();
 
                 while (data.charAt(endIndex-1) == '\n' || data.charAt(endIndex-1) == '\r')
                     endIndex--;

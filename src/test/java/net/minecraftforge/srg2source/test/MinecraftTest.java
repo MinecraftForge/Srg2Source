@@ -126,7 +126,7 @@ public class MinecraftTest {
     }
 
     public static class Redefined {
-        private static final Pattern SRG_FINDER = Pattern.compile("(func_[0-9]+_[a-zA-Z_]+?|field_[0-9]+_[a-zA-Z_]+?|p_[\\w]+_\\d+_)\\b");
+        private static final Pattern SRG_FINDER = Pattern.compile("((?:func_|m_)[0-9]+_[a-zA-Z_]*?|(?:field_|f_)[0-9]+_[a-zA-Z_]*?|p_[\\w]+_\\d+_)\\b");
         private final String mcver;
         private final Path root;
 
@@ -316,14 +316,14 @@ public class MinecraftTest {
 
                     @Override
                     public String rename(IField value) {
-                        if (value.getOriginal().startsWith("field_"))
+                        if (value.getOriginal().startsWith("field_") || value.getOriginal().startsWith("f_"))
                             return Redefined.this.makeName(value.getOriginal());
                         return value.getOriginal();
                     }
 
                     @Override
                     public String rename(IMethod value) {
-                        if (value.getOriginal().startsWith("func_"))
+                        if (value.getOriginal().startsWith("func_") || value.getOriginal().startsWith("m_"))
                             return Redefined.this.makeName(value.getOriginal());
                         return value.getOriginal();
                     }
