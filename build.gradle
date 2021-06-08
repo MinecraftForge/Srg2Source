@@ -35,7 +35,7 @@ project.ext {
 group = 'net.minecraftforge'
 archivesBaseName = 'srg2source'
 def branch = project.ext.GIT_INFO.branch
-version = "${project.ext.GIT_INFO.tag}.${t -> if (branch != 'master') t << '-' + branch}"
+version = "${project.ext.GIT_INFO.tag}.${project.ext.GIT_INFO.offset}${t -> if (branch != 'master') t << '-' + branch}"
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 configurations {
