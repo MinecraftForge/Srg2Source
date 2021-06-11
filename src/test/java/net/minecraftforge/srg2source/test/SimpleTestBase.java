@@ -56,7 +56,7 @@ import net.minecraftforge.srg2source.util.Util;
 import net.minecraftforge.srg2source.util.io.FolderSupplier;
 
 public abstract class SimpleTestBase {
-    private static final String FORGE_MAVEN = "https://files.minecraftforge.net/maven/";
+    private static final String FORGE_MAVEN = "https://maven.minecraftforge.net/";
 
     protected abstract String getPrefix();
     protected abstract List<String> getLibraries();
