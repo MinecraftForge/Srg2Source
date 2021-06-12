@@ -51,7 +51,7 @@ dependencies {
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4' // easy CLI parsing
 
     // necessary eclipse AST stuff
-    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.14.0'
+    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.25.0'
     
     //We use this to patch the JDT at runtime
     implementation 'cpw.mods:modlauncher:8.0.9'
@@ -66,7 +66,7 @@ dependencies {
 repositories {
     maven {
         name = "forge"
-        url = "http://files.minecraftforge.net/maven"
+        url = "https://maven.minecraftforge.net"
     }
     maven {
         name = "eclipse"
