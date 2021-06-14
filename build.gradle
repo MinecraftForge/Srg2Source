@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
         maven {
             name = "forge"
-            url = "https://maven.minecraftforge.net"
+            url = "https://maven.minecraftforge.net/"
         }
         maven {
             name = "eclipse"
@@ -66,7 +66,7 @@ dependencies {
 repositories {
     maven {
         name = "forge"
-        url = "https://maven.minecraftforge.net"
+        url = "https://maven.minecraftforge.net/"
     }
     maven {
         name = "eclipse"
