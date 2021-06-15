@@ -31,6 +31,7 @@ public class SingleTests extends SimpleTestBase {
     @Override protected String getPrefix() { return ""; }
     @Override protected List<String> getLibraries(){ return Collections.emptyList(); }
     @Override protected RangeExtractorBuilder customize(RangeExtractorBuilder builder) { return builder.enablePreview(); };
+    @Override protected void testClass(String name) { super.testClass(name, SourceVersion.JAVA_15); }
 
     //@Test public void testLambda()         { testClass("Lambda");         }
     @Test public void testGenerics()       { testClass("GenericClasses"); }
@@ -42,6 +43,6 @@ public class SingleTests extends SimpleTestBase {
     @Test public void testPackageInfo()    { testClass("PackageInfo"   ); }
     //@Test public void testCache()          { testClass("GenericClasses"); }
     @Test public void testWhiteSpace()     { testClass("Whitespace"    ); }
-    @Test public void testRecordSimple()   { testClass("RecordSimple", SourceVersion.JAVA_15); }
-    @Test public void testPatternMatch()   { testClass("PatternMatch", SourceVersion.JAVA_15); }
+    @Test public void testRecordSimple()   { testClass("RecordSimple"); }
+    @Test public void testPatternMatch()   { testClass("PatternMatch"); }
 }
