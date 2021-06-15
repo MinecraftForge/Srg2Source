@@ -74,6 +74,9 @@ public abstract class SimpleTestBase {
     }
 
     protected void testClass(final String name) {
+        testClass(name, SourceVersion.JAVA_1_8);
+    }
+    protected void testClass(final String name, final SourceVersion sourceVersion) {
         final Path root = getRoot().resolve(getPrefix()).resolve(name);
 
         Assert.assertTrue("Unknown test: " + root.toAbsolutePath(), Files.exists(root));
@@ -82,10 +85,10 @@ public abstract class SimpleTestBase {
 
         Path original = root.resolve("original");
         Path mapped = root.resolve("mapped");
-        testExtract(original, root.resolve("original.range"), libraries);
+        testExtract(original, root.resolve("original.range"), libraries, sourceVersion);
         if (Files.exists(mapped)) {
             Path range = root.resolve("mapped.range");
-            testExtract(mapped, range, libraries);
+            testExtract(mapped, range, libraries, sourceVersion);
             testApply(original, range, mapped, root.resolve("mapped.tsrg"));
         }
     }
@@ -131,25 +134,32 @@ public abstract class SimpleTestBase {
         return ret.stream().map(Path::toFile).collect(Collectors.toList());
     }
 
-    private void testExtract(Path src, Path range, List<File> libs) {
+    private void testExtract(Path src, Path range, List<File> libs, final SourceVersion sourceVersion) {
         ByteArrayOutputStream data = new ByteArrayOutputStream();
         ByteArrayOutputStream logs = new ByteArrayOutputStream();
 
         RangeExtractor extractor = customize(new RangeExtractorBuilder())
-            .sourceCompatibility(SourceVersion.JAVA_1_8)
+            .sourceCompatibility(sourceVersion)
             .input(new TestFolderSupplier(src))
             .logger(new PrintStream(logs))
             .output(new PrintWriter(data))
+            .logWarnings()
             .build();
 
         libs.forEach(extractor::addLibrary);
 
         boolean worked = extractor.run();
-        @SuppressWarnings("unused")
         String log = logs.toString();
 
-        Assert.assertTrue("Failed to do work!", worked);
-        Assert.assertEquals(range.getFileName().toString(), getFileContents(range), data.toString());
+        if (!worked) {
+            System.out.println(log);
+            Assert.fail("Failed to do work!");
+        }
+        String expected = getFileContents(range);
+        if (!expected.equals(data.toString())) {
+            System.out.println(log);
+            Assert.assertEquals(range.getFileName().toString(), expected, data.toString());
+        }
     }
 
     private void testApply(Path original, Path range, Path mapped, Path srg) {

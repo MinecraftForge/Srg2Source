@@ -66,6 +66,8 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
     private int cache_hits = 0;
     private boolean enableMixins = false;
     private boolean fatalMixins = false;
+    private boolean logWarnings = false;
+    private boolean enablePreview = false;
 
     public RangeExtractor(){}
 
@@ -90,6 +92,12 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
     }
     public boolean areMixinsFatal() {
         return this.fatalMixins;
+    }
+    public void logWarnings() {
+        this.logWarnings = true;
+    }
+    public void enablePreview() {
+        this.enablePreview = true;
     }
 
     public void addLibrary(File value) {
@@ -220,7 +228,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
                         RangeExtractor.this.cache_hits++;
                     } else {
                         if (cu.getProblems() != null && cu.getProblems().length > 0)
-                            Arrays.stream(cu.getProblems()).filter(p -> !p.isWarning()).forEach(p -> log("   Compile Error! " + p.toString()));
+                            Arrays.stream(cu.getProblems()).filter(p -> logWarnings || !p.isWarning()).forEach(p -> log("   Compile Error! " + p.toString()));
 
                         SymbolReferenceWalker walker = new SymbolReferenceWalker(RangeExtractor.this, builder, enableMixins);
                         walker.safeWalk(cu);
@@ -276,7 +284,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
     }
 
     private ASTParser createParser(String srcRoot) {
-        ASTParser parser = ASTParser.newParser(AST.JLS10);
+        ASTParser parser = ASTParser.newParser(AST.JLS15);
         parser.setEnvironment(getLibArray(), srcRoot == null ? null : new String[] {srcRoot}, null, true);
         return setOptions(parser);
     }
@@ -287,6 +295,8 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
         parser.setBindingsRecovery(true);
         Hashtable<String, String> options = JavaCore.getDefaultOptions();
         JavaCore.setComplianceOptions(sourceVersion, options);
+        if (enablePreview)
+            options.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
         parser.setCompilerOptions(options);
         return parser;
     }

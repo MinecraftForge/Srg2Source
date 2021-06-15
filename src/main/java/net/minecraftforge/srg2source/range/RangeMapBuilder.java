@@ -105,6 +105,10 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
         addStructure(StructuralEntry.createEnum(start, length, name));
     }
 
+    public void addRecordDeclaration(int start, int length, String name) {
+        addStructure(StructuralEntry.createRecord(start, length, name));
+    }
+
     public void addMethodDeclaration(int start, int length, String name, String desc) {
         addStructure(StructuralEntry.createMethod(start, length, name, desc));
     }

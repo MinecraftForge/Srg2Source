@@ -26,7 +26,14 @@ public enum SourceVersion {
     JAVA_1_7(JavaCore.VERSION_1_7),
     JAVA_1_8(JavaCore.VERSION_1_8),
     JAVA_9(JavaCore.VERSION_9),
-    JAVA_10(JavaCore.VERSION_10);
+    JAVA_10(JavaCore.VERSION_10),
+    JAVA_11(JavaCore.VERSION_11),
+    JAVA_12(JavaCore.VERSION_12),
+    JAVA_13(JavaCore.VERSION_13),
+    JAVA_14(JavaCore.VERSION_14),
+    JAVA_15(JavaCore.VERSION_15),
+    //JAVA_16(JavaCore.VERSION_16), //TODO Wait for Eclipse JDT to update on maven central...
+    ;
 
     private String spec;
     private SourceVersion(String spec) {

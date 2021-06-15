@@ -1,0 +1,7 @@
+public class PatternMatch {
+    public void test(Object param) {
+        if (param instanceof String str) {
+            System.out.println(str);
+        }
+    }
+}

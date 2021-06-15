@@ -19,11 +19,14 @@
 
 package net.minecraftforge.srg2source.extract;
 
+import java.util.List;
+
 import javax.annotation.Nullable;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.objectweb.asm.Opcodes;
 
 public class ExtractUtil {
@@ -51,6 +54,17 @@ public class ExtractUtil {
             buf.append(getTypeSignature(param));
         buf.append(')');
         buf.append(getTypeSignature(method.getReturnType()));
+        return buf.toString();
+    }
+
+    public static String getDescriptor(List<SingleVariableDeclaration> params) {
+        StringBuilder buf = new StringBuilder();
+        buf.append('(');
+        for (SingleVariableDeclaration var : params) {
+            ITypeBinding bind = var.getType().resolveBinding();
+            buf.append(getTypeSignature(bind));
+        }
+        buf.append(')');
         return buf.toString();
     }
 

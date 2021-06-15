@@ -54,6 +54,8 @@ public class RangeExtractorBuilder {
     private File cache = null;
     private boolean enableMixins = false;
     private boolean fatalMixins = false;
+    private boolean logWarnings = false;
+    private boolean enablePreview = false;
 
     public RangeExtractorBuilder sourceCompatibility(SourceVersion value) {
         this.sourceVersion = value;
@@ -193,6 +195,16 @@ public class RangeExtractorBuilder {
         return this;
     }
 
+    public RangeExtractorBuilder logWarnings() {
+        this.logWarnings = true;
+        return this;
+    }
+
+    public RangeExtractorBuilder enablePreview() {
+        this.enablePreview = true;
+        return this;
+    }
+
     public RangeExtractor build() {
         RangeExtractor ret = new RangeExtractor();
         ret.setLogger(logStd);
@@ -214,6 +226,10 @@ public class RangeExtractorBuilder {
             ret.enableMixins();
         if (this.fatalMixins)
             ret.fatalMixins();
+        if (this.logWarnings)
+            ret.logWarnings();
+        if (this.enablePreview)
+            ret.enablePreview();
 
         if (this.cache != null) {
             try (InputStream fin = new FileInputStream(this.cache)) {

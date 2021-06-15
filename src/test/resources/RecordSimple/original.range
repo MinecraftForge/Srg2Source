@@ -1,0 +1,12 @@
+start 1 RecordSimple.java 3aa2d2b1c9363c614f91f80c95265687
+recorddef 0 46 RecordSimple
+# Start RECORD RecordSimple
+  class 14 12 RecordSimple false RecordSimple
+  methoddef 26 80 <init> (ILjava/lang/String;)V
+  # Start METHOD <init>(ILjava/lang/String;)V
+    parameter 31 1 a RecordSimple <init> (ILjava/lang/String;)V 0
+    class 34 6 String false java/lang/String
+    parameter 41 1 b RecordSimple <init> (ILjava/lang/String;)V 1
+  # End METHOD
+# End RECORD
+end

@@ -36,7 +36,8 @@ public class StructuralEntry implements IRange {
         }),
         ENUM,
         ANNOTATION,
-        INTERFACE;
+        INTERFACE,
+        RECORD;
 
         private BiFunction<Type, String, StructuralEntry> read;
         private Type(BiFunction<Type, String, StructuralEntry> read) {
@@ -66,6 +67,10 @@ public class StructuralEntry implements IRange {
 
     public static StructuralEntry createEnum(int start, int length, String name) {
         return new StructuralEntry(Type.ENUM, start, length, name, null);
+    }
+
+    public static StructuralEntry createRecord(int start, int length, String name) {
+        return new StructuralEntry(Type.RECORD, start, length, name, null);
     }
 
     public static StructuralEntry createInterface(int start, int length, String name) {

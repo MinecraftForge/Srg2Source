@@ -1,0 +1,19 @@
+start 1 PatternMatch.java cb335eb9ddc3c29911a72e705f2a4ae7
+classdef 0 168 PatternMatch
+# Start CLASS PatternMatch
+  class 13 12 PatternMatch false PatternMatch
+  methoddef 33 132 test (Ljava/lang/Object;)V
+  # Start METHOD test(Ljava/lang/Object;)V
+    method 45 4 test PatternMatch test (Ljava/lang/Object;)V
+    class 50 6 Object false java/lang/Object
+    parameter 57 5 param PatternMatch test (Ljava/lang/Object;)V 0
+    parameter 79 5 param PatternMatch test (Ljava/lang/Object;)V 0
+    class 96 6 String false java/lang/String
+    local_variable 103 3 str PatternMatch test (Ljava/lang/Object;)V 1 Ljava/lang/String;
+    class 123 6 System false java/lang/System
+    field 130 3 out java/lang/System
+    method 134 7 println java/io/PrintStream println (Ljava/lang/String;)V
+    local_variable 142 3 str PatternMatch test (Ljava/lang/Object;)V 1 Ljava/lang/String;
+  # End METHOD
+# End CLASS
+end

@@ -116,9 +116,9 @@ public class SymbolReferenceWalker {
         return parent == null ? null : parent.findLocal(key);
     }
 
-    private void trackParameters(IMethodBinding mtd, List<VariableDeclaration> params, int synthetics) {
+    private void trackParameters(List<? extends VariableDeclaration> params, int synthetics) {
         //ITypeBinding[] args = mtd.getParameterTypes();
-        int index = synthetics; //Modifier.isStatic(mtd.getModifiers()) ? 0 : 1;
+        int index = synthetics;
         for (int x = 0; x < params.size(); x++) {
             String key = params.get(x).getName().resolveBinding().getKey();
             parameterInfo.put(key, new ParamInfo(className, methodName, methodDesc, index));
@@ -225,6 +225,48 @@ public class SymbolReferenceWalker {
         return false;
     }
 
+    /**
+     * We use a child walker to process all class like objects, so that the walker has context of what class it is in.
+     * This means we need to cancel processing the children and walk them ourselves in the child walker.
+     * TODO: Add a 'ignore' to child walkers and let it walk itself?
+     */
+    @SuppressWarnings("unchecked")
+    private boolean process(RecordDeclaration node) {
+        String name = getInternalName(node.resolveBinding(), node);
+        builder.addRecordDeclaration(node.getStartPosition(), node.getLength(), name);
+
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, name, null, null);
+        walker.acceptChild(node.getJavadoc());
+        walker.acceptChildren(node.modifiers());
+        walker.acceptChild(node.getName());
+        walker.acceptChildren(node.typeParameters());
+
+        //walker.acceptChildren(node.recordComponents());
+        {
+            List<SingleVariableDeclaration> params = (List<SingleVariableDeclaration>)node.recordComponents();
+
+            int start = node.getName().getStartPosition() + node.getName().getLength();
+            for (TypeParameter n : (List<TypeParameter>)node.typeParameters()) {
+                start = n.getStartPosition() + node.getLength();
+            }
+            int end = start;
+            for (SingleVariableDeclaration n : params) {
+                end = n.getStartPosition() + node.getLength();
+            }
+
+            String desc = ExtractUtil.getDescriptor(params) + 'V';
+            builder.addMethodDeclaration(start, end, "<init>", desc);
+            SymbolReferenceWalker iwalker = new SymbolReferenceWalker(walker, name, "<init>", desc);
+
+            iwalker.trackParameters(params, 0);
+            iwalker.acceptChildren(params);
+        }
+
+        walker.acceptChildren(node.superInterfaceTypes());
+        walker.acceptChildren(node.bodyDeclarations());
+        return false;
+    }
+
     /*
      * Resolving the label name results in a null binding, unsure if there is a way to properly do so.
      * However we don't really care, so we can skip the name child of this label.
@@ -270,7 +312,7 @@ public class SymbolReferenceWalker {
             walker = new SymbolReferenceWalker(this, className, name, desc);
 
             ITypeBinding[] args = mtd.getParameterTypes();
-            walker.trackParameters(mtd, params, args.length - params.size());
+            walker.trackParameters(params, args.length - params.size());
         } else
             walker = new SymbolReferenceWalker(this, className, name, desc);
 
@@ -305,7 +347,7 @@ public class SymbolReferenceWalker {
                 else if (type.isNested() && type.isClass() && ((type.getModifiers() & Opcodes.ACC_STATIC) == 0))
                     synthetic = 1; //Outer class
             }
-            walker.trackParameters(mtd, params, synthetic);
+            walker.trackParameters(params, synthetic);
         }
 
         walker.acceptChild(node.getJavadoc());
@@ -374,7 +416,7 @@ public class SymbolReferenceWalker {
                             owner = this.mixins.getFieldOwner(owner, node.toString(), ExtractUtil.getTypeSignature(var.getType()));
                         builder.addFieldReference(node.getStartPosition(), node.getLength(), node.toString(), owner);
                     }
-                } else if (var.isParameter()) {
+                } else if (var.isParameter() || var.isRecordComponent()) {
                     ParamInfo info = findParameter(var.getKey());
                     if (info == null)
                         error(node, "Illegal Argument: " + var.getKey());
@@ -511,6 +553,27 @@ public class SymbolReferenceWalker {
      */
     private boolean process(ImportDeclaration node) {
         return false; //Do not walk children, ignore it all
+    }
+
+    private boolean process(InstanceofExpression node) {
+        // visit children in normal left to right reading order
+        acceptChild(node.getLeftOperand());
+        acceptChild(node.getRightOperand());
+        SimpleName pattern = null;
+        try {
+            pattern = node.getPatternVariable();
+        } catch (UnsupportedOperationException e) {
+            // Nom: this is nasty, but the only other way to check is to use internal code. Which is also bad.
+        }
+
+        if (pattern != null) {
+            IVariableBinding bind = (IVariableBinding)pattern.resolveBinding();
+            trackLocalVariable(pattern, bind);
+            acceptChild(pattern);
+            System.currentTimeMillis();
+        }
+
+        return false;
     }
 
     /**
@@ -667,7 +730,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(ImportDeclaration               node) { return process(node); }
         @Override public boolean visit(InfixExpression                 node) { return true; }
         @Override public boolean visit(Initializer                     node) { return process(node); }
-        @Override public boolean visit(InstanceofExpression            node) { return true; }
+        @Override public boolean visit(InstanceofExpression            node) { return process(node); }
         @Override public boolean visit(IntersectionType                node) { return true; }
         @Override public boolean visit(Javadoc                         node) { return true; }
         @Override public boolean visit(LabeledStatement                node) { return process(node); }
@@ -683,6 +746,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(Modifier                        node) { return true; }
         @Override public boolean visit(ModuleDeclaration               node) { return true; }
         @Override public boolean visit(ModuleModifier                  node) { return true; }
+        @Override public boolean visit(ModuleQualifiedName             node) { return true; }
         @Override public boolean visit(NameQualifiedType               node) { return true; }
         @Override public boolean visit(NormalAnnotation                node) { return process(node); }
         @Override public boolean visit(NullLiteral                     node) { return true; }
@@ -698,6 +762,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(QualifiedName                   node) { return process(node); }
         @Override public boolean visit(QualifiedType                   node) { return true; }
         @Override public boolean visit(RequiresDirective               node) { return true; }
+        @Override public boolean visit(RecordDeclaration               node) { return process(node); }
         @Override public boolean visit(ReturnStatement                 node) { return true; }
         @Override public boolean visit(SimpleName                      node) { return process(node); }
         @Override public boolean visit(SimpleType                      node) { return true; }
@@ -709,9 +774,11 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(SuperMethodInvocation           node) { return true; }
         @Override public boolean visit(SuperMethodReference            node) { return true; }
         @Override public boolean visit(SwitchCase                      node) { return true; }
+        @Override public boolean visit(SwitchExpression                node) { return true; }
         @Override public boolean visit(SwitchStatement                 node) { return true; }
         @Override public boolean visit(SynchronizedStatement           node) { return true; }
         @Override public boolean visit(TagElement                      node) { return true; }
+        @Override public boolean visit(TextBlock                       node) { return true; }
         @Override public boolean visit(TextElement                     node) { return true; }
         @Override public boolean visit(ThisExpression                  node) { return true; }
         @Override public boolean visit(ThrowStatement                  node) { return true; }
@@ -728,5 +795,6 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(UsesDirective                   node) { return true; }
         @Override public boolean visit(WhileStatement                  node) { return true; }
         @Override public boolean visit(WildcardType                    node) { return true; }
+        @Override public boolean visit(YieldStatement                  node) { return true; }
     };
 }
