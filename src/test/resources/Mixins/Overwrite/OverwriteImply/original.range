@@ -7,7 +7,7 @@ classdef 115 102 OverwriteImply
   methoddef 168 47 remove (Ljava/lang/Object;)Z
   # Start METHOD remove(Ljava/lang/Object;)Z
     class 169 9 Overwrite false org/spongepowered/asm/mixin/Overwrite
-    method 196 6 remove java/util/AbstractCollection remove (Ljava/lang/Object;)Z
+    method 196 6 remove java/util/Collection remove (Ljava/lang/Object;)Z
     class 203 6 Object false java/lang/Object
     parameter 210 1 e OverwriteImply remove (Ljava/lang/Object;)Z 0
   # End METHOD

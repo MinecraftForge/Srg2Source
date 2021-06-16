@@ -1,17 +1,17 @@
-start 1 SimpleImplements.java a165e326bacd06b8f45c0fa1356418e9
-classdef 189 141 SimpleImplements
+start 1 SimpleImplements.java 83bde69016718c349d40fded0251da02
+classdef 162 141 SimpleImplements
 # Start CLASS SimpleImplements
-  class 190 5 Mixin false org/spongepowered/asm/mixin/Mixin
-  class 196 6 Vector false java/util/Vector
-  class 211 10 Implements false org/spongepowered/asm/mixin/Implements
-  class 224 9 Interface false org/spongepowered/asm/mixin/Interface
-  method 234 5 iface org/spongepowered/asm/mixin/Interface iface ()Ljava/lang/Class;
-  class 242 8 Runnable false java/lang/Runnable
-  method 258 6 prefix org/spongepowered/asm/mixin/Interface prefix ()Ljava/lang/String;
-  class 290 16 SimpleImplements false SimpleImplements
-  methoddef 311 17 pre$run ()V
+  class 163 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 169 6 Vector false java/util/Vector
+  class 184 10 Implements false org/spongepowered/asm/mixin/Implements
+  class 197 9 Interface false org/spongepowered/asm/mixin/Interface
+  method 207 5 iface org/spongepowered/asm/mixin/Interface iface ()Ljava/lang/Class;
+  class 215 8 Runnable false java/lang/Runnable
+  method 231 6 prefix org/spongepowered/asm/mixin/Interface prefix ()Ljava/lang/String;
+  class 263 16 SimpleImplements false SimpleImplements
+  methoddef 284 17 pre$run ()V
   # Start METHOD pre$run()V
-    method 320 3 run java/lang/Runnable run ()V
+    method 293 3 run java/lang/Runnable run ()V
   # End METHOD
 # End CLASS
 end

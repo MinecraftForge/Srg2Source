@@ -21,7 +21,7 @@ classdef 97 189 Test
     # Start METHOD lambda$0(LTest;)Ljava/util/Set;
       class 250 7 HashSet false java/util/HashSet
     # End METHOD
-    method 263 3 add java/util/Set add (Ljava/lang/Object;)Z
+    method 263 3 add java/util/Collection add (Ljava/lang/Object;)Z
   # End METHOD
 # End CLASS
 end

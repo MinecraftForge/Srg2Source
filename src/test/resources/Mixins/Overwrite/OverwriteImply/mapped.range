@@ -7,7 +7,7 @@ classdef 115 104 OverwriteImply
   methoddef 168 49 contains (Ljava/lang/Object;)Z
   # Start METHOD contains(Ljava/lang/Object;)Z
     class 169 9 Overwrite false org/spongepowered/asm/mixin/Overwrite
-    method 196 8 contains java/util/AbstractCollection contains (Ljava/lang/Object;)Z
+    method 196 8 contains java/util/Collection contains (Ljava/lang/Object;)Z
     class 205 6 Object false java/lang/Object
     parameter 212 1 e OverwriteImply contains (Ljava/lang/Object;)Z 0
   # End METHOD
