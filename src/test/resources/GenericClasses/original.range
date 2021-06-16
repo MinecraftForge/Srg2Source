@@ -33,7 +33,7 @@ classdef 68 488 GenericClasses
       class 402 6 String false java/lang/String
       methoddef 395 86 bar (Ljava/lang/String;)Ljava/lang/String;
       # Start METHOD bar(Ljava/lang/String;)Ljava/lang/String;
-        method 409 3 bar GenericClasses$1 bar (Ljava/lang/String;)Ljava/lang/String;
+        method 409 3 bar GenericClasses$IFoo bar (Ljava/lang/Object;)Ljava/lang/Object;
         class 413 6 String false java/lang/String
         parameter 420 3 arg GenericClasses$1 bar (Ljava/lang/String;)Ljava/lang/String; 0
       # End METHOD

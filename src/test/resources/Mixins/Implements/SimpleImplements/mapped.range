@@ -1,17 +1,17 @@
-start 1 SimpleImplements.java 4462a3db4ddaada946c653b8178fbf19
-classdef 188 144 SimpleImplements
+start 1 SimpleImplements.java 5d3ce8434e0d384a550396b9360e8d1b
+classdef 162 148 SimpleImplements
 # Start CLASS SimpleImplements
-  class 189 5 Mixin false org/spongepowered/asm/mixin/Mixin
-  class 195 6 Vector false java/util/Vector
-  class 210 10 Implements false org/spongepowered/asm/mixin/Implements
-  class 223 9 Interface false org/spongepowered/asm/mixin/Interface
-  method 233 5 iface org/spongepowered/asm/mixin/Interface iface ()Ljava/lang/Class;
-  class 241 9 Closeable false java/io/Closeable
-  method 258 6 prefix org/spongepowered/asm/mixin/Interface prefix ()Ljava/lang/String;
-  class 290 16 SimpleImplements false SimpleImplements
-  methoddef 311 19 pre$close ()V
+  class 163 5 Mixin false org/spongepowered/asm/mixin/Mixin
+  class 169 6 Vector false java/util/Vector
+  class 184 10 Implements false org/spongepowered/asm/mixin/Implements
+  class 197 9 Interface false org/spongepowered/asm/mixin/Interface
+  method 207 5 iface org/spongepowered/asm/mixin/Interface iface ()Ljava/lang/Class;
+  class 215 13 AutoCloseable false java/lang/AutoCloseable
+  method 236 6 prefix org/spongepowered/asm/mixin/Interface prefix ()Ljava/lang/String;
+  class 268 16 SimpleImplements false SimpleImplements
+  methoddef 289 19 pre$close ()V
   # Start METHOD pre$close()V
-    method 320 5 close java/io/Closeable close ()V
+    method 298 5 close java/lang/AutoCloseable close ()V
   # End METHOD
 # End CLASS
 end

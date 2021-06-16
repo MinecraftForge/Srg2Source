@@ -19,26 +19,19 @@
 
 package net.minecraftforge.srg2source.test;
 
+import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
+import net.minecraftforge.srg2source.api.SourceVersion;
+import org.junit.Test;
+
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
-
-import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
-import net.minecraftforge.srg2source.api.SourceVersion;
-
-public class SingleTests extends SimpleTestBase {
+public class Java15Tests extends SimpleTestBase {
     @Override protected String getPrefix() { return ""; }
     @Override protected List<String> getLibraries(){ return Collections.emptyList(); }
+    @Override protected RangeExtractorBuilder customize(RangeExtractorBuilder builder) { return builder.enablePreview(); };
+    @Override protected void testClass(String name) { super.testClass(name, SourceVersion.JAVA_15); }
 
-    //@Test public void testLambda()         { testClass("Lambda");         }
-    @Test public void testGenerics()       { testClass("GenericClasses"); }
-    @Test public void testAnonClass()      { testClass("AnonClass"     ); }
-    @Test public void testInnerClass()     { testClass("InnerClass"    ); }
-    @Test public void testLocalClass()     { testClass("LocalClass"    ); }
-    @Test public void testImportSpaces()   { testClass("ImportSpaces"  ); }
-    @Test public void testNestedGenerics() { testClass("NestedGenerics"); }
-    @Test public void testPackageInfo()    { testClass("PackageInfo"   ); }
-    //@Test public void testCache()          { testClass("GenericClasses"); }
-    @Test public void testWhiteSpace()     { testClass("Whitespace"    ); }
+    @Test public void testRecordSimple()   { testClass("RecordSimple"); }
+    @Test public void testPatternMatch()   { testClass("PatternMatch"); }
 }

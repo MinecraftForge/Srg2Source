@@ -1,2 +1,2 @@
-java/util/AbstractCollection java/util/AbstractCollection
+java/util/Collection java/util/Collection
 	contains (Ljava/lang/Object;)Z remove

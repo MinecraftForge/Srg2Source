@@ -3,7 +3,6 @@ import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
 
 import java.util.Vector;
-import java.lang.Runnable;
 
 @Mixin(Vector.class)
 @Implements({@Interface(iface = Runnable.class, prefix = "pre$")})
