@@ -555,23 +555,10 @@ public class SymbolReferenceWalker {
         return false; //Do not walk children, ignore it all
     }
 
-    private boolean process(InstanceofExpression node) {
+    private boolean process(PatternInstanceofExpression node) {
         // visit children in normal left to right reading order
         acceptChild(node.getLeftOperand());
         acceptChild(node.getRightOperand());
-        SimpleName pattern = null;
-        try {
-            pattern = node.getPatternVariable();
-        } catch (UnsupportedOperationException e) {
-            // Nom: this is nasty, but the only other way to check is to use internal code. Which is also bad.
-        }
-
-        if (pattern != null) {
-            IVariableBinding bind = (IVariableBinding)pattern.resolveBinding();
-            trackLocalVariable(pattern, bind);
-            acceptChild(pattern);
-            System.currentTimeMillis();
-        }
 
         return false;
     }
@@ -730,7 +717,8 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(ImportDeclaration               node) { return process(node); }
         @Override public boolean visit(InfixExpression                 node) { return true; }
         @Override public boolean visit(Initializer                     node) { return process(node); }
-        @Override public boolean visit(InstanceofExpression            node) { return process(node); }
+        @Override public boolean visit(InstanceofExpression            node) { return true; }
+        @Override public boolean visit(PatternInstanceofExpression     node) { return process(node); }
         @Override public boolean visit(IntersectionType                node) { return true; }
         @Override public boolean visit(Javadoc                         node) { return true; }
         @Override public boolean visit(LabeledStatement                node) { return process(node); }

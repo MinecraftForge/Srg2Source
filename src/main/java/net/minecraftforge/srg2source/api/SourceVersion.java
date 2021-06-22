@@ -32,7 +32,7 @@ public enum SourceVersion {
     JAVA_13(JavaCore.VERSION_13),
     JAVA_14(JavaCore.VERSION_14),
     JAVA_15(JavaCore.VERSION_15),
-    //JAVA_16(JavaCore.VERSION_16), //TODO Wait for Eclipse JDT to update on maven central...
+    JAVA_16(JavaCore.VERSION_16),
     ;
 
     private String spec;

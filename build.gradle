@@ -5,16 +5,12 @@ buildscript {
             name = "forge"
             url = "https://maven.minecraftforge.net/"
         }
-        maven {
-            name = "eclipse"
-            url = "https://repo.eclipse.org/content/groups/eclipse/"
-        }
     }
     dependencies {
         classpath 'net.sf.proguard:proguard-gradle:6.1.0'
-        classpath 'org.ow2.asm:asm:6.2.1'
-        classpath 'org.ow2.asm:asm-tree:6.2.1'
-        classpath 'org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r'
+        classpath 'org.ow2.asm:asm:9.1'
+        classpath 'org.ow2.asm:asm-tree:9.1'
+        classpath 'net.minecraftforge:GradleUtils:1.+'
     }
 }
 
@@ -26,16 +22,12 @@ apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
-
-project.ext {
-    GIT_INFO = gitInfo(rootProject.file('.'))
-}
+apply plugin: 'net.minecraftforge.gradleutils'
 
 group = 'net.minecraftforge'
 archivesBaseName = 'srg2source'
-def branch = project.ext.GIT_INFO.branch
-version = "${project.ext.GIT_INFO.tag}.${project.ext.GIT_INFO.offset}${t -> if (branch != 'master') t << '-' + branch}"
-java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+version = gradleutils.getTagOffsetBranchVersion()
+java.toolchain.languageVersion = JavaLanguageVersion.of(11)
 
 configurations {
     implementation.canBeResolved = true
@@ -50,19 +42,7 @@ dependencies {
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4' // easy CLI parsing
 
     // necessary eclipse AST stuff
-    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.25.0'
-
-    // Because Eclipse is dumb and decided to use dynamic versions with J8 incompatibility
-    implementation('org.eclipse.platform:org.eclipse.core.resources') { version { strictly '3.14.0' } }
-    implementation('org.eclipse.platform:org.eclipse.core.runtime') { version { strictly '3.20.100' } }
-    implementation('org.eclipse.platform:org.eclipse.text') { version { strictly '3.11.0' } }
-    implementation('org.eclipse.platform:org.eclipse.core.filesystem') { version { strictly '1.7.700' } }
-    implementation('org.eclipse.platform:org.eclipse.equinox.common') { version { strictly '3.14.100' } }
-    implementation('org.eclipse.platform:org.eclipse.core.contenttype') { version { strictly '3.7.900' } }
-    implementation('org.eclipse.platform:org.eclipse.core.jobs') { version { strictly '3.10.1100' } }
-    implementation('org.eclipse.platform:org.eclipse.equinox.registry') { version { strictly '3.10.100' } }
-    implementation('org.eclipse.platform:org.eclipse.osgi') { version { strictly '3.16.200' } }
-    implementation('org.eclipse.platform:org.eclipse.core.commands') { version { strictly '3.9.800' } }
+    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.26.0'
 
     //We use this to patch the JDT at runtime
     implementation 'cpw.mods:modlauncher:8.0.9'
@@ -332,45 +312,4 @@ publishing {
             }
         }
     }
-}
-
-def gitInfo(dir) {
-    String.metaClass.rsplit = { String del, int limit = -1 ->
-        def lst = new ArrayList()
-        def x = 0, idx
-        def tmp = delegate
-        while ((idx = tmp.lastIndexOf(del)) != -1 && (limit == -1 || x++ < limit)) {
-            lst.add(0, tmp.substring(idx + del.length(), tmp.length()))
-            tmp = tmp.substring(0, idx)
-        }
-        lst.add(0, tmp)
-        return lst
-    }
-
-    def git = null
-    try {
-        git = org.eclipse.jgit.api.Git.open(dir)
-    } catch (org.eclipse.jgit.errors.RepositoryNotFoundException e) {
-        return [
-                tag: '0.0',
-                offset: '0',
-                hash: '00000000',
-                branch: 'master',
-                commit: '0000000000000000000000',
-                abbreviatedId: '00000000'
-        ]
-    }
-    def desc = git.describe().setLong(true).setTags(true).call().rsplit('-', 2)
-    def head = git.repository.exactRef('HEAD')
-    def longBranch = head.symbolic ? head?.target?.name : null // matches Repository.getFullBranch() but returning null when on a detached HEAD
-
-    def ret = [:]
-    ret.tag = desc[0]
-    ret.offset = desc[1]
-    ret.hash = desc[2]
-    ret.branch = longBranch != null ? org.eclipse.jgit.lib.Repository.shortenRefName(longBranch) : null
-    ret.commit = org.eclipse.jgit.lib.ObjectId.toString(head.objectId)
-    ret.abbreviatedId = head.objectId.abbreviate(8).name()
-
-    return ret
 }

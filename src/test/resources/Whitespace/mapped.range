@@ -1,5 +1,5 @@
-start 1 not_test/package-info.java 682fc01d5bcf2541fc47c84b3f9fc71f
+start 1 not_test/package-info.java 69666c5b162c8c5492587fa74dd8f632
 class 1 10 Deprecated false java/lang/Deprecated
-class 13 9 Generated false javax/annotation/Generated
+class 13 9 Generated false javax/annotation/processing/Generated
 package 40 8 not_test
 end

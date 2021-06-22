@@ -26,11 +26,10 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 
-public class Java15Tests extends SimpleTestBase {
+public class Java16Tests extends SimpleTestBase {
     @Override protected String getPrefix() { return ""; }
     @Override protected List<String> getLibraries(){ return Collections.emptyList(); }
-    @Override protected RangeExtractorBuilder customize(RangeExtractorBuilder builder) { return builder.enablePreview(); };
-    @Override protected void testClass(String name) { super.testClass(name, SourceVersion.JAVA_15); }
+    @Override protected void testClass(String name) { super.testClass(name, SourceVersion.JAVA_16); }
 
     @Test public void testRecordSimple()   { testClass("RecordSimple"); }
     @Test public void testPatternMatch()   { testClass("PatternMatch"); }
