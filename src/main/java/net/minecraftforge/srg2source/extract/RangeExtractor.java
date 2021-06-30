@@ -284,7 +284,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
     }
 
     private ASTParser createParser(String srcRoot) {
-        ASTParser parser = ASTParser.newParser(AST.JLS15);
+        ASTParser parser = ASTParser.newParser(AST.JLS_Latest);
         parser.setEnvironment(getLibArray(), srcRoot == null ? null : new String[] {srcRoot}, null, true);
         return setOptions(parser);
     }

@@ -5,37 +5,29 @@ buildscript {
             name = "forge"
             url = "https://maven.minecraftforge.net/"
         }
-        maven {
-            name = "eclipse"
-            url = "https://repo.eclipse.org/content/groups/eclipse/"
-        }
     }
     dependencies {
-        classpath 'net.sf.proguard:proguard-gradle:6.1.0'
-        classpath 'org.ow2.asm:asm:6.2.1'
-        classpath 'org.ow2.asm:asm-tree:6.2.1'
-        classpath 'org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r'
+        classpath 'com.guardsquare:proguard-gradle:7.1.0-beta5'
+        classpath 'org.ow2.asm:asm:9.1'
+        classpath 'org.ow2.asm:asm-tree:9.1'
+        classpath 'net.minecraftforge:GradleUtils:1.+'
     }
 }
 
 plugins {
-  id 'net.minecrell.licenser' version '0.4'
+  id 'org.cadixdev.licenser' version '0.6.1'
 }
 
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
-
-project.ext {
-    GIT_INFO = gitInfo(rootProject.file('.'))
-}
+apply plugin: 'net.minecraftforge.gradleutils'
 
 group = 'net.minecraftforge'
 archivesBaseName = 'srg2source'
-def branch = project.ext.GIT_INFO.branch
-version = "${project.ext.GIT_INFO.tag}.${project.ext.GIT_INFO.offset}${t -> if (branch != 'master') t << '-' + branch}"
-java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+version = gradleutils.getTagOffsetBranchVersion()
+java.toolchain.languageVersion = JavaLanguageVersion.of(11)
 
 configurations {
     implementation.canBeResolved = true
@@ -45,24 +37,12 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation 'com.google.jimfs:jimfs:1.1'
 
-    implementation 'org.ow2.asm:asm:6.2.1'
-    implementation 'org.ow2.asm:asm-tree:6.2.1'
+    implementation 'org.ow2.asm:asm:9.1'
+    implementation 'org.ow2.asm:asm-tree:9.1'
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4' // easy CLI parsing
 
     // necessary eclipse AST stuff
-    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.25.0'
-
-    // Because Eclipse is dumb and decided to use dynamic versions with J8 incompatibility
-    implementation('org.eclipse.platform:org.eclipse.core.resources') { version { strictly '3.14.0' } }
-    implementation('org.eclipse.platform:org.eclipse.core.runtime') { version { strictly '3.20.100' } }
-    implementation('org.eclipse.platform:org.eclipse.text') { version { strictly '3.11.0' } }
-    implementation('org.eclipse.platform:org.eclipse.core.filesystem') { version { strictly '1.7.700' } }
-    implementation('org.eclipse.platform:org.eclipse.equinox.common') { version { strictly '3.14.100' } }
-    implementation('org.eclipse.platform:org.eclipse.core.contenttype') { version { strictly '3.7.900' } }
-    implementation('org.eclipse.platform:org.eclipse.core.jobs') { version { strictly '3.10.1100' } }
-    implementation('org.eclipse.platform:org.eclipse.equinox.registry') { version { strictly '3.10.100' } }
-    implementation('org.eclipse.platform:org.eclipse.osgi') { version { strictly '3.16.200' } }
-    implementation('org.eclipse.platform:org.eclipse.core.commands') { version { strictly '3.9.800' } }
+    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.26.0'
 
     //We use this to patch the JDT at runtime
     implementation 'cpw.mods:modlauncher:8.0.9'
@@ -107,16 +87,16 @@ import org.objectweb.asm.*
 import org.objectweb.asm.tree.*
 
 //TODO: Eclipse complains about unused messages. Find a way to make it shut up.
-class PatchJDTClasses extends DefaultTask {
+abstract class PatchJDTClasses extends DefaultTask {
     static def COMPILATION_UNIT_RESOLVER = 'org/eclipse/jdt/core/dom/CompilationUnitResolver'
     static def RANGE_EXTRACTOR = 'net/minecraftforge/srg2source/extract/RangeExtractor'
-    def RESOLVE_METHOD = 'resolve([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Lorg/eclipse/jdt/core/dom/FileASTRequestor;ILjava/util/Map;I)V'
-    def GET_CONTENTS = 'org/eclipse/jdt/internal/compiler/util/Util.getFileCharContent(Ljava/io/File;Ljava/lang/String;)[C'
-    def HOOK_DESC_RESOLVE = '(Ljava/lang/String;Ljava/lang/String;)[C'
+    static def RESOLVE_METHOD = 'resolve([Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Lorg/eclipse/jdt/core/dom/FileASTRequestor;ILjava/util/Map;I)V'
+    static def GET_CONTENTS = 'org/eclipse/jdt/internal/compiler/util/Util.getFileCharContent(Ljava/io/File;Ljava/lang/String;)[C'
+    static def HOOK_DESC_RESOLVE = '(Ljava/lang/String;Ljava/lang/String;)[C'
 
-    @Input SetProperty<String> targets = project.objects.setProperty(String.class)
-    @Input ConfigurableFileCollection libraries = project.objects.fileCollection()
-    @OutputFile RegularFileProperty output = project.objects.fileProperty()
+    @Input abstract SetProperty<String> getTargets()
+    @InputFiles @Classpath abstract ConfigurableFileCollection getLibraries()
+    @OutputFile abstract RegularFileProperty getOutput()
 
     @TaskAction
     void patchClass() {
@@ -247,30 +227,26 @@ task pgShrinkJar(type: proguard.gradle.ProGuardTask, dependsOn: shadowJar) {
 
     injars inputJar
     outjars obfuscatedJar
-    libraryjars([filter: '!META-INF/versions/**'], configurations.compile)
+    libraryjars([filter: '!META-INF/versions/**'], configurations.implementation)
 
-    // Automatically handle the Java version of this build.
-    if (System.getProperty('java.version').startsWith('1.')) {
-        // Before Java 9, the runtime classes were packaged in a single jar file.
-        libraryjars "${System.getProperty('java.home')}/lib/rt.jar"
-    } else {
-        // As of Java 9, the runtime classes are packaged in modular jmod files.
-        ['java.base', 'java.desktop', 'java.logging', 'jdk.unsupported', 'java.xml', 'java.management', 'java.compiler'].each {
-            libraryjars "${System.getProperty('java.home')}/jmods/${it}.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-        }
+    // Get the target JVM executable path, then go 2 files up to remove the bin\java.exe
+    def targetJvm = javaToolchains.launcherFor(java.toolchain).get().executablePath.asFile.parentFile.parentFile
+    // As of Java 9, the runtime classes are packaged in modular jmod files.
+    ['java.base', 'java.desktop', 'java.logging', 'jdk.unsupported', 'java.xml', 'java.management', 'java.compiler'].each {
+        libraryjars "$targetJvm/jmods/${it}.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
     }
     configuration config
 }
 
 task shrinkJar(type: Jar, dependsOn: pgShrinkJar) {
-    classifier = 'fatjar'
+    archiveClassifier = 'fatjar'
     from zipTree(pgShrinkJar.obfuscatedJar)
     manifest.from(jar.manifest)
 }
 
 task sourcesJar(type: Jar) {
     from sourceSets.main.allSource
-    classifier = 'sources'
+    archiveClassifier = 'sources'
 }
 
 artifacts {
@@ -332,45 +308,4 @@ publishing {
             }
         }
     }
-}
-
-def gitInfo(dir) {
-    String.metaClass.rsplit = { String del, int limit = -1 ->
-        def lst = new ArrayList()
-        def x = 0, idx
-        def tmp = delegate
-        while ((idx = tmp.lastIndexOf(del)) != -1 && (limit == -1 || x++ < limit)) {
-            lst.add(0, tmp.substring(idx + del.length(), tmp.length()))
-            tmp = tmp.substring(0, idx)
-        }
-        lst.add(0, tmp)
-        return lst
-    }
-
-    def git = null
-    try {
-        git = org.eclipse.jgit.api.Git.open(dir)
-    } catch (org.eclipse.jgit.errors.RepositoryNotFoundException e) {
-        return [
-                tag: '0.0',
-                offset: '0',
-                hash: '00000000',
-                branch: 'master',
-                commit: '0000000000000000000000',
-                abbreviatedId: '00000000'
-        ]
-    }
-    def desc = git.describe().setLong(true).setTags(true).call().rsplit('-', 2)
-    def head = git.repository.exactRef('HEAD')
-    def longBranch = head.symbolic ? head?.target?.name : null // matches Repository.getFullBranch() but returning null when on a detached HEAD
-
-    def ret = [:]
-    ret.tag = desc[0]
-    ret.offset = desc[1]
-    ret.hash = desc[2]
-    ret.branch = longBranch != null ? org.eclipse.jgit.lib.Repository.shortenRefName(longBranch) : null
-    ret.commit = org.eclipse.jgit.lib.ObjectId.toString(head.objectId)
-    ret.abbreviatedId = head.objectId.abbreviate(8).name()
-
-    return ret
 }

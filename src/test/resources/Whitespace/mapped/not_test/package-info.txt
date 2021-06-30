@@ -3,7 +3,7 @@
 package not_test;
 
 import java.lang.Deprecated;
-import javax.annotation.Generated;
+import javax.annotation.processing.Generated;
 
 
 
