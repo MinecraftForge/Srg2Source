@@ -555,14 +555,6 @@ public class SymbolReferenceWalker {
         return false; //Do not walk children, ignore it all
     }
 
-    private boolean process(PatternInstanceofExpression node) {
-        // visit children in normal left to right reading order
-        acceptChild(node.getLeftOperand());
-        acceptChild(node.getRightOperand());
-
-        return false;
-    }
-
     /**
      * We output the package declaration, explicitly because we want to know that it
      * is a package declaration and not a generic simple name.
@@ -718,7 +710,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(InfixExpression                 node) { return true; }
         @Override public boolean visit(Initializer                     node) { return process(node); }
         @Override public boolean visit(InstanceofExpression            node) { return true; }
-        @Override public boolean visit(PatternInstanceofExpression     node) { return process(node); }
+        @Override public boolean visit(PatternInstanceofExpression     node) { return true; }
         @Override public boolean visit(IntersectionType                node) { return true; }
         @Override public boolean visit(Javadoc                         node) { return true; }
         @Override public boolean visit(LabeledStatement                node) { return process(node); }
