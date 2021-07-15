@@ -405,7 +405,7 @@ public class SymbolReferenceWalker {
 
                 String clsName = getInternalName(type, node);
                 String text = node.toString();
-                if ("var".equals(text)) {
+                if (node.isVar()) {
                     text = clsName.substring(clsName.lastIndexOf('/') + 1);
                     text = text.substring(text.lastIndexOf('$') + 1);
                 }
