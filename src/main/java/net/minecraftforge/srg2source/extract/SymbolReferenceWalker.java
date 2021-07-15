@@ -404,12 +404,10 @@ public class SymbolReferenceWalker {
                     return false;
 
                 String clsName = getInternalName(type, node);
-                String text = node.toString();
-                if (node.isVar()) {
-                    text = clsName.substring(clsName.lastIndexOf('/') + 1);
-                    text = text.substring(text.lastIndexOf('$') + 1);
+                if (!node.isVar()) {
+                    // If it's a var type, we don't need to add it to the rangemap
+                    builder.addClassReference(node.getStartPosition(), node.getLength(), node.toString(), clsName, false);
                 }
-                builder.addClassReference(node.getStartPosition(), node.getLength(), text, clsName, false);
                 return true; //There currently arn't any children for SimpleNames, so this return does nothing.
 
             case IBinding.VARIABLE:
