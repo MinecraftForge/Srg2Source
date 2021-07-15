@@ -252,11 +252,6 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                     break;
                 case CLASS: {
                     ClassReference ref = (ClassReference)info;
-                    if ("var".equals(ref.getText())) {
-                        // Don't rename var variables
-                        newName = oldName;
-                        break;
-                    }
                     //TODO: I am unsure how we should handle mappings that change the inner class level of a class.
                     // Right now, the outer class is it's own ClassReference entry. So we have no way to figure out if we need to qualify/import it...
                     String fullname = mapClass(ref.getClassName());

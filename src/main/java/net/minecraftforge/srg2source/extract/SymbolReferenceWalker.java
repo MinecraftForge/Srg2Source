@@ -404,7 +404,12 @@ public class SymbolReferenceWalker {
                     return false;
 
                 String clsName = getInternalName(type, node);
-                builder.addClassReference(node.getStartPosition(), node.getLength(), node.toString(), clsName, false);
+                String text = node.toString();
+                if ("var".equals(text)) {
+                    text = clsName.substring(clsName.lastIndexOf('/') + 1);
+                    text = text.substring(text.lastIndexOf('$') + 1);
+                }
+                builder.addClassReference(node.getStartPosition(), node.getLength(), text, clsName, false);
                 return true; //There currently arn't any children for SimpleNames, so this return does nothing.
 
             case IBinding.VARIABLE:
