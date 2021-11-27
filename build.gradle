@@ -7,10 +7,10 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.guardsquare:proguard-gradle:7.1.0-beta5'
-        classpath 'org.ow2.asm:asm:9.1'
-        classpath 'org.ow2.asm:asm-tree:9.1'
-        classpath 'net.minecraftforge:GradleUtils:1.+'
+        classpath 'com.guardsquare:proguard-gradle:7.1.1'
+        classpath 'org.ow2.asm:asm:9.2'
+        classpath 'org.ow2.asm:asm-tree:9.2'
+        classpath 'net.minecraftforge.gradleutils:GradleUtils:1.+'
     }
 }
 
@@ -27,31 +27,11 @@ apply plugin: 'net.minecraftforge.gradleutils'
 group = 'net.minecraftforge'
 archivesBaseName = 'srg2source'
 version = gradleutils.getTagOffsetBranchVersion()
+println('Version: ' + version)
 java.toolchain.languageVersion = JavaLanguageVersion.of(11)
 
 configurations {
     implementation.canBeResolved = true
-}
-
-dependencies {
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'com.google.jimfs:jimfs:1.1'
-
-    implementation 'org.ow2.asm:asm:9.1'
-    implementation 'org.ow2.asm:asm-tree:9.1'
-    implementation 'net.sf.jopt-simple:jopt-simple:5.0.4' // easy CLI parsing
-
-    // necessary eclipse AST stuff
-    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.26.0'
-
-    //We use this to patch the JDT at runtime
-    implementation 'cpw.mods:modlauncher:8.0.9'
-
-    // ModLauncher has this on runtime scope
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-
-    //Because tons of projects all paarsing SRG files is annoying
-    implementation 'net.minecraftforge:srgutils:0.4.1'
 }
 
 repositories {
@@ -64,6 +44,27 @@ repositories {
         url = "https://repo.eclipse.org/content/groups/eclipse"
     }
     mavenCentral()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'com.google.jimfs:jimfs:1.2'
+
+    implementation 'org.ow2.asm:asm:9.2'
+    implementation 'org.ow2.asm:asm-tree:9.2'
+    implementation 'net.sf.jopt-simple:jopt-simple:5.0.4' // easy CLI parsing
+
+    // necessary eclipse AST stuff
+    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.28.0.v20211117-1416'
+
+    //We use this to patch the JDT at runtime
+    implementation 'cpw.mods:modlauncher:8.0.9'
+
+    // ModLauncher has this on runtime scope
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+
+    //Because tons of projects all parsing SRG files is annoying
+    implementation 'net.minecraftforge:srgutils:0.4.3'
 }
 
 jar {

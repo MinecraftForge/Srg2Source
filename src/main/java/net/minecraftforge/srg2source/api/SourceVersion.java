@@ -33,6 +33,7 @@ public enum SourceVersion {
     JAVA_14(JavaCore.VERSION_14),
     JAVA_15(JavaCore.VERSION_15),
     JAVA_16(JavaCore.VERSION_16),
+    JAVA_17(JavaCore.VERSION_17),
     ;
 
     private String spec;

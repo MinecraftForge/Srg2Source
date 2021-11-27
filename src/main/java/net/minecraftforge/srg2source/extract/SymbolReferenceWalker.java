@@ -687,6 +687,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(BlockComment                    node) { return true; }
         @Override public boolean visit(BooleanLiteral                  node) { return true; }
         @Override public boolean visit(BreakStatement                  node) { return process(node); }
+        @Override public boolean visit(CaseDefaultExpression           node) { return true; }
         @Override public boolean visit(CastExpression                  node) { return true; }
         @Override public boolean visit(CatchClause                     node) { return true; }
         @Override public boolean visit(CharacterLiteral                node) { return true; }
@@ -708,6 +709,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(FieldAccess                     node) { return true; }
         @Override public boolean visit(FieldDeclaration                node) { return true; }
         @Override public boolean visit(ForStatement                    node) { return true; }
+        @Override public boolean visit(GuardedPattern                  node) { return true; }
         @Override public boolean visit(IfStatement                     node) { return true; }
         @Override public boolean visit(ImportDeclaration               node) { return process(node); }
         @Override public boolean visit(InfixExpression                 node) { return true; }
@@ -733,6 +735,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(NameQualifiedType               node) { return true; }
         @Override public boolean visit(NormalAnnotation                node) { return process(node); }
         @Override public boolean visit(NullLiteral                     node) { return true; }
+        @Override public boolean visit(NullPattern                     node) { return true; }
         @Override public boolean visit(NumberLiteral                   node) { return true; }
         @Override public boolean visit(OpensDirective                  node) { return true; }
         @Override public boolean visit(PackageDeclaration              node) { return process(node); }
@@ -771,6 +774,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(TypeLiteral                     node) { return true; }
         @Override public boolean visit(TypeMethodReference             node) { return true; }
         @Override public boolean visit(TypeParameter                   node) { return true; }
+        @Override public boolean visit(TypePattern                     node) { return true; }
         @Override public boolean visit(VariableDeclarationExpression   node) { return true; }
         @Override public boolean visit(VariableDeclarationFragment     node) { return process(node); }
         @Override public boolean visit(VariableDeclarationStatement    node) { return true; }
