@@ -636,7 +636,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
 
     String mapMethod(String owner, String name, String desc) {
         if ("<init>".equals(name)) {
-            String newName = mapClass(owner);
+            String newName = fixLocalClassName(mapClass(owner));
             int idx = newName.lastIndexOf('$');
             idx = idx != -1 ? idx : newName.lastIndexOf('/');
             return idx == -1 ? newName : newName.substring(idx + 1);
