@@ -254,7 +254,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                     ClassReference ref = (ClassReference)info;
                     //TODO: I am unsure how we should handle mappings that change the inner class level of a class.
                     // Right now, the outer class is it's own ClassReference entry. So we have no way to figure out if we need to qualify/import it...
-                    String fullname = mapClass(ref.getClassName());
+                    String fullname = fixLocalClassName(mapClass(ref.getClassName()));
                     idx = fullname.lastIndexOf('/');
                     String packagename = idx == -1 ? null : fullname.substring(0, idx);
                     String simplename = fullname.substring(idx + 1);
@@ -352,6 +352,29 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         }
 
         return Arrays.asList(fileName, outString);
+    }
+
+    private static String fixLocalClassName(String fullname) {
+        int firstIdx = fullname.indexOf('$');
+        if (firstIdx == -1)
+            return fullname;
+
+        StringBuilder builder = new StringBuilder(fullname.length());
+        final String[] parts = fullname.split("\\$");
+        builder.append(parts[0]);
+        for (int part = 1; part < parts.length; part++) {
+            String piece = parts[part];
+            int idx = 0;
+            while (idx < piece.length() && !(Character.isJavaIdentifierStart(piece.codePointAt(idx)))) {
+                idx+=Character.charCount(piece.codePointAt(idx));
+            }
+            if (idx == piece.length()) {
+                builder.append("$").append(piece);
+            } else {
+                builder.append("$").append(piece.substring(idx));
+            }
+        }
+        return builder.toString();
     }
 
     private static void trackImport(Set<String> imports, String topLevel, String self, String reference) {
