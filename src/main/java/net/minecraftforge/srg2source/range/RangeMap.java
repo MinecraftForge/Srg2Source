@@ -186,58 +186,48 @@ public class RangeMap {
             }
         }
 
-        Stack<StructuralEntry> stack = new Stack<>();
-        Iterator<StructuralEntry> segments = structures.iterator();
+        // Get ROOT elements as we want only root children
+        List<IRange> rootElements = new ArrayList<>();
+        rootElements.addAll(this.root.getEntries(false));
+        rootElements.addAll(this.root.getStructures(false));
 
-        StructuralEntry last = null;
-        StructuralEntry next = segments.hasNext() ? segments.next() : null;
-
-        for (RangeEntry entry : entries) {
-            if (pretty) {
-                while (last != null) {
-                    if (entry.getStart() < end(last))
-                        break;
-                    writer.tabs--;
-                    writer.accept("# End " + last.getType().name());
-                    last = stack.empty() ? null : stack.pop();
-                }
-            }
-
-            if (next != null) {
-                if (entry.getStart() > next.getStart()) {
-                    next.write(writer);
-                    if (pretty) {
-                        writer.accept("# Start " + next.getType().name() + ' ' + next.getName() + (next.getDescriptor() == null ? "" : next.getDescriptor()));
-                        writer.tabs++;
-                        if (last != null)
-                            stack.push(last);
-                        last = next;
-                        next = segments.hasNext() ? segments.next() : null;
-                    }
-                }
-            }
-
-            entry.write(writer);
-        }
-
-        //Grab all the trailing things that don't have entries inside them?
-        //Should never be the case because we should have a entry for the name of the object at least, but hey why not.
-        if (next != null) {
-            next.write(writer);
-            while (segments.hasNext())
-                segments.next().write(writer);
-        }
-
-        if (pretty) {
-            while (last != null) {
-                writer.tabs--;
-                writer.accept("# End " + last.getType().name());
-                last = stack.empty() ? null : stack.pop();
-            }
+        // Start printing root without tab
+        for (IRange element : rootElements.stream()
+                .sorted(Comparator.comparing(IRange::getStart))
+                .collect(Collectors.toList())) {
+            printElement(writer, element, 0);
         }
 
         writer.tabs = 0;
         writer.accept("end");
+    }
+
+    public static void printElement(Writer writer, IRange entry, int tabs) {
+        if (entry instanceof StructuralEntry){
+            StructuralEntry structure = (StructuralEntry) entry;
+
+            List<IRange> elements = new ArrayList<>();
+            elements.addAll(structure.getEntries(false));
+            elements.addAll(structure.getStructures(false));
+
+            writer.tabs = tabs;
+            structure.write(writer); // print structure def
+            writer.accept("# Start " + structure.getType().name() + ' ' + structure.getName() + (structure.getDescriptor() == null ? "" : structure.getDescriptor()));
+
+            for (IRange element : elements.stream()
+                    .sorted(Comparator.comparing(IRange::getStart))
+                    .collect(Collectors.toList())) {
+                printElement(writer, element, tabs + 1);
+            }
+
+            writer.tabs = tabs;
+            writer.accept("# End " + structure.getType().name());
+        } else
+        if (entry instanceof RangeEntry) {
+            RangeEntry rentry = (RangeEntry) entry;
+            writer.tabs = tabs;
+            rentry.write(writer);
+        }
     }
 
     private static class Writer implements Consumer<String> {
