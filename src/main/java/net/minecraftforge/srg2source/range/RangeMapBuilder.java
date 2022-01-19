@@ -20,8 +20,8 @@
 package net.minecraftforge.srg2source.range;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 import net.minecraftforge.srg2source.range.entries.ClassLiteral;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
@@ -39,9 +39,10 @@ import net.minecraftforge.srg2source.range.entries.StructuralEntry;
 import net.minecraftforge.srg2source.util.io.ConfLogger;
 
 public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
-    private final List<RangeEntry> entries = new ArrayList<>();
-    private final List<StructuralEntry> structures = new ArrayList<>();
+    private final StructuralEntry root = StructuralEntry.createRoot();
     private final List<MetaEntry> meta = new ArrayList<>();
+
+    private final Stack<StructuralEntry> stack = new Stack<>();
 
     private final ConfLogger<?> logger;
     private final String filename;
@@ -51,6 +52,7 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
         this.logger = logger;
         this.filename = filename;
         this.hash = hash;
+        this.stack.push(root);
     }
 
     public String getFilename() {
@@ -64,12 +66,8 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
     }
 
     public RangeMap build() {
-        // These should be sorted already, as we should encounter them in source order.
-        // But lets sort them anyways
-        Collections.sort(entries, (a, b) -> a.getStart() - b.getStart());
-        Collections.sort(structures, (a, b) -> a.getStart() - b.getStart());
-        checkOverlaps(entries);
-        return new RangeMap(filename, hash, entries, structures, meta);
+        //checkOverlaps(entries); // TODO Make new check for structural hierarchy
+        return new RangeMap(filename, hash, root, meta);
     }
 
     private void checkOverlaps(List<? extends IRange> lst) {
@@ -88,9 +86,36 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
     }
 
 
+    private StructuralEntry getParent(IRange range) {
+        StructuralEntry last = stack.peek();
+        if (last.getType() != StructuralEntry.Type.ROOT) {
+            int newStart = range.getStart();
+            int newEnd = range.getStart() + range.getLength();
+            do {
+                int lastStart = last.getStart();
+                int lastEnd = last.getStart() + last.getLength();
+                if (newEnd > lastEnd) {
+                    stack.pop(); // New structure is out of last range, remove last from stack
+                    last = stack.peek();
+                } else
+                    break;
+            } while (stack.size() > 1);
+        } else {
+            // Check stack size if meet root structure
+            if (stack.size() != 1)
+                throw new IllegalStateException("Stack must have one element when meet ROOT structure! Stack size: " + stack.size());
+        }
+
+        return stack.peek();
+    }
+
     // Structure Elements
-    private void addStructure(StructuralEntry entry) {
-        structures.add(entry);
+    private void addStructure(StructuralEntry structure) {
+        StructuralEntry parent = getParent(structure);
+        // Store structure in parent structure
+        parent.addStructure(structure);
+        // and push new actual processed structure on stack
+        stack.push(structure);
     }
 
     public void addAnnotationDeclaration(int start, int length, String name) {
@@ -119,7 +144,9 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
 
     // Code Elements
     private void addCode(RangeEntry entry) {
-        entries.add(entry);
+        StructuralEntry parent = getParent(entry);
+        // Store entry in parent structure
+        parent.addEntry(entry);
     }
 
     public void addPackageReference(int start, int length, String name) {
