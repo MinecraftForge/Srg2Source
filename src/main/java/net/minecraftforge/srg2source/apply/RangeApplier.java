@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -233,7 +234,8 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         //String newTopLevelQualifiedName = ((newTopLevelClassPackage == null ? "" : newTopLevelClassPackage + '/') + newTopLevelClassName).replace('\\', '/');
 
         // TODO: Track what code object we're in so we have more context?
-        for (RangeEntry info : rangeList.getEntries()) {
+        for (RangeEntry info : rangeList.getRoot().getEntries(true)
+                .stream().sorted(Comparator.comparing(RangeEntry::getStart)).collect(Collectors.toList())) {
             int start = info.getStart();
             int end = start + info.getLength();
             String expectedOldText = info.getText();

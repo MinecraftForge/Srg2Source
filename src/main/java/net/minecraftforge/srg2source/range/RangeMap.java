@@ -88,24 +88,34 @@ public class RangeMap {
 
     private final String filename;
     private final String hash;
-    private final List<RangeEntry> entries;
-    private final List<StructuralEntry> structures;
+    private final StructuralEntry root;
     private final List<MetaEntry> meta;
 
     private RangeMap(int spec, String filename, String hash, List<String> lines, int start, int end) {
         this.filename = filename;
         this.hash = hash;
-        final List<RangeEntry> entries = new ArrayList<>();
-        final List<StructuralEntry> structures = new ArrayList<>();
+        this.root = StructuralEntry.createRoot();
         final List<MetaEntry> meta = new ArrayList<>();
-        this.entries = Collections.unmodifiableList(entries);
-        this.structures = Collections.unmodifiableList(structures);
         this.meta = Collections.unmodifiableList(meta);
 
+        Stack<StructuralEntry> stack = new Stack<>();
+        stack.push(this.root);
+
+        int lastDepth = 0;
         for (int x = start; x < end; x++) {
+            int depth = 0;
+            for (Character ch : lines.get(x).toCharArray()) {
+                if (ch.equals(' ')) depth++; else break;
+            }
+
             String line = stripComment(lines.get(x)).trim();
             if (line.isEmpty())
                 continue;
+
+            // Depth changed, remove last structure from stack
+            if (depth < lastDepth)
+                stack.pop();
+
             int idx = line.indexOf(' ');
             if (idx == -1)
                 throw new IllegalArgumentException("Invalid RangeMap line #" + x + ": " + lines.get(x));
@@ -114,21 +124,29 @@ public class RangeMap {
                 String type = line.substring(0, idx);
                 if ("meta".equals(type))
                     meta.add(MetaEntry.read(spec, line.substring(idx + 1)));
-                else if (type.endsWith("def")) //Structure
-                    structures.add(StructuralEntry.read(spec, type.substring(0, type.length() - 3), line.substring(idx + 1)));
-                else //entry
-                    entries.add(RangeEntry.read(spec, type, line.substring(idx + 1)));
+                else if (type.endsWith("def")) { // structure
+                    StructuralEntry structure = StructuralEntry.read(spec, type.substring(0, type.length() - 3), line.substring(idx + 1));
+                    // Store structure in parent structure
+                    stack.peek().addStructure(structure);
+                    // and push new actual processed structure on stack
+                    stack.push(structure);
+                } else { // entry
+                    RangeEntry entry = RangeEntry.read(spec, type, line.substring(idx + 1));
+                    // Store entry in parent structure
+                    stack.peek().addEntry(entry);
+                }
+
+                lastDepth = depth;
             } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid RangeMap line #" + x + ": " + lines.get(x), e);
             }
         }
     }
 
-    RangeMap(String filename, String hash, List<RangeEntry> entries, List<StructuralEntry> structures, List<MetaEntry> meta) {
+    RangeMap(String filename, String hash, StructuralEntry root, List<MetaEntry> meta) {
         this.filename = filename;
         this.hash = hash;
-        this.entries = Collections.unmodifiableList(entries);
-        this.structures = Collections.unmodifiableList(structures);
+        this.root = root;
         this.meta = Collections.unmodifiableList(meta);
     }
 
@@ -140,12 +158,8 @@ public class RangeMap {
         return this.hash;
     }
 
-    public List<RangeEntry> getEntries() {
-        return this.entries;
-    }
-
-    public List<StructuralEntry> getStructures() {
-        return this.structures;
+    public StructuralEntry getRoot() {
+        return this.root;
     }
 
     public List<MetaEntry> getMeta() {

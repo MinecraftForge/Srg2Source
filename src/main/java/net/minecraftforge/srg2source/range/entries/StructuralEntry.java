@@ -19,6 +19,9 @@
 
 package net.minecraftforge.srg2source.range.entries;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -27,15 +30,21 @@ import net.minecraftforge.srg2source.range.IRange;
 
 public class StructuralEntry implements IRange {
     public enum Type {
+        ROOT,
         CLASS,
         METHOD((me, data) -> {
             String[] pts = data.split(" ");
             if (pts.length != 4)
                 throw new IllegalArgumentException("Missing required parts. Parts Length: " + pts.length);
-            return new StructuralEntry(me, Integer.parseInt(pts[0]), Integer.parseInt(pts[1]), pts[2], pts[2]);
+            return new StructuralEntry(me, Integer.parseInt(pts[0]), Integer.parseInt(pts[1]), pts[2], pts[3]);
         }),
         ENUM,
-        ANNOTATION,
+        ANNOTATION((me, data) -> {
+            String[] pts = data.split(" ");
+            if (pts.length != 3)
+                throw new IllegalArgumentException("Missing required parts. Parts Length: " + pts.length);
+            return new StructuralEntry(me, Integer.parseInt(pts[0]), Integer.parseInt(pts[1]), pts[2], null);
+        }),
         INTERFACE,
         RECORD;
 
@@ -55,6 +64,10 @@ public class StructuralEntry implements IRange {
         private StructuralEntry read(String data) {
             return this.read.apply(this, data);
         }
+    }
+
+    public static StructuralEntry createRoot() {
+        return new StructuralEntry(Type.ROOT, -1, -1, null, null);
     }
 
     public static StructuralEntry createAnnotation(int start, int length, String name) {
@@ -97,19 +110,66 @@ public class StructuralEntry implements IRange {
     private final String name;
     private final String desc;
 
+    private final List<StructuralEntry> structures;
+    private final List<RangeEntry> entries;
+
     private StructuralEntry(Type type, int start, int length, String name, String desc) {
         this.type = type;
         this.start = start;
         this.length = length;
         this.name = name;
         this.desc = desc;
+        this.structures = new ArrayList<>();
+        this.entries = new ArrayList<>();
+    }
+
+    public void addEntry(RangeEntry entry) {
+        this.entries.add(entry);
+    }
+
+    public boolean hasEntries() {
+        return !this.entries.isEmpty();
+    }
+
+    public List<RangeEntry> getEntries(boolean children) {
+        final List<RangeEntry> entries = new ArrayList<>();
+        entries.addAll(this.entries);
+
+        // Scan structures for children entries
+        if (children) {
+            for (StructuralEntry structure : this.structures)
+                entries.addAll(structure.getEntries(children));
+        }
+
+        return Collections.unmodifiableList(entries);
+    }
+
+    public void addStructure(StructuralEntry structure) {
+        this.structures.add(structure);
+    }
+
+    public boolean hasStructures() {
+        return !this.structures.isEmpty();
+    }
+
+    public List<StructuralEntry> getStructures(boolean children) {
+        final List<StructuralEntry> structures = new ArrayList<>();
+        structures.addAll(this.structures);
+
+        // Scan structures for childrens
+        if (children) {
+            for (StructuralEntry structure : this.structures)
+                structures.addAll(structure.getStructures(children));
+        }
+
+        return Collections.unmodifiableList(structures);
     }
 
     @Override
     public String toString() {
         return "StructuralEntry[type: " + type.name() +
                 ", Start: " + start + ", Len: " + length +
-                ", Name: \"" + name + "\", Desc: \"" + desc + "\"]";
+                ", Name: \"" + name + "\", Desc: \"" + desc + "\", Entries: \"" + entries.size()  + "\", Structures: \"" + structures.size() + "\"]";
     }
 
     public Type getType() {
