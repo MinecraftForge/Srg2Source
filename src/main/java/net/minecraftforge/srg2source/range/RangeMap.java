@@ -42,7 +42,9 @@ import net.minecraftforge.srg2source.range.entries.StructuralEntry;
 import net.minecraftforge.srg2source.util.Util;
 
 public class RangeMap {
-    private final int SPEC = 1;
+    private static final int SPEC = 1;
+    private static final char TAB_CHAR = ' ';
+    private static final int TAB_SIZE = 2;
 
     //TODO: Support output types:
     // Directory: every range file is split into it's own file. Would allow for easier navigation/debug
@@ -106,16 +108,19 @@ public class RangeMap {
         for (int x = start; x < end; x++) {
             int depth = 0;
             for (Character ch : lines.get(x).toCharArray()) {
-                if (ch.equals(' ')) depth++; else break;
+                if (ch.equals(RangeMap.TAB_CHAR)) depth++; else break;
             }
+            depth /= RangeMap.TAB_SIZE; // depth is correlated with stack size, not indent
 
             String line = stripComment(lines.get(x)).trim();
             if (line.isEmpty())
                 continue;
 
             // Depth changed, remove last structure from stack
-            if (depth < lastDepth)
+            while (depth < lastDepth) {
                 stack.pop();
+                lastDepth--;
+            }
 
             int idx = line.indexOf(' ');
             if (idx == -1)
@@ -240,7 +245,7 @@ public class RangeMap {
         @Override
         public void accept(String line) {
             for (int x = 0; x < tabs; x++)
-                out.write("  ");
+                out.write(String.valueOf(RangeMap.TAB_CHAR).repeat(RangeMap.TAB_SIZE));
             out.print(line + '\n'); //Don't use println, as we want consistent line endings.
         }
     }
