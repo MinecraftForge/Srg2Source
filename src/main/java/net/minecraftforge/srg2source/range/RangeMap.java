@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -131,9 +130,10 @@ public class RangeMap {
                 if ("meta".equals(type))
                     meta.add(MetaEntry.read(spec, line.substring(idx + 1)));
                 else if (type.endsWith("def")) { // structure
-                    StructuralEntry structure = StructuralEntry.read(spec, type.substring(0, type.length() - 3), line.substring(idx + 1));
+                    StructuralEntry parent = stack.peek();
+                    StructuralEntry structure = StructuralEntry.read(spec, type.substring(0, type.length() - 3), parent, line.substring(idx + 1));
                     // Store structure in parent structure
-                    stack.peek().addStructure(structure);
+                    parent.addStructure(structure);
                     // and push new actual processed structure on stack
                     stack.push(structure);
                 } else { // entry

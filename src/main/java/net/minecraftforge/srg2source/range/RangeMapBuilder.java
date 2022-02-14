@@ -70,6 +70,7 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
         return new RangeMap(filename, hash, root, meta);
     }
 
+    //TODO: Make this check used again?
     private void checkOverlaps(List<? extends IRange> lst) {
         if (lst.isEmpty())
             return;
@@ -85,12 +86,15 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
         }
     }
 
-
     private StructuralEntry getParent(IRange range) {
+        return getParent(range.getStart(), range.getLength());
+    }
+
+    private StructuralEntry getParent(int start, int length) {
         StructuralEntry last = stack.peek();
         if (last.getType() != StructuralEntry.Type.ROOT) {
-            int newStart = range.getStart();
-            int newEnd = range.getStart() + range.getLength();
+            int newStart = start;
+            int newEnd = start + length;
             do {
                 int lastStart = last.getStart();
                 int lastEnd = last.getStart() + last.getLength();
@@ -119,27 +123,27 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
     }
 
     public void addAnnotationDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createAnnotation(start, length, name));
+        addStructure(StructuralEntry.createAnnotation(getParent(start, length), start, length, name));
     }
 
     public void addClassDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createClass(start, length, name));
+        addStructure(StructuralEntry.createClass(getParent(start, length), start, length, name));
     }
 
     public void addEnumDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createEnum(start, length, name));
+        addStructure(StructuralEntry.createEnum(getParent(start, length), start, length, name));
     }
 
     public void addRecordDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createRecord(start, length, name));
+        addStructure(StructuralEntry.createRecord(getParent(start, length), start, length, name));
     }
 
     public void addMethodDeclaration(int start, int length, String name, String desc) {
-        addStructure(StructuralEntry.createMethod(start, length, name, desc));
+        addStructure(StructuralEntry.createMethod(getParent(start, length), start, length, name, desc));
     }
 
     public void addInterfaceDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createInterface(start, length, name));
+        addStructure(StructuralEntry.createInterface(getParent(start, length), start, length, name));
     }
 
     // Code Elements
