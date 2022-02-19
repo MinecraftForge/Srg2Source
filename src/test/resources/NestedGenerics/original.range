@@ -16,9 +16,9 @@ classdef 97 189 Test
     local_variable 209 3 map Test main ([Ljava/lang/String;)V 1 Ljava/util/Map;
     method 213 15 computeIfAbsent java/util/Map computeIfAbsent (Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;
     class 233 4 Test false Test
-    parameter 241 1 k Test lambda$0 (LTest;)Ljava/util/Set; 0
     methoddef 241 20 lambda$0 (LTest;)Ljava/util/Set;
     # Start METHOD lambda$0(LTest;)Ljava/util/Set;
+      parameter 241 1 k Test lambda$0 (LTest;)Ljava/util/Set; 0
       class 250 7 HashSet false java/util/HashSet
     # End METHOD
     method 263 3 add java/util/Collection add (Ljava/lang/Object;)Z
