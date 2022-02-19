@@ -47,6 +47,7 @@ import java.util.stream.Stream;
 
 import net.minecraftforge.srg2source.api.InputSupplier;
 import net.minecraftforge.srg2source.api.OutputSupplier;
+import net.minecraftforge.srg2source.range.IRange;
 import net.minecraftforge.srg2source.range.RangeMap;
 import net.minecraftforge.srg2source.range.entries.ClassLiteral;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
@@ -57,6 +58,7 @@ import net.minecraftforge.srg2source.range.entries.MethodLiteral;
 import net.minecraftforge.srg2source.range.entries.MethodReference;
 import net.minecraftforge.srg2source.range.entries.ParameterReference;
 import net.minecraftforge.srg2source.range.entries.RangeEntry;
+import net.minecraftforge.srg2source.range.entries.StructuralEntry;
 import net.minecraftforge.srg2source.util.Util;
 import net.minecraftforge.srg2source.util.io.ConfLogger;
 import net.minecraftforge.srgutils.IMappingFile;
@@ -76,6 +78,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
     private Map<String, String> guessLambdas = null;
     private boolean guessLocals = false;
     private boolean sortImports = false;
+    private String newline = "\n";
 
     public void readSrg(Path srg) {
         try (InputStream in = Files.newInputStream(srg)) {
@@ -212,38 +215,67 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         output.close();
     }
 
-    private List<String> processJavaSourceFile(String fileName, String data, RangeMap rangeList, ClassMeta meta) throws IOException {
-        StringBuilder outData = new StringBuilder();
-        outData.append(data);
+    public interface StructuralEntryProcessor {
 
-        Set<String> importsToAdd = new TreeSet<>();
-        int shift = 0;
+        /**
+         * Takes given {@code entry} and processes it
+         *
+         * @param entry structural entry to process
+         */
+        void process(StructuralEntry entry);
+    }
+
+    public interface RangeEntryProcessor {
+
+        /**
+         * Takes given {@code entry} with {@code parent} and processes it
+         *
+         * @param entry  range entry to process
+         * @param parent entry structural parent
+         */
+        void process(RangeEntry entry, StructuralEntry parent); // TODO: Store parent reference in entry, to not must pass parent as second argument
+    }
+
+    private List<String> processJavaSourceFile(String fileName, String data, RangeMap rangeMap, ClassMeta meta) throws IOException {
+        StringBuilder outData = new StringBuilder(data);
+
+        // Detect and store file endline type
+        this.newline = Util.detectLineEnd(data);
 
         // Existing package/class name (with package, internal) derived from filename
         String oldTopLevelClassFullName = Util.getTopLevelClassForFilename(fileName);
-        int idx = oldTopLevelClassFullName.lastIndexOf('/');
-        String oldTopLevelClassPackage = idx == -1 ? null                     : oldTopLevelClassFullName.substring(0, idx);
-        String oldTopLevelClassName    = idx == -1 ? oldTopLevelClassFullName : oldTopLevelClassFullName.substring(idx + 1);
+        int index = oldTopLevelClassFullName.lastIndexOf('/');
+        String oldTopLevelClassPackage = index == -1 ? null : oldTopLevelClassFullName.substring(0, index);
+        String oldTopLevelClassName = index == -1 ? oldTopLevelClassFullName : oldTopLevelClassFullName.substring(index + 1);
 
         // New package/class name through mapping
         String newTopLevelClassFullName = mapClass(oldTopLevelClassFullName);
-        idx = newTopLevelClassFullName.lastIndexOf('/');
-        String newTopLevelClassPackage = idx == -1 ? null                     : newTopLevelClassFullName.substring(0, idx);
-        String newTopLevelClassName    = idx == -1 ? newTopLevelClassFullName : newTopLevelClassFullName.substring(idx + 1);
+        index = newTopLevelClassFullName.lastIndexOf('/');
+        String newTopLevelClassPackage = index == -1 ? null : newTopLevelClassFullName.substring(0, index);
+        String newTopLevelClassName = index == -1 ? newTopLevelClassFullName : newTopLevelClassFullName.substring(index + 1);
 
-        //String newTopLevelQualifiedName = ((newTopLevelClassPackage == null ? "" : newTopLevelClassPackage + '/') + newTopLevelClassName).replace('\\', '/');
+        // Use this anonymous class to store shift value. Its effectively final, so can be pass to consumer lambda
+        var shift = new Object() {
+            private int value = 0;
+            public int get() { return value; }
+            public void add(int value) { this.value += value; }
+        };
 
-        // TODO: Track what code object we're in so we have more context?
-        for (RangeEntry info : rangeList.getRoot().getEntries(true)
-                .stream().sorted(Comparator.comparing(RangeEntry::getStart)).collect(Collectors.toList())) {
+        Set<String> importsToAdd = new TreeSet<>();
+
+        StructuralEntryProcessor structProc = (structure) -> {
+            // Nothing, we don't process structures yet...
+        };
+
+        RangeEntryProcessor entryProc = (info, parent) -> {
             int start = info.getStart();
             int end = start + info.getLength();
             String expectedOldText = info.getText();
-            String oldName = outData.substring(start + shift, end + shift);
+            String oldName = outData.substring(start + shift.get(), end + shift.get());
 
             if (!oldName.equals(expectedOldText))
                 throw new RuntimeException("Rename sanity check failed: expected '" + expectedOldText +
-                        "' at [" + start + "," + end + "] (shifted " + shift + " [" + (start + shift) + "," + (end + shift) + "]) " +
+                        "' at [" + start + "," + end + "] (shifted " + shift.get() + " [" + (start + shift.get()) + "," + (end + shift.get()) + "]) " +
                         "in " + fileName + ", but found '" + oldName + "'\n" +
                         "Regenerate symbol map on latest sources or start with fresh source and try again");
 
@@ -257,7 +289,7 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                     //TODO: I am unsure how we should handle mappings that change the inner class level of a class.
                     // Right now, the outer class is it's own ClassReference entry. So we have no way to figure out if we need to qualify/import it...
                     String fullname = fixLocalClassName(mapClass(ref.getClassName()));
-                    idx = fullname.lastIndexOf('/');
+                    int idx = fullname.lastIndexOf('/');
                     String packagename = idx == -1 ? null : fullname.substring(0, idx);
                     String simplename = fullname.substring(idx + 1);
                     idx = simplename.lastIndexOf('$');
@@ -325,35 +357,57 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                     throw new IllegalArgumentException("Unknown RangeEntry type: " + info);
             }
 
-            if (oldName.equals(newName))
-                continue; //No rename? Skip the rest.
+            if (!oldName.equals(newName)) {
+                log("Rename " + info + " Shift[" + shift + "] " + oldName + " -> " + newName);
 
-            log("Rename " + info + " Shift[" + shift + "] " + oldName + " -> " + newName);
+                // Rename algorithm:
+                // 1. textually replace text at specified range with new text
+                outData.replace(start + shift.get(), end + shift.get(), newName);
+                // 2. shift future ranges by difference in text length
+                shift.add(newName.length() - oldName.length());
+            }
+        };
 
-            // Rename algorithm:
-            // 1. textually replace text at specified range with new text
-            // 2. shift future ranges by difference in text length
-            //data = data.substring(0, info.start + shift) + newName + data.substring(end + shift);
-            outData.replace(start + shift, end + shift, newName);
-            shift += (newName.length() - oldName.length());
-        }
+        // Now recursively step all structures with entries in range map
+        this.stepAllStartingFrom(rangeMap.getRoot(), null, structProc, entryProc);
 
         // Lastly, update imports - this == separate from symbol range manipulation above
         String outString = updateImports(outData, importsToAdd);
 
         // rename?
-        fileName = fileName.replace('\\', '/');
+        String outFileName = fileName.replace('\\', '/');
         String newFileName = newTopLevelClassFullName + ".java";
 
-        if (newFileName.charAt(0) != '/' && fileName.charAt(0) == '/')
+        if (newFileName.charAt(0) != '/' && outFileName.charAt(0) == '/')
             newFileName = '/' + newFileName;
 
-        if (!fileName.equals(newFileName)) {
-            log("Rename file " + fileName + " -> " + newFileName);
-            fileName = newFileName;
+        if (!outFileName.equals(newFileName)) {
+            log("Rename file " + outFileName + " -> " + newFileName);
+            outFileName = newFileName;
         }
 
-        return Arrays.asList(fileName, outString);
+        return Arrays.asList(outFileName, outString);
+    }
+
+    public void stepAllStartingFrom(IRange entry, StructuralEntry parent, StructuralEntryProcessor saction, RangeEntryProcessor eaction) {
+        if (entry instanceof StructuralEntry) {
+            StructuralEntry structure = (StructuralEntry) entry;
+            saction.process(structure);
+
+            List<IRange> elements = new ArrayList<>();
+            elements.addAll(structure.getEntries(false));
+            elements.addAll(structure.getStructures(false));
+
+            // Sort elements to process by 'start' value for proper shifting
+            for (IRange element : elements.stream()
+                    .sorted(Comparator.comparing(IRange::getStart))
+                    .collect(Collectors.toList())) {
+                stepAllStartingFrom(element, structure, saction, eaction);
+            }
+        } else
+        if (entry instanceof RangeEntry) {
+            eaction.process((RangeEntry) entry, parent);
+        }
     }
 
     private static String fixLocalClassName(String fullname) {
@@ -408,7 +462,6 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
         boolean addedNewImports = false;
         boolean sawImports = false;
         int packageLine = -1;
-        String newline = data.indexOf("\r\n") != -1 ? "\r\n" : "\n";
 
         while (nextIndex > -1) {
             String line = data.substring(lastIndex, nextIndex);
