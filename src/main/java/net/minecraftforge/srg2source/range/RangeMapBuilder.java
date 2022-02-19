@@ -98,7 +98,7 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
             do {
                 int lastStart = last.getStart();
                 int lastEnd = last.getStart() + last.getLength();
-                if (newEnd > lastEnd) {
+                if (newEnd > lastEnd && last.getType() != StructuralEntry.Type.RECORD) {
                     stack.pop(); // New structure is out of last range, remove last from stack
                     last = stack.peek();
                 } else
