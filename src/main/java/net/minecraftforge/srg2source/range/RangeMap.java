@@ -129,20 +129,21 @@ public class RangeMap {
                 String type = line.substring(0, idx);
                 if ("meta".equals(type))
                     meta.add(MetaEntry.read(spec, line.substring(idx + 1)));
-                else if (type.endsWith("def")) { // structure
-                    StructuralEntry parent = stack.peek();
-                    StructuralEntry structure = StructuralEntry.read(spec, type.substring(0, type.length() - 3), parent, line.substring(idx + 1));
-                    // Store structure in parent structure
-                    parent.addStructure(structure);
-                    // and push new actual processed structure on stack
-                    stack.push(structure);
-                } else { // entry
-                    RangeEntry entry = RangeEntry.read(spec, type, line.substring(idx + 1));
-                    // Store entry in parent structure
-                    stack.peek().addEntry(entry);
+                else {
+                    if (type.endsWith("def")) { // structure
+                        StructuralEntry parent = stack.peek();
+                        StructuralEntry structure = StructuralEntry.read(spec, type.substring(0, type.length() - 3), parent, line.substring(idx + 1));
+                        // Store structure in parent structure
+                        parent.addStructure(structure);
+                        // and push new actual processed structure on stack
+                        stack.push(structure);
+                    } else { // entry
+                        RangeEntry entry = RangeEntry.read(spec, type, line.substring(idx + 1));
+                        // Store entry in parent structure
+                        stack.peek().addEntry(entry);
+                    }
+                    lastDepth = depth;
                 }
-
-                lastDepth = depth;
             } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid RangeMap line #" + x + ": " + lines.get(x), e);
             }
