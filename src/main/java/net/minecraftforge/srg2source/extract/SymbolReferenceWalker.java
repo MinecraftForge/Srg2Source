@@ -247,15 +247,15 @@ public class SymbolReferenceWalker {
 
             int start = node.getName().getStartPosition() + node.getName().getLength();
             for (TypeParameter n : (List<TypeParameter>)node.typeParameters()) {
-                start = n.getStartPosition() + node.getLength();
+                start = n.getStartPosition() + n.getLength();
             }
             int end = start;
             for (SingleVariableDeclaration n : params) {
-                end = n.getStartPosition() + node.getLength();
+                end = n.getStartPosition() + n.getLength();
             }
 
             String desc = ExtractUtil.getDescriptor(params) + 'V';
-            builder.addMethodDeclaration(start, end, "<init>", desc);
+            builder.addMethodDeclaration(start, end - start, "<init>", desc);
             SymbolReferenceWalker iwalker = new SymbolReferenceWalker(walker, name, "<init>", desc);
 
             iwalker.trackParameters(params, 0);
@@ -412,9 +412,10 @@ public class SymbolReferenceWalker {
 
             case IBinding.VARIABLE:
                 IVariableBinding var = (IVariableBinding)bind;
-                if (var.isField()) { //Fields and Enum Constants
-                    if (var.getDeclaringClass() != null) { // Things like array.lenth is a Field reference, but has no declaring class.
-                        String owner = getInternalName(var.getDeclaringClass(), node);
+                if (var.isField() || (var.isParameter() && var.getDeclaringMethod().isCompactConstructor())) { //Fields, Enum Constants, and parameters in compact constructors
+                    ITypeBinding declaringClass = var.isField() ? var.getDeclaringClass() : var.getDeclaringMethod().getDeclaringClass();
+                    if (declaringClass != null) { // Things like array.lenth is a Field reference, but has no declaring class.
+                        String owner = getInternalName(declaringClass, node);
                         if (this.mixins != null)
                             owner = this.mixins.getFieldOwner(owner, node.toString(), ExtractUtil.getTypeSignature(var.getType()));
                         builder.addFieldReference(node.getStartPosition(), node.getLength(), node.toString(), owner);
