@@ -242,20 +242,15 @@ public class SymbolReferenceWalker {
         walker.acceptChildren(node.typeParameters());
 
         //walker.acceptChildren(node.recordComponents());
-        {
-            List<SingleVariableDeclaration> params = (List<SingleVariableDeclaration>)node.recordComponents();
+        List<SingleVariableDeclaration> params = (List<SingleVariableDeclaration>)node.recordComponents();
+        if (!params.isEmpty()) {
+            int start = params.get(0).getStartPosition();
 
-            int start = node.getName().getStartPosition() + node.getName().getLength();
-            for (TypeParameter n : (List<TypeParameter>)node.typeParameters()) {
-                start = n.getStartPosition() + n.getLength();
-            }
-            int end = start;
-            for (SingleVariableDeclaration n : params) {
-                end = n.getStartPosition() + n.getLength();
-            }
+            SingleVariableDeclaration last = params.get(params.size() - 1);
+            int length = (last.getStartPosition() + last.getLength()) - start;
 
             String desc = ExtractUtil.getDescriptor(params) + 'V';
-            builder.addMethodDeclaration(start, end - start, "<init>", desc);
+            builder.addMethodDeclaration(start, length, "<init>", desc);
             SymbolReferenceWalker iwalker = new SymbolReferenceWalker(walker, name, "<init>", desc);
 
             iwalker.trackParameters(params, 0);
