@@ -33,4 +33,5 @@ public class Java16Tests extends SimpleTestBase {
 
     @Test public void testRecordSimple()   { testClass("RecordSimple"); }
     @Test public void testPatternMatch()   { testClass("PatternMatch"); }
+    @Test public void testRecordCompact()  { testClass("RecordCompact"); }
 }
