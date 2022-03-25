@@ -10,7 +10,7 @@ buildscript {
         classpath 'com.guardsquare:proguard-gradle:7.1.1'
         classpath 'org.ow2.asm:asm:9.2'
         classpath 'org.ow2.asm:asm-tree:9.2'
-        classpath 'net.minecraftforge.gradleutils:GradleUtils:1.+'
+        classpath 'net.minecraftforge.gradleutils:GradleUtils:2.+'
     }
 }
 
@@ -65,6 +65,10 @@ dependencies {
 
     //Because tons of projects all parsing SRG files is annoying
     implementation 'net.minecraftforge:srgutils:0.4.3'
+}
+
+changelog {
+    fromTag "8.0"
 }
 
 jar {
