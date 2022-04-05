@@ -1,0 +1,4 @@
+RecordSimple RecordSimple
+	a b
+	b a
+	<init> (ILjava/lang/String;)V <init>

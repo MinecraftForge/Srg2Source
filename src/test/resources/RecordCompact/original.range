@@ -4,7 +4,7 @@ recorddef 0 87 RecordCompact
   class 14 13 RecordCompact false RecordCompact
   methoddef 28 5 <init> (I)V
   # Start METHOD <init>(I)V
-    parameter 32 1 a RecordCompact <init> (I)V 0
+    field 32 1 a RecordCompact
   # End METHOD
   methoddef 41 44 <init> (I)V
   # Start METHOD <init>(I)V
