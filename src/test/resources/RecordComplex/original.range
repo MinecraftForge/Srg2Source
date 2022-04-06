@@ -4,13 +4,13 @@ recorddef 136 1413 RecordComplex
   class 150 13 RecordComplex false RecordComplex
   methoddef 164 41 <init> (ILjava/util/Map;[Ljava/lang/String;)V
   # Start METHOD <init>(ILjava/util/Map;[Ljava/lang/String;)V
-    parameter 168 1 d RecordComplex <init> (ILjava/util/Map;[Ljava/lang/String;)V 0
+    field 168 1 d RecordComplex
     class 171 3 Map false java/util/Map
     class 175 6 String false java/lang/String
     class 183 6 String false java/lang/String
-    parameter 191 1 e RecordComplex <init> (ILjava/util/Map;[Ljava/lang/String;)V 1
+    field 191 1 e RecordComplex
     class 194 6 String false java/lang/String
-    parameter 204 1 f RecordComplex <init> (ILjava/util/Map;[Ljava/lang/String;)V 2
+    field 204 1 f RecordComplex
   # End METHOD
   class 234 8 Supplier false java/util/function/Supplier
   class 243 13 RecordComplex false RecordComplex
