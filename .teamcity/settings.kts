@@ -32,7 +32,7 @@ project {
     buildType(PullRequests)
 
     params {
-        text("docker_jdk_version", "11", label = "Gradle version", description = "The version of the JDK to use during execution of tasks in a JDK.", display = ParameterDisplay.HIDDEN, allowEmpty = false)
+        text("docker_jdk_version", "17", label = "Gradle version", description = "The version of the JDK to use during execution of tasks in a JDK.", display = ParameterDisplay.HIDDEN, allowEmpty = false)
         text("docker_gradle_version", "7.4.2", label = "Gradle version", description = "The version of Gradle to use during execution of Gradle tasks.", display = ParameterDisplay.HIDDEN, allowEmpty = false)
         text("git_main_branch", "master", label = "Git Main Branch", description = "The git main or default branch to use in VCS operations.", display = ParameterDisplay.HIDDEN, allowEmpty = false)
         text("github_repository_name", "Srg2Source", label = "The github repository name. Used to connect to it in VCS Roots.", description = "This is the repository slug on github. So for example `Srg2Source` or `MinecraftForge`. It is interpolated into the global VCS Roots.", display = ParameterDisplay.HIDDEN, allowEmpty = false)
