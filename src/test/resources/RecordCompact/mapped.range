@@ -1,0 +1,15 @@
+start 1 RecordCompact.java 34140c933c2ff9dc2beb308fc60f49ab
+recorddef 0 87 RecordCompact
+# Start RECORD RecordCompact
+  class 14 13 RecordCompact false RecordCompact
+  methoddef 28 5 <init> (I)V
+  # Start METHOD <init>(I)V
+    field 32 1 b RecordCompact
+  # End METHOD
+  methoddef 41 44 <init> (I)V
+  # Start METHOD <init>(I)V
+    method 48 13 RecordCompact RecordCompact <init> (I)V
+    field 72 1 b RecordCompact
+  # End METHOD
+# End RECORD
+end

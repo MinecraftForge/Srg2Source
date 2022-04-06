@@ -1,0 +1,10 @@
+public record RecordCanonical (String b, int a) {
+    public RecordCanonical(String b, int a) {
+        this.b = b;
+        if (a > 0) {
+            this.a = a;
+        } else {
+            this.a = b.hashCode();
+        }
+    }
+}
