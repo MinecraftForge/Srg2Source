@@ -3,10 +3,6 @@ RecordComplex RecordComplex
 	a d
 	b e
 	c f
-	<init> (ILjava/util/Map;[Ljava/lang/String;)V <init>
-		0 a d
-		1 b e
-		2 c f
 	a ()I d
 	b ()Ljava/util/Map; e
 	c ()[Ljava/lang/String; f

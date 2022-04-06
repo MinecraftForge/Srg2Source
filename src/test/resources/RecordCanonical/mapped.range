@@ -1,0 +1,27 @@
+start 1 RecordCanonical.java 8302ef9c11b966d672577a467f3ec4de
+recorddef 0 229 RecordCanonical
+# Start RECORD RecordCanonical
+  class 14 15 RecordCanonical false RecordCanonical
+  class 30 6 String false java/lang/String
+  methoddef 30 15 <init> (Ljava/lang/String;I)V
+  # Start METHOD <init>(Ljava/lang/String;I)V
+    field 37 1 b RecordCanonical
+    field 44 1 a RecordCanonical
+  # End METHOD
+  methoddef 53 174 <init> (Ljava/lang/String;I)V
+  # Start METHOD <init>(Ljava/lang/String;I)V
+    method 60 15 RecordCanonical RecordCanonical <init> (Ljava/lang/String;I)V
+    class 76 6 String false java/lang/String
+    field 83 1 b RecordCanonical
+    field 90 1 a RecordCanonical
+    field 108 1 b RecordCanonical
+    field 112 1 b RecordCanonical
+    field 127 1 a RecordCanonical
+    field 153 1 a RecordCanonical
+    field 157 1 a RecordCanonical
+    field 194 1 a RecordCanonical
+    field 198 1 b RecordCanonical
+    method 200 8 hashCode java/lang/Object hashCode ()I
+  # End METHOD
+# End RECORD
+end

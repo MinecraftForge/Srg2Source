@@ -1,0 +1,1 @@
+public record RecordSimple(int b, String a) {}

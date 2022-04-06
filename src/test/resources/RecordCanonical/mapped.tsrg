@@ -1,0 +1,4 @@
+RecordCanonical RecordCanonical
+	b a
+	a b
+	<init> (Ljava/lang/String;I)V <init>

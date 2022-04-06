@@ -1,0 +1,5 @@
+public record RecordCompact(int b) {
+    public RecordCompact {
+        b += 1;
+    }
+}
