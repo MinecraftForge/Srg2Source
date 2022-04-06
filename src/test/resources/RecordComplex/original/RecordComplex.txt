@@ -1,0 +1,58 @@
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
+
+public record RecordComplex(int d, Map<String, String> e, String... f) {
+    private static final Supplier<RecordComplex> DEFAULT_FACTORY = RecordComplex::new;
+    private static int counter = 5;
+
+    public static RecordComplex createDefault() {
+        counter++;
+        return DEFAULT_FACTORY.get();
+    }
+
+    public RecordComplex {
+        if (d > 100)
+            throw new IllegalStateException("a cannot be greater than 100!");
+    }
+
+    private RecordComplex() {
+        this(50, new HashMap<>());
+    }
+
+    public int d() {
+        return d == 0 ? 100 : d;
+    }
+
+    public Map<String, String> e() {
+        return e instanceof HashMap<String, String> hashMap ? hashMap : null;
+    }
+
+    public String[] f() {
+        throw new UnsupportedOperationException("Can't do that!");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        RecordComplex that = (RecordComplex) o;
+        return d == that.d && e.equals(that.e) && Arrays.equals(f, that.f);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(d, e);
+        result = 31 * result + Arrays.hashCode(f);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "RecordComplex[a=" + d + ", b=" + e + ", c=" + Arrays.toString(f) + "]";
+    }
+}

@@ -1,0 +1,120 @@
+start 1 RecordComplex.java d253d3c7c3ab9359b7b6695a77aca042
+recorddef 142 1464 RecordComplex
+# Start RECORD RecordComplex
+  class 156 13 RecordComplex false RecordComplex
+  methoddef 170 41 <init> (ILjava/util/Map;[Ljava/lang/String;)V
+  # Start METHOD <init>(ILjava/util/Map;[Ljava/lang/String;)V
+    parameter 174 1 a RecordComplex <init> (ILjava/util/Map;[Ljava/lang/String;)V 0
+    class 177 3 Map false java/util/Map
+    class 181 6 String false java/lang/String
+    class 189 6 String false java/lang/String
+    parameter 197 1 b RecordComplex <init> (ILjava/util/Map;[Ljava/lang/String;)V 1
+    class 200 6 String false java/lang/String
+    parameter 210 1 c RecordComplex <init> (ILjava/util/Map;[Ljava/lang/String;)V 2
+  # End METHOD
+  class 241 8 Supplier false java/util/function/Supplier
+  class 250 13 RecordComplex false RecordComplex
+  field 265 15 DEFAULT_FACTORY RecordComplex
+  class 283 13 RecordComplex false RecordComplex
+  field 327 7 counter RecordComplex
+  methoddef 347 111 createDefault ()LRecordComplex;
+  # Start METHOD createDefault()LRecordComplex;
+    class 361 13 RecordComplex false RecordComplex
+    method 375 13 createDefault RecordComplex createDefault ()LRecordComplex;
+    field 402 7 counter RecordComplex
+    field 429 15 DEFAULT_FACTORY RecordComplex
+    method 445 3 get java/util/function/Supplier get ()Ljava/lang/Object;
+  # End METHOD
+  methoddef 466 130 <init> (ILjava/util/Map;[Ljava/lang/String;)V
+  # Start METHOD <init>(ILjava/util/Map;[Ljava/lang/String;)V
+    method 473 13 RecordComplex RecordComplex <init> (ILjava/util/Map;[Ljava/lang/String;)V
+    field 502 1 a RecordComplex
+    class 534 21 IllegalStateException false java/lang/IllegalStateException
+  # End METHOD
+  methoddef 604 68 <init> ()V
+  # Start METHOD <init>()V
+    method 612 13 RecordComplex RecordComplex <init> ()V
+    class 652 7 HashMap false java/util/HashMap
+  # End METHOD
+  methoddef 680 57 a ()I
+  # Start METHOD a()I
+    method 691 1 a RecordComplex a ()I
+    field 713 1 a RecordComplex
+    field 728 1 a RecordComplex
+  # End METHOD
+  methoddef 745 118 b ()Ljava/util/Map;
+  # Start METHOD b()Ljava/util/Map;
+    class 752 3 Map false java/util/Map
+    class 756 6 String false java/lang/String
+    class 764 6 String false java/lang/String
+    method 772 1 b RecordComplex b ()Ljava/util/Map;
+    field 794 1 b RecordComplex
+    class 807 7 HashMap false java/util/HashMap
+    class 815 6 String false java/lang/String
+    class 823 6 String false java/lang/String
+    local_variable 831 7 hashMap RecordComplex b ()Ljava/util/Map; 0 Ljava/util/HashMap;
+    local_variable 841 7 hashMap RecordComplex b ()Ljava/util/Map; 0 Ljava/util/HashMap;
+  # End METHOD
+  methoddef 871 96 c ()[Ljava/lang/String;
+  # Start METHOD c()[Ljava/lang/String;
+    class 878 6 String false java/lang/String
+    method 887 1 c RecordComplex c ()[Ljava/lang/String;
+    class 912 29 UnsupportedOperationException false java/lang/UnsupportedOperationException
+  # End METHOD
+  methoddef 975 312 equals (Ljava/lang/Object;)Z
+  # Start METHOD equals(Ljava/lang/Object;)Z
+    class 976 8 Override false java/lang/Override
+    method 1005 6 equals java/lang/Object equals (Ljava/lang/Object;)Z
+    class 1012 6 Object false java/lang/Object
+    parameter 1019 1 o RecordComplex equals (Ljava/lang/Object;)Z 0
+    parameter 1045 1 o RecordComplex equals (Ljava/lang/Object;)Z 0
+    parameter 1087 1 o RecordComplex equals (Ljava/lang/Object;)Z 0
+    method 1100 8 getClass java/lang/Object getClass ()Ljava/lang/Class;
+    parameter 1114 1 o RecordComplex equals (Ljava/lang/Object;)Z 0
+    method 1116 8 getClass java/lang/Object getClass ()Ljava/lang/Class;
+    class 1164 13 RecordComplex false RecordComplex
+    local_variable 1178 4 that RecordComplex equals (Ljava/lang/Object;)Z 1 LRecordComplex;
+    class 1186 13 RecordComplex false RecordComplex
+    parameter 1201 1 o RecordComplex equals (Ljava/lang/Object;)Z 0
+    field 1220 1 a RecordComplex
+    local_variable 1225 4 that RecordComplex equals (Ljava/lang/Object;)Z 1 LRecordComplex;
+    field 1230 1 a RecordComplex
+    field 1235 1 b RecordComplex
+    method 1237 6 equals java/util/Map equals (Ljava/lang/Object;)Z
+    local_variable 1244 4 that RecordComplex equals (Ljava/lang/Object;)Z 1 LRecordComplex;
+    field 1249 1 b RecordComplex
+    class 1255 6 Arrays false java/util/Arrays
+    method 1262 6 equals java/util/Arrays equals ([Ljava/lang/Object;[Ljava/lang/Object;)Z
+    field 1269 1 c RecordComplex
+    local_variable 1272 4 that RecordComplex equals (Ljava/lang/Object;)Z 1 LRecordComplex;
+    field 1277 1 c RecordComplex
+  # End METHOD
+  methoddef 1295 163 hashCode ()I
+  # Start METHOD hashCode()I
+    class 1296 8 Override false java/lang/Override
+    method 1321 8 hashCode java/lang/Object hashCode ()I
+    local_variable 1347 6 result RecordComplex hashCode ()I 0 I
+    class 1356 7 Objects false java/util/Objects
+    method 1364 4 hash java/util/Objects hash ([Ljava/lang/Object;)I
+    field 1369 1 a RecordComplex
+    field 1372 1 b RecordComplex
+    local_variable 1385 6 result RecordComplex hashCode ()I 0 I
+    local_variable 1399 6 result RecordComplex hashCode ()I 0 I
+    class 1408 6 Arrays false java/util/Arrays
+    method 1415 8 hashCode java/util/Arrays hashCode ([Ljava/lang/Object;)I
+    field 1424 1 c RecordComplex
+    local_variable 1444 6 result RecordComplex hashCode ()I 0 I
+  # End METHOD
+  methoddef 1466 137 toString ()Ljava/lang/String;
+  # Start METHOD toString()Ljava/lang/String;
+    class 1467 8 Override false java/lang/Override
+    class 1488 6 String false java/lang/String
+    method 1495 8 toString java/lang/Object toString ()Ljava/lang/String;
+    field 1545 1 a RecordComplex
+    field 1558 1 b RecordComplex
+    class 1571 6 Arrays false java/util/Arrays
+    method 1578 8 toString java/util/Arrays toString ([Ljava/lang/Object;)Ljava/lang/String;
+    field 1587 1 c RecordComplex
+  # End METHOD
+# End RECORD
+end
