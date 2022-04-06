@@ -1,28 +1,22 @@
 buildscript {
     repositories {
         mavenCentral()
-        maven {
-            name = "forge"
-            url = "https://maven.minecraftforge.net/"
-        }
     }
     dependencies {
-        classpath 'com.guardsquare:proguard-gradle:7.1.1'
-        classpath 'org.ow2.asm:asm:9.2'
-        classpath 'org.ow2.asm:asm-tree:9.2'
-        classpath 'net.minecraftforge.gradleutils:GradleUtils:2.+'
+        classpath 'com.guardsquare:proguard-gradle:7.2.1'
+        classpath 'org.ow2.asm:asm:9.3'
+        classpath 'org.ow2.asm:asm-tree:9.3'
     }
 }
 
 plugins {
-  id 'org.cadixdev.licenser' version '0.6.1'
+    id 'org.cadixdev.licenser' version '0.6.1'
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradleutils' version '2.+'
 }
-
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
-apply plugin: 'net.minecraftforge.gradleutils'
 
 group = 'net.minecraftforge'
 archivesBaseName = 'srg2source'
@@ -50,12 +44,12 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'com.google.jimfs:jimfs:1.2'
 
-    implementation 'org.ow2.asm:asm:9.2'
-    implementation 'org.ow2.asm:asm-tree:9.2'
+    implementation 'org.ow2.asm:asm:9.3'
+    implementation 'org.ow2.asm:asm-tree:9.3'
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4' // easy CLI parsing
 
     // necessary eclipse AST stuff
-    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.28.0.v20211117-1416'
+    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.29.0'
 
     //We use this to patch the JDT at runtime
     implementation 'cpw.mods:modlauncher:8.0.9'
@@ -64,7 +58,7 @@ dependencies {
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
     //Because tons of projects all parsing SRG files is annoying
-    implementation 'net.minecraftforge:srgutils:0.4.3'
+    implementation 'net.minecraftforge:srgutils:0.4.11'
 }
 
 changelog {
@@ -110,15 +104,15 @@ abstract class PatchJDTClasses extends DefaultTask {
             libraries.getFiles().stream().filter{ !it.isDirectory() }.each { lib ->
                 new ZipFile(lib).withCloseable { zin ->
                     def remove = []
-                    toProcess.each{ target -> 
+                    toProcess.each{ target ->
                         def entry = zin.getEntry(target+'.class')
                         if (entry == null)
                             return
-                        
+
                         def node = new ClassNode()
                         def reader = new ClassReader(zin.getInputStream(entry))
                         reader.accept(node, 0)
-                        
+
                         //CompilationUnitResolver allows batch compiling, the problem is it is hardcoded to read the contents from a File.
                         //So we patch this call to redirect to us, so we can get the contents from our InputSupplier
                         if (COMPILATION_UNIT_RESOLVER.equals(target)) {
@@ -159,10 +153,10 @@ abstract class PatchJDTClasses extends DefaultTask {
                             marker.instructions.add(new InsnNode(Opcodes.IRETURN))
                             logger.lifecycle('Patched: ' + node.name)
                         }
-                        
+
                         def writer = new ClassWriter(0)
                         node.accept(writer)
-                        
+
                         remove.add(target)
                         def nentry = new ZipEntry(entry.name)
                         nentry.time = 0
@@ -191,7 +185,7 @@ task shadowJar (type: Jar, dependsOn: patchJDT) {
     classifier 'shadow'
     duplicatesStrategy = 'exclude'
     with jar
-    
+
     from zipTree(patchJDT.output)
     from { configurations.implementation.collect { it.isDirectory() ? it : zipTree(it) } }
     exclude 'about_files/**'
@@ -227,7 +221,7 @@ task pgShrinkJar(type: proguard.gradle.ProGuardTask, dependsOn: shadowJar) {
     }
     inputs.file inputJar
     inputs.file config
-    
+
     outDir.mkdirs()
 
     injars inputJar
@@ -298,19 +292,6 @@ publishing {
         }
     }
     repositories {
-        maven {
-            if (System.env.MAVEN_USER) {
-                url 'https://maven.minecraftforge.net/'
-                authentication {
-                    basic(BasicAuthentication)
-                }
-                credentials {
-                    username = System.env.MAVEN_USER ?: 'not'
-                    password = System.env.MAVEN_PASSWORD ?: 'set'
-                }
-            } else {
-                url 'file://' + rootProject.file('repo').getAbsolutePath()
-            }
-        }
+        maven gradleutils.getPublishingForgeMaven()
     }
 }

@@ -62,6 +62,8 @@ public class ExtractUtil {
         buf.append('(');
         for (SingleVariableDeclaration var : params) {
             ITypeBinding bind = var.getType().resolveBinding();
+            if (var.isVarargs())
+                bind = bind.createArrayType(1);
             buf.append(getTypeSignature(bind));
         }
         buf.append(')');

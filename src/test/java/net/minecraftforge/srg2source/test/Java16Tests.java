@@ -19,7 +19,6 @@
 
 package net.minecraftforge.srg2source.test;
 
-import net.minecraftforge.srg2source.api.RangeExtractorBuilder;
 import net.minecraftforge.srg2source.api.SourceVersion;
 import org.junit.Test;
 
@@ -34,4 +33,5 @@ public class Java16Tests extends SimpleTestBase {
     @Test public void testRecordSimple()   { testClass("RecordSimple"); }
     @Test public void testPatternMatch()   { testClass("PatternMatch"); }
     @Test public void testRecordCompact()  { testClass("RecordCompact"); }
+    @Test public void testRecordComplex()  { testClass("RecordComplex"); }
 }
