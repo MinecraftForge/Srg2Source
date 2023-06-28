@@ -407,7 +407,7 @@ public class SymbolReferenceWalker {
 
             case IBinding.VARIABLE:
                 IVariableBinding var = (IVariableBinding)bind;
-                if (var.isField() || (var.isParameter() && var.getDeclaringMethod().isCompactConstructor())) { //Fields, Enum Constants, and parameters in compact constructors
+                if (var.isField() || (var.isParameter() && (var.getDeclaringMethod().isCompactConstructor() || var.getDeclaringMethod().isCanonicalConstructor()))) { //Fields, Enum Constants, and parameters in canonical or compact constructors
                     ITypeBinding declaringClass = var.isField() ? var.getDeclaringClass() : var.getDeclaringMethod().getDeclaringClass();
                     if (declaringClass != null) { // Things like array.lenth is a Field reference, but has no declaring class.
                         String owner = getInternalName(declaringClass, node);
@@ -419,8 +419,10 @@ public class SymbolReferenceWalker {
                     ParamInfo info = findParameter(var.getKey());
                     if (info == null)
                         error(node, "Illegal Argument: " + var.getKey());
-                    else
+                    else if (var.isParameter())
                         builder.addParameterReference(node.getStartPosition(), node.getLength(), node.toString(), info.owner, info.name, info.desc, info.index);
+                    else
+                        builder.addFieldReference(node.getStartPosition(), node.getLength(), node.toString(), info.owner);
                 } else {
                     /*
                      *  These are local variables, the compiler gives them unique IDs in ascending order in var.getVariableId,
@@ -577,26 +579,33 @@ public class SymbolReferenceWalker {
      *
      * This is what causes ViewFrustum to add the extra ChunkRenderDispatcher.ChunkRender import:
      * `renderChunkFactory.new ChunkRender();`
-     * Problem is.... we have no idea how to get the subtype's root name object... Will need to look into this more
      */
     private boolean process(ClassInstanceCreation node) {
-        return true;
-        /*
-        if (node.getExpression() == null)
+        if (node.getExpression() == null || node.getAST().apiLevel() >= JLS3 && !node.getType().isSimpleType() || node.getAST().apiLevel() <= JLS2 && !node.getName().isSimpleName())
             return true;
 
-        if (node.toString().contains("ChunkRender()"))
+        if (node.toString().contains("RenderChunk("))
             System.currentTimeMillis();
-        if (node.getAST().apiLevel() == JLS2) {
-            acceptChild(node.getName());
+        Name name = null;
+        acceptChild(node.getExpression());
+        if (node.getAST().apiLevel() <= JLS2) {
+            name = node.getName();
         } else if (node.getAST().apiLevel() >= JLS3) {
             acceptChildren(node.typeArguments());
-            acceptChild(node.getType();
+            name = ((SimpleType) node.getType()).getName();
         }
+        
+        IBinding binding = name.resolveBinding();
+        if (binding.getKind() != IBinding.TYPE) {
+            error(node, "Non type binding when constructing an instance: " + binding.getName());
+            return false;
+        }
+        
+        String clsName = getInternalName((ITypeBinding) binding, name);
+        builder.addClassReference(name.getStartPosition(), name.getLength(), name.toString(), clsName, true);
         acceptChildren(node.arguments());
         acceptChild(node.getAnonymousClassDeclaration());
         return false;
-        */
     }
 
     /*
