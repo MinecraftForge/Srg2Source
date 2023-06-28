@@ -55,6 +55,21 @@ dependencies {
     		strictly '3.26.0'
     	}
     }
+    implementation('org.eclipse.platform:org.eclipse.core.resources') {
+    	version {
+    		strictly '3.18.0'
+    	}
+    }
+    implementation('org.eclipse.platform:org.eclipse.core.jobs') {
+    	version {
+    		strictly '3.13.100'
+    	}
+    }
+    implementation('org.eclipse.platform:org.eclipse.core.contenttype') {
+    	version {
+    		strictly '3.8.200'
+    	}
+    }
 
     //We use this to patch the JDT at runtime
     implementation 'cpw.mods:modlauncher:8.1.3'
