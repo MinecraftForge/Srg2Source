@@ -579,26 +579,31 @@ public class SymbolReferenceWalker {
      *
      * This is what causes ViewFrustum to add the extra ChunkRenderDispatcher.ChunkRender import:
      * `renderChunkFactory.new ChunkRender();`
-     * Problem is.... we have no idea how to get the subtype's root name object... Will need to look into this more
      */
     private boolean process(ClassInstanceCreation node) {
-        return true;
-        /*
-        if (node.getExpression() == null)
+        if (node.getExpression() == null || node.getAST().apiLevel() >= JLS3 && !node.getType().isSimpleType() || node.getAST().apiLevel() <= JLS2 && !node.getName().isSimpleName())
             return true;
 
-        if (node.toString().contains("ChunkRender()"))
-            System.currentTimeMillis();
-        if (node.getAST().apiLevel() == JLS2) {
-            acceptChild(node.getName());
+        Name name = null;
+        acceptChild(node.getExpression());
+        if (node.getAST().apiLevel() <= JLS2) {
+            name = node.getName();
         } else if (node.getAST().apiLevel() >= JLS3) {
             acceptChildren(node.typeArguments());
-            acceptChild(node.getType();
+            name = ((SimpleType) node.getType()).getName();
         }
+        
+        IBinding binding = name.resolveBinding();
+        if (binding.getKind() != IBinding.TYPE) {
+            error(node, "Non type binding when constructing an instance: " + binding.getName());
+            return false;
+        }
+        
+        String clsName = getInternalName((ITypeBinding) binding, name);
+        builder.addClassReference(name.getStartPosition(), name.getLength(), name.toString(), clsName, true);
         acceptChildren(node.arguments());
         acceptChild(node.getAnonymousClassDeclaration());
         return false;
-        */
     }
 
     /*
