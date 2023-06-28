@@ -407,7 +407,7 @@ public class SymbolReferenceWalker {
 
             case IBinding.VARIABLE:
                 IVariableBinding var = (IVariableBinding)bind;
-                if (var.isField() || (var.isParameter() && (var.getDeclaringMethod().isCompactConstructor() || var.getDeclaringMethod().isCanonicalConstructor()))) { //Fields, Enum Constants, and parameters in canonical or compact constructors
+                if (var.isField() || (var.isParameter() && var.getDeclaringMethod().isCompactConstructor())) { //Fields, Enum Constants, and parameters in compact constructors
                     ITypeBinding declaringClass = var.isField() ? var.getDeclaringClass() : var.getDeclaringMethod().getDeclaringClass();
                     if (declaringClass != null) { // Things like array.lenth is a Field reference, but has no declaring class.
                         String owner = getInternalName(declaringClass, node);
@@ -419,10 +419,8 @@ public class SymbolReferenceWalker {
                     ParamInfo info = findParameter(var.getKey());
                     if (info == null)
                         error(node, "Illegal Argument: " + var.getKey());
-                    else if (var.isParameter())
-                        builder.addParameterReference(node.getStartPosition(), node.getLength(), node.toString(), info.owner, info.name, info.desc, info.index);
                     else
-                        builder.addFieldReference(node.getStartPosition(), node.getLength(), node.toString(), info.owner);
+                        builder.addParameterReference(node.getStartPosition(), node.getLength(), node.toString(), info.owner, info.name, info.desc, info.index);
                 } else {
                     /*
                      *  These are local variables, the compiler gives them unique IDs in ascending order in var.getVariableId,
@@ -584,8 +582,6 @@ public class SymbolReferenceWalker {
         if (node.getExpression() == null || node.getAST().apiLevel() >= JLS3 && !node.getType().isSimpleType() || node.getAST().apiLevel() <= JLS2 && !node.getName().isSimpleName())
             return true;
 
-        if (node.toString().contains("RenderChunk("))
-            System.currentTimeMillis();
         Name name = null;
         acceptChild(node.getExpression());
         if (node.getAST().apiLevel() <= JLS2) {
