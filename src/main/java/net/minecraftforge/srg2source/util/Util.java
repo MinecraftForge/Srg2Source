@@ -132,4 +132,8 @@ public class Util {
             ret.add(data);
         return ret;
     }
+
+    public static String detectLineEnd(String data) {
+        return data.indexOf("\r\n" ) != -1 ? "\r\n" : "\n";
+    }
 }

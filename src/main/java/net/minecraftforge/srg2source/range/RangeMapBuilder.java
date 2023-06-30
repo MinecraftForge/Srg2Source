@@ -20,8 +20,8 @@
 package net.minecraftforge.srg2source.range;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 import net.minecraftforge.srg2source.range.entries.ClassLiteral;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
@@ -39,9 +39,10 @@ import net.minecraftforge.srg2source.range.entries.StructuralEntry;
 import net.minecraftforge.srg2source.util.io.ConfLogger;
 
 public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
-    private final List<RangeEntry> entries = new ArrayList<>();
-    private final List<StructuralEntry> structures = new ArrayList<>();
+    private final StructuralEntry root = StructuralEntry.createRoot();
     private final List<MetaEntry> meta = new ArrayList<>();
+
+    private final Stack<StructuralEntry> stack = new Stack<>();
 
     private final ConfLogger<?> logger;
     private final String filename;
@@ -51,6 +52,7 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
         this.logger = logger;
         this.filename = filename;
         this.hash = hash;
+        this.stack.push(root);
     }
 
     public String getFilename() {
@@ -64,14 +66,11 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
     }
 
     public RangeMap build() {
-        // These should be sorted already, as we should encounter them in source order.
-        // But lets sort them anyways
-        Collections.sort(entries, (a, b) -> a.getStart() - b.getStart());
-        Collections.sort(structures, (a, b) -> a.getStart() - b.getStart());
-        checkOverlaps(entries);
-        return new RangeMap(filename, hash, entries, structures, meta);
+        //checkOverlaps(entries); // TODO Make new check for structural hierarchy
+        return new RangeMap(filename, hash, root, meta);
     }
 
+    //TODO: Make this check used again?
     private void checkOverlaps(List<? extends IRange> lst) {
         if (lst.isEmpty())
             return;
@@ -87,39 +86,71 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
         }
     }
 
+    private StructuralEntry getParent(IRange range) {
+        return getParent(range.getStart(), range.getLength());
+    }
+
+    private StructuralEntry getParent(int start, int length) {
+        StructuralEntry last = stack.peek();
+        if (last.getType() != StructuralEntry.Type.ROOT) {
+            int newStart = start;
+            int newEnd = start + length;
+            do {
+                int lastStart = last.getStart();
+                int lastEnd = last.getStart() + last.getLength();
+                if (newEnd > lastEnd && last.getType() != StructuralEntry.Type.RECORD) {
+                    stack.pop(); // New structure is out of last range, remove last from stack
+                    last = stack.peek();
+                } else
+                    break;
+            } while (stack.size() > 1);
+        } else {
+            // Check stack size if meet root structure
+            if (stack.size() != 1)
+                throw new IllegalStateException("Stack must have one element when meet ROOT structure! Stack size: " + stack.size());
+        }
+
+        return stack.peek();
+    }
 
     // Structure Elements
-    private void addStructure(StructuralEntry entry) {
-        structures.add(entry);
+    private void addStructure(StructuralEntry structure) {
+        StructuralEntry parent = getParent(structure);
+        // Store structure in parent structure
+        parent.addStructure(structure);
+        // and push new actual processed structure on stack
+        stack.push(structure);
     }
 
     public void addAnnotationDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createAnnotation(start, length, name));
+        addStructure(StructuralEntry.createAnnotation(getParent(start, length), start, length, name));
     }
 
     public void addClassDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createClass(start, length, name));
+        addStructure(StructuralEntry.createClass(getParent(start, length), start, length, name));
     }
 
     public void addEnumDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createEnum(start, length, name));
+        addStructure(StructuralEntry.createEnum(getParent(start, length), start, length, name));
     }
 
     public void addRecordDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createRecord(start, length, name));
+        addStructure(StructuralEntry.createRecord(getParent(start, length), start, length, name));
     }
 
     public void addMethodDeclaration(int start, int length, String name, String desc) {
-        addStructure(StructuralEntry.createMethod(start, length, name, desc));
+        addStructure(StructuralEntry.createMethod(getParent(start, length), start, length, name, desc));
     }
 
     public void addInterfaceDeclaration(int start, int length, String name) {
-        addStructure(StructuralEntry.createInterface(start, length, name));
+        addStructure(StructuralEntry.createInterface(getParent(start, length), start, length, name));
     }
 
     // Code Elements
     private void addCode(RangeEntry entry) {
-        entries.add(entry);
+        StructuralEntry parent = getParent(entry);
+        // Store entry in parent structure
+        parent.addEntry(entry);
     }
 
     public void addPackageReference(int start, int length, String name) {

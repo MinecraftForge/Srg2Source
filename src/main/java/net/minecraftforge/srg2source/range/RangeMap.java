@@ -27,8 +27,8 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -41,7 +41,9 @@ import net.minecraftforge.srg2source.range.entries.StructuralEntry;
 import net.minecraftforge.srg2source.util.Util;
 
 public class RangeMap {
-    private final int SPEC = 1;
+    private static final int SPEC = 1;
+    private static final char TAB_CHAR = ' ';
+    private static final int TAB_SIZE = 2;
 
     //TODO: Support output types:
     // Directory: every range file is split into it's own file. Would allow for easier navigation/debug
@@ -88,24 +90,37 @@ public class RangeMap {
 
     private final String filename;
     private final String hash;
-    private final List<RangeEntry> entries;
-    private final List<StructuralEntry> structures;
+    private final StructuralEntry root;
     private final List<MetaEntry> meta;
 
     private RangeMap(int spec, String filename, String hash, List<String> lines, int start, int end) {
         this.filename = filename;
         this.hash = hash;
-        final List<RangeEntry> entries = new ArrayList<>();
-        final List<StructuralEntry> structures = new ArrayList<>();
+        this.root = StructuralEntry.createRoot();
         final List<MetaEntry> meta = new ArrayList<>();
-        this.entries = Collections.unmodifiableList(entries);
-        this.structures = Collections.unmodifiableList(structures);
         this.meta = Collections.unmodifiableList(meta);
 
+        Stack<StructuralEntry> stack = new Stack<>();
+        stack.push(this.root);
+
+        int lastDepth = 0;
         for (int x = start; x < end; x++) {
+            int depth = 0;
+            for (Character ch : lines.get(x).toCharArray()) {
+                if (ch.equals(RangeMap.TAB_CHAR)) depth++; else break;
+            }
+            depth /= RangeMap.TAB_SIZE; // depth is correlated with stack size, not indent
+
             String line = stripComment(lines.get(x)).trim();
             if (line.isEmpty())
                 continue;
+
+            // Depth changed, remove last structure from stack
+            while (depth < lastDepth) {
+                stack.pop();
+                lastDepth--;
+            }
+
             int idx = line.indexOf(' ');
             if (idx == -1)
                 throw new IllegalArgumentException("Invalid RangeMap line #" + x + ": " + lines.get(x));
@@ -114,21 +129,31 @@ public class RangeMap {
                 String type = line.substring(0, idx);
                 if ("meta".equals(type))
                     meta.add(MetaEntry.read(spec, line.substring(idx + 1)));
-                else if (type.endsWith("def")) //Structure
-                    structures.add(StructuralEntry.read(spec, type.substring(0, type.length() - 3), line.substring(idx + 1)));
-                else //entry
-                    entries.add(RangeEntry.read(spec, type, line.substring(idx + 1)));
+                else {
+                    if (type.endsWith("def")) { // structure
+                        StructuralEntry parent = stack.peek();
+                        StructuralEntry structure = StructuralEntry.read(spec, type.substring(0, type.length() - 3), parent, line.substring(idx + 1));
+                        // Store structure in parent structure
+                        parent.addStructure(structure);
+                        // and push new actual processed structure on stack
+                        stack.push(structure);
+                    } else { // entry
+                        RangeEntry entry = RangeEntry.read(spec, type, line.substring(idx + 1));
+                        // Store entry in parent structure
+                        stack.peek().addEntry(entry);
+                    }
+                    lastDepth = depth;
+                }
             } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid RangeMap line #" + x + ": " + lines.get(x), e);
             }
         }
     }
 
-    RangeMap(String filename, String hash, List<RangeEntry> entries, List<StructuralEntry> structures, List<MetaEntry> meta) {
+    RangeMap(String filename, String hash, StructuralEntry root, List<MetaEntry> meta) {
         this.filename = filename;
         this.hash = hash;
-        this.entries = Collections.unmodifiableList(entries);
-        this.structures = Collections.unmodifiableList(structures);
+        this.root = root;
         this.meta = Collections.unmodifiableList(meta);
     }
 
@@ -140,12 +165,8 @@ public class RangeMap {
         return this.hash;
     }
 
-    public List<RangeEntry> getEntries() {
-        return this.entries;
-    }
-
-    public List<StructuralEntry> getStructures() {
-        return this.structures;
+    public StructuralEntry getRoot() {
+        return this.root;
     }
 
     public List<MetaEntry> getMeta() {
@@ -171,58 +192,48 @@ public class RangeMap {
             }
         }
 
-        Stack<StructuralEntry> stack = new Stack<>();
-        Iterator<StructuralEntry> segments = structures.iterator();
+        // Get ROOT elements as we want only root children
+        List<IRange> rootElements = new ArrayList<>();
+        rootElements.addAll(this.root.getEntries(false));
+        rootElements.addAll(this.root.getStructures(false));
 
-        StructuralEntry last = null;
-        StructuralEntry next = segments.hasNext() ? segments.next() : null;
-
-        for (RangeEntry entry : entries) {
-            if (pretty) {
-                while (last != null) {
-                    if (entry.getStart() < end(last))
-                        break;
-                    writer.tabs--;
-                    writer.accept("# End " + last.getType().name());
-                    last = stack.empty() ? null : stack.pop();
-                }
-            }
-
-            if (next != null) {
-                if (entry.getStart() > next.getStart()) {
-                    next.write(writer);
-                    if (pretty) {
-                        writer.accept("# Start " + next.getType().name() + ' ' + next.getName() + (next.getDescriptor() == null ? "" : next.getDescriptor()));
-                        writer.tabs++;
-                        if (last != null)
-                            stack.push(last);
-                        last = next;
-                        next = segments.hasNext() ? segments.next() : null;
-                    }
-                }
-            }
-
-            entry.write(writer);
-        }
-
-        //Grab all the trailing things that don't have entries inside them?
-        //Should never be the case because we should have a entry for the name of the object at least, but hey why not.
-        if (next != null) {
-            next.write(writer);
-            while (segments.hasNext())
-                segments.next().write(writer);
-        }
-
-        if (pretty) {
-            while (last != null) {
-                writer.tabs--;
-                writer.accept("# End " + last.getType().name());
-                last = stack.empty() ? null : stack.pop();
-            }
+        // Start printing root without tab
+        for (IRange element : rootElements.stream()
+                .sorted(Comparator.comparing(IRange::getStart))
+                .collect(Collectors.toList())) {
+            printElement(writer, element, 0);
         }
 
         writer.tabs = 0;
         writer.accept("end");
+    }
+
+    public static void printElement(Writer writer, IRange entry, int tabs) {
+        if (entry instanceof StructuralEntry){
+            StructuralEntry structure = (StructuralEntry) entry;
+
+            List<IRange> elements = new ArrayList<>();
+            elements.addAll(structure.getEntries(false));
+            elements.addAll(structure.getStructures(false));
+
+            writer.tabs = tabs;
+            structure.write(writer); // print structure def
+            writer.accept("# Start " + structure.getType().name() + ' ' + structure.getName() + (structure.getDescriptor() == null ? "" : structure.getDescriptor()));
+
+            for (IRange element : elements.stream()
+                    .sorted(Comparator.comparing(IRange::getStart))
+                    .collect(Collectors.toList())) {
+                printElement(writer, element, tabs + 1);
+            }
+
+            writer.tabs = tabs;
+            writer.accept("# End " + structure.getType().name());
+        } else
+        if (entry instanceof RangeEntry) {
+            RangeEntry rentry = (RangeEntry) entry;
+            writer.tabs = tabs;
+            rentry.write(writer);
+        }
     }
 
     private static class Writer implements Consumer<String> {
@@ -235,7 +246,7 @@ public class RangeMap {
         @Override
         public void accept(String line) {
             for (int x = 0; x < tabs; x++)
-                out.write("  ");
+                out.write(String.valueOf(RangeMap.TAB_CHAR).repeat(RangeMap.TAB_SIZE));
             out.print(line + '\n'); //Don't use println, as we want consistent line endings.
         }
     }
