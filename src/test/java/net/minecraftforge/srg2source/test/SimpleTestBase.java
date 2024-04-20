@@ -1,20 +1,6 @@
 /*
- * Srg2Source
- * Copyright (c) 2020.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation version 2.1
- * of the License.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Copyright (c) Forge Development LLC
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 package net.minecraftforge.srg2source.test;
@@ -42,7 +28,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
@@ -65,7 +51,7 @@ public abstract class SimpleTestBase {
 
     private Path getRoot() {
         URL url = this.getClass().getResource("/test.marker");
-        Assert.assertNotNull("Could not find test.marker", url);
+        Assertions.assertNotNull(url, "Could not find test.marker");
         try {
             return new File(url.toURI()).getParentFile().toPath();
         } catch (URISyntaxException e) {
@@ -79,7 +65,7 @@ public abstract class SimpleTestBase {
     protected void testClass(final String name, final SourceVersion sourceVersion) {
         final Path root = getRoot().resolve(getPrefix()).resolve(name);
 
-        Assert.assertTrue("Unknown test: " + root.toAbsolutePath(), Files.exists(root));
+        Assertions.assertTrue(Files.exists(root), "Unknown test: " + root.toAbsolutePath());
 
         List<File> libraries = gatherLibraries(root, getRoot().resolve("libraries"));
 
@@ -153,12 +139,12 @@ public abstract class SimpleTestBase {
 
         if (!worked) {
             System.out.println(log);
-            Assert.fail("Failed to do work!");
+            Assertions.fail("Failed to do work!");
         }
         String expected = getFileContents(range);
         if (!expected.equals(data.toString())) {
             System.out.println(log);
-            Assert.assertEquals(range.getFileName().toString(), expected, data.toString());
+            Assertions.assertEquals(expected, data.toString(), range.getFileName().toString());
         }
     }
 
@@ -188,10 +174,10 @@ public abstract class SimpleTestBase {
     private void compareDirs(Path expected, Path actual) throws IOException {
         Set<String> lstExpected = Files.walk(expected).filter(Files::isRegularFile).map(p -> expected.relativize(p).toString().replace('\\', '/').replace(".txt", ".java")).collect(Collectors.toSet());
         Set<String> lstActual = Files.walk(actual).filter(Files::isRegularFile).map(p -> actual.relativize(p).toString().replace('\\', '/')).collect(Collectors.toSet());
-        Assert.assertEquals("File listing differ", lstExpected, lstActual);
+        Assertions.assertEquals(lstExpected, lstActual, "File listing differ");
         Files.walk(actual).filter(Files::isRegularFile).forEach(p -> {
             String relative = actual.relativize(p).toString().replace(".java", ".txt");
-            Assert.assertEquals("Files differ: " + relative, getFileContents(expected.resolve(relative)), getFileContents(p));
+            Assertions.assertEquals(getFileContents(expected.resolve(relative)), getFileContents(p), "Files differ: " + relative);
         });
     }
 

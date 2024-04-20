@@ -3,98 +3,92 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.guardsquare:proguard-gradle:7.2.1'
-        classpath 'org.ow2.asm:asm:9.3'
-        classpath 'org.ow2.asm:asm-tree:9.3'
+        classpath 'org.ow2.asm:asm:9.7'
+        classpath 'org.ow2.asm:asm-tree:9.7'
     }
 }
 
 plugins {
-    id 'org.cadixdev.licenser' version '0.6.1'
     id 'java'
     id 'idea'
     id 'eclipse'
     id 'maven-publish'
-    id 'net.minecraftforge.gradleutils' version '2.+'
+    id 'net.minecraftforge.licenser' version '1.0.1'
+    id 'net.minecraftforge.gradleutils' version '[2.3,2.4)'
 }
 
 group = 'net.minecraftforge'
 archivesBaseName = 'srg2source'
-version = gradleutils.getTagOffsetBranchVersion()
+version = gradleutils.tagOffsetVersion
 println('Version: ' + version)
-java.toolchain.languageVersion = JavaLanguageVersion.of(11)
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    withSourcesJar()
+}
 
 configurations {
-    implementation.canBeResolved = true
+    shadow
+    implementation.extendsFrom shadow
 }
 
 repositories {
-    maven {
-        name = "forge"
-        url = "https://maven.minecraftforge.net/"
-    }
-    maven {
-        name = "eclipse"
-        url = "https://repo.eclipse.org/content/groups/eclipse"
-    }
+    //mavenLocal()
+    maven gradleutils.forgeMaven
     mavenCentral()
 }
 
 dependencies {
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'com.google.jimfs:jimfs:1.2'
+    implementation(libs.securemodules)
+    implementation(libs.nulls)
+    shadow(libs.bundles.asm)
+    shadow(libs.jopt.simple) // easy CLI parsing
+    shadow(libs.srgutils) //Because tons of projects all parsing SRG files is annoying
+    shadow(libs.bundles.eclipse) // necessary eclipse AST stuff
+    implementation(libs.ml) // We need to patch eclipse to allow sources from more then raw files
 
-    implementation 'org.ow2.asm:asm:9.3'
-    implementation 'org.ow2.asm:asm-tree:9.3'
-    implementation 'net.sf.jopt-simple:jopt-simple:5.0.4' // easy CLI parsing
-
-    // necessary eclipse AST stuff
-    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.29.0'
-    implementation('org.eclipse.platform:org.eclipse.core.runtime') {
-    	version {
-    		strictly '3.26.0'
-    	}
-    }
-    implementation('org.eclipse.platform:org.eclipse.core.resources') {
-    	version {
-    		strictly '3.18.0'
-    	}
-    }
-    implementation('org.eclipse.platform:org.eclipse.core.jobs') {
-    	version {
-    		strictly '3.13.100'
-    	}
-    }
-    implementation('org.eclipse.platform:org.eclipse.core.contenttype') {
-    	version {
-    		strictly '3.8.200'
-    	}
-    }
-
-    //We use this to patch the JDT at runtime
-    implementation 'cpw.mods:modlauncher:8.1.3'
-
-    // ModLauncher has this on runtime scope
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-
-    //Because tons of projects all parsing SRG files is annoying
-    implementation 'net.minecraftforge:srgutils:0.4.11'
+    testImplementation(libs.junit.api)
+    testImplementation(libs.jimfs)
+    testRuntimeOnly(libs.bundles.junit.runtime)
 }
 
 changelog {
-    fromTag "8.0"
+    from '8.0'
 }
 
-jar {
+tasks.named('jar', Jar).configure {
     exclude 'data/**'
     manifest {
-        attributes 'version': project.version
-        attributes 'javaCompliance': project.targetCompatibility
-        attributes 'group': project.group
-        attributes 'Main-Class': 'net.minecraftforge.srg2source.ConsoleTool'
+        attributes([
+            'Automatic-Module-Name': 'net.minecraftforge.srg2source',
+            'Main-Class': 'net.minecraftforge.srg2source.ConsoleTool'
+        ] as LinkedHashMap)
+        attributes([
+            'Specification-Title':   'Srg2Source',
+            'Specification-Vendor':  'Forge Development LLC',
+            'Specification-Version':  gradleutils.gitInfo.tag,
+            'Implementation-Title':  'Srg2Source',
+            'Implementation-Vendor': 'Forge Development LLC',
+            'Implementation-Version': project.version
+        ] as LinkedHashMap, 'net/minecraftforge/srg2source/')
     }
 }
 
+tasks.register('shadowJarPatched', Jar).configure {
+    dependsOn patchJDT
+    archiveClassifier = 'fatjar'
+    manifest = jar.manifest
+    
+    from(zipTree(patchJDT.output))
+    from(sourceSets.main.output) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+  
+    from { configurations.shadow.collect { it.isDirectory() ? it : zipTree(it) } } {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+    exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'module-info.class')
+}
 
 license {
     header = file('LICENSE-header.txt')
@@ -156,7 +150,8 @@ abstract class PatchJDTClasses extends DefaultTask {
                                             resolve.instructions.set(resolve.instructions.get(x - 2), new InsnNode(Opcodes.NOP)); // INVOKESTATIC <init>
                                             insn.owner = RANGE_EXTRACTOR
                                             insn.desc = HOOK_DESC_RESOLVE
-                                            logger.lifecycle('Patched ' + node.name)
+                                            //logger.lifecycle('Patched ' + node.name)
+                                            remove.add(target)
                                         } else {
                                             throw new IllegalStateException('Found Util.getFileCharContents call, with unexpected context')
                                         }
@@ -171,13 +166,13 @@ abstract class PatchJDTClasses extends DefaultTask {
                             marker.instructions.clear()
                             marker.instructions.add(new InsnNode(Opcodes.ICONST_1))
                             marker.instructions.add(new InsnNode(Opcodes.IRETURN))
-                            logger.lifecycle('Patched: ' + node.name)
+                            //logger.lifecycle('Patched: ' + node.name)
+                            remove.add(target)
                         }
 
                         def writer = new ClassWriter(0)
                         node.accept(writer)
 
-                        remove.add(target)
                         def nentry = new ZipEntry(entry.name)
                         nentry.time = 0
                         zout.putNextEntry(nentry)
@@ -193,125 +188,77 @@ abstract class PatchJDTClasses extends DefaultTask {
     }
 }
 
-task patchJDT(type: PatchJDTClasses, dependsOn: jar) {
+tasks.register('unpatchedJar', Jar).configure {
+    from sourceSets.main.output
+    archiveClassifier = 'unpatched'
+}
+
+tasks.register('patchJDT', PatchJDTClasses).configure {
     targets.add(PatchJDTClasses.COMPILATION_UNIT_RESOLVER)
     targets.add(PatchJDTClasses.RANGE_EXTRACTOR)
-    libraries.from(jar.archiveFile)
-    libraries.from(configurations.implementation.filter{ !it.isDirectory() })
+    libraries.from(unpatchedJar.archiveFile)
+    libraries.from(configurations.shadow.filter{ !it.isDirectory() })
     output = project.layout.buildDirectory.file("patch_jdt.jar")
 }
 
-task shadowJar (type: Jar, dependsOn: patchJDT) {
-    classifier 'shadow'
-    duplicatesStrategy = 'exclude'
-    with jar
-
-    from zipTree(patchJDT.output)
-    from { configurations.implementation.collect { it.isDirectory() ? it : zipTree(it) } }
-    exclude 'about_files/**'
-    exclude 'ant_tasks/**'
-    exclude 'META-INF/versions/**'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/org/**'
-    exclude 'META-INF/services/**'
-    exclude 'META-INF/eclipse.inf'
-    exclude 'META-INF/ECLIPSE_.*'
-    exclude 'META-INF/DEPENDENCIES'
-    exclude 'META-INF/LICENSE'
-    exclude 'META-INF/NOTICE'
-    exclude '*.html'
-    exclude '*.profile'
-    exclude '*.properties'
-    exclude '*.jar'
-    exclude '*api_description'
-    exclude '.options'
-    exclude 'profile.list'
-    exclude 'plugin.xml'
-    exclude 'module-info.class'
-    exclude 'Log4j-*'
-    exclude 'log4j2.xml'
-}
-
-task pgShrinkJar(type: proguard.gradle.ProGuardTask, dependsOn: shadowJar) {
-    ext {
-        inputJar = shadowJar.archiveFile.get().asFile
-        outDir = file("${buildDir}/proguard")
-        obfuscatedJar = "${outDir}/${jar.archiveBaseName.get()}.jar"
-        config = 'proguard.pro'
-    }
-    inputs.file inputJar
-    inputs.file config
-
-    outDir.mkdirs()
-
-    injars inputJar
-    outjars obfuscatedJar
-    libraryjars([filter: '!META-INF/versions/**'], configurations.implementation)
-
-    // Get the target JVM executable path, then go 2 files up to remove the bin\java.exe
-    def targetJvm = javaToolchains.launcherFor(java.toolchain).get().executablePath.asFile.parentFile.parentFile
-    // As of Java 9, the runtime classes are packaged in modular jmod files.
-    ['java.base', 'java.desktop', 'java.logging', 'jdk.unsupported', 'java.xml', 'java.management', 'java.compiler'].each {
-        libraryjars "$targetJvm/jmods/${it}.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-    }
-    configuration config
-}
-
-task shrinkJar(type: Jar, dependsOn: pgShrinkJar) {
-    archiveClassifier = 'fatjar'
-    from zipTree(pgShrinkJar.obfuscatedJar)
-    manifest.from(jar.manifest)
-}
-
-task sourcesJar(type: Jar) {
-    from sourceSets.main.allSource
-    archiveClassifier = 'sources'
-}
-
-artifacts {
-    archives jar
-    archives shrinkJar
-    archives sourcesJar
-}
-
 publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            pom {
-                from components.java
-                artifact shrinkJar
-                artifact sourcesJar
-                name = 'Srg2Source'
-                description = 'Srg2Source library for ForgeGradle'
-                url = 'https://github.com/MinecraftForge/Srg2Source'
-                scm {
-                    url = 'https://github.com/MinecraftForge/Srg2Source'
-                    connection = 'scm:git:git://github.com/MinecraftForge/Srg2Source.git'
-                    developerConnection = 'scm:git:git@github.com:MinecraftForge/Srg2Source.git'
-                }
-                issueManagement {
-                    system = 'github'
-                    url = 'https://github.com/MinecraftForge/Srg2Source/issues'
-                }
+    publications.register('mavenJava', MavenPublication) {
+        artifact jar
+        artifact shadowJarPatched
+        artifact sourcesJar
+        pom {
+            name = 'Srg2Source'
+            description = 'Srg2Source library for ForgeGradle'
+            url = 'https://github.com/MinecraftForge/Srg2Source'
 
-                licenses {
-                    license {
-                        name = 'LGPL 2.1'
-                        url = 'https://github.com/MinecraftForge/Srg2Source/blob/master/LICENSE'
-                        distribution = 'repo'
-                    }
-                }
+            gradleutils.pom.setGitHubDetails(pom, 'Srg2Source')
 
-                developers {
-                    developer {
-                        id = 'LexManos'
-                        name = 'Lex Manos'
-                    }
-                }
+            license gradleutils.pom.Licenses.LGPLv2_1
+
+            developers {
+                developer gradleutils.pom.Developers.LexManos
             }
         }
     }
+
     repositories {
-        maven gradleutils.getPublishingForgeMaven()
+        maven gradleutils.publishingForgeMaven
     }
 }
+// We need to write the manifest to the binary file so we have properly versioned packaged at dev time.
+tasks.register('writeManifest') {
+    doLast {
+        if (plugins.findPlugin('net.minecraftforge.gradle.patcher')) // Forge project
+            universalJar.manifest.writeTo(rootProject.file('src/main/resources/META-INF/MANIFEST.MF'))
+        else
+            jar.manifest.writeTo(project.file('src/main/resources/META-INF/MANIFEST.MF'))
+    }
+}
+
+tasks.register('generateResources') {
+    dependsOn('writeManifest')
+}
+
+// Make sure out manifests get written before compiling the code, IDEA calls this task if you tell it to use the gradle build.
+tasks.withType(JavaCompile).configureEach {
+    dependsOn 'generateResources'
+    dependsOn 'processResources' // Needed because we merge the output of this with the output of the compile task. And gradle detects downstream tasks using the output without a hard dep
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+    options.warnings = false // Shutup deprecated for removal warnings
+}
+
+// Merge the resources and classes into the same directory. We'll need to split them at runtime because
+// Minecraft and Forge are in the same sourceSet as they are inter dependent.. for now..
+sourceSets.each {
+    def dir = layout.buildDirectory.dir("classes/java/$it.name")
+    it.output.resourcesDir = dir
+    it.java.destinationDirectory = dir
+}
+
+eclipse {
+    // Run everytime eclipse builds the code
+    //autoBuildTasks writeManifest
+    // Run when importing the project
+    synchronizationTasks generateResources, writeManifest
+}
+

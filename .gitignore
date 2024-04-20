@@ -27,3 +27,4 @@ MINECRAFT_TEST*
 repo/
 /logs/
 /_test/
+/src/main/resources/META-INF/MANIFEST.MF

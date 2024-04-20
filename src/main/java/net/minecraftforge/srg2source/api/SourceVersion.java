@@ -1,20 +1,6 @@
 /*
- * Srg2Source
- * Copyright (c) 2020.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation version 2.1
- * of the License.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Copyright (c) Forge Development LLC
+ * SPDX-License-Identifier: LGPL-2.1-only
  */
 
 package net.minecraftforge.srg2source.api;
@@ -34,6 +20,10 @@ public enum SourceVersion {
     JAVA_15(JavaCore.VERSION_15),
     JAVA_16(JavaCore.VERSION_16),
     JAVA_17(JavaCore.VERSION_17),
+    JAVA_18(JavaCore.VERSION_18),
+    JAVA_19(JavaCore.VERSION_19),
+    JAVA_20(JavaCore.VERSION_20),
+    JAVA_21(JavaCore.VERSION_21),
     ;
 
     private String spec;

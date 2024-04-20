@@ -5,4 +5,47 @@ pluginManagement {
     }
 }
 
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
+}
+
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            // Main
+            library('jopt-simple', 'net.sf.jopt-simple:jopt-simple:6.0-alpha-3')
+            library('securemodules', 'net.minecraftforge:securemodules:2.2.14')
+            library('srgutils', 'net.minecraftforge:srgutils:0.5.10')
+            library('jimfs', 'com.google.jimfs:jimfs:1.2')
+            library('nulls', 'org.jetbrains:annotations:23.0.0') // Got to have our null annotations!
+
+            library('eclipse-jdt',       'org.eclipse.jdt:org.eclipse.jdt.core:3.37.0')
+            library('eclipse-runtime',   'org.eclipse.platform:org.eclipse.core.runtime:3.31.0')
+            library('eclipse-resources', 'org.eclipse.platform:org.eclipse.core.resources:3.20.100')
+            library('eclipse-jobs',      'org.eclipse.platform:org.eclipse.core.jobs:3.15.200')
+            library('eclipse-types',     'org.eclipse.platform:org.eclipse.core.contenttype:3.9.300')
+            bundle('eclipse', ['eclipse-jdt', 'eclipse-runtime', 'eclipse-resources', 'eclipse-jobs', 'eclipse-types'])
+
+            // Test
+            library('ml', 'net.minecraftforge:modlauncher:10.1.4')
+
+            version('junit', '5.10.1')
+            library('junit-api', 'org.junit.jupiter', 'junit-jupiter-api').versionRef('junit')
+            library('junit-engine', 'org.junit.jupiter', 'junit-jupiter-engine').versionRef('junit')
+            library('junit-platform-launcher', 'org.junit.platform:junit-platform-launcher:1.10.1')
+            bundle('junit-runtime', ['junit-engine', 'junit-platform-launcher'])
+
+            version('asm', '9.7')
+            library('asm',      'org.ow2.asm', 'asm'     ).versionRef('asm')
+            library('asm-tree', 'org.ow2.asm', 'asm-tree').versionRef('asm')
+            bundle('asm', ['asm', 'asm-tree'])
+
+            version('powermock', '2.0.9')
+            library('powermock-core', 'org.powermock', 'powermock-core').versionRef('powermock')
+            library('powermock-reflect', 'org.powermock', 'powermock-reflect').versionRef('powermock')
+            bundle('powermock', ['powermock-core', 'powermock-reflect'])
+        }
+    }
+}
+
 rootProject.name = 'Srg2Source'
