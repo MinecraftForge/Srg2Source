@@ -58,7 +58,7 @@ public class MinecraftTest {
     //It will make all necessary files for this test.
 
     private static final Path MCP_ROOT = Paths.get("Z:/Projects/MCPConfig/");
-    private static final String MC_VERSION = "1.20.5-rc1";
+    private static final String MC_VERSION = "1.21.4";
     private static final OutputStream NULL_OUTPUT = new OutputStream() { public void write(int b) throws IOException { } };
 
     /**
@@ -125,6 +125,7 @@ public class MinecraftTest {
                     .batch(!forceOld)
                     .output(root.resolve("extract_" + (forceOld ? "legacy" : "batched") + ".txt"))
                     .sourceCompatibility(SourceVersion.JAVA_21)
+                    .failOnError()
                     .logger(log);
 
                 libraries.forEach(l -> {

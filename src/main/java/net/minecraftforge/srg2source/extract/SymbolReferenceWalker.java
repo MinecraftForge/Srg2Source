@@ -534,6 +534,20 @@ public class SymbolReferenceWalker {
     }
 
     /**
+     * This is an 'Implicit' class declaration, from JEP 463.
+     *
+     * We use a child walker to process all class like objects, so that the walker has context of what class it is in.
+     * This means we need to cancel processing the children and walk them ourselves in the child walker.
+     */
+    private boolean process(ImplicitTypeDeclaration node) {
+        String name = getInternalName((ITypeBinding)node.getName().resolveBinding(), node.getName());
+        SymbolReferenceWalker walker = new SymbolReferenceWalker(this, name, null, null);
+        walker.acceptChild(node.getJavadoc());
+        walker.acceptChildren(node.bodyDeclarations());
+        return false;
+    }
+
+    /**
      * Right now we do not dump import range information.
      * The Applier does very rudimentary import management itself.
      * We may expose this information in the future, if there becomes a need for it.
@@ -566,6 +580,7 @@ public class SymbolReferenceWalker {
      * This is what causes ViewFrustum to add the extra ChunkRenderDispatcher.ChunkRender import:
      * `renderChunkFactory.new ChunkRender();`
      */
+    @SuppressWarnings("deprecation")
     private boolean process(ClassInstanceCreation node) {
         if (node.getExpression() == null || node.getAST().apiLevel() >= JLS3 && !node.getType().isSimpleType() || node.getAST().apiLevel() <= JLS2 && !node.getName().isSimpleName())
             return true;
@@ -578,13 +593,13 @@ public class SymbolReferenceWalker {
             acceptChildren(node.typeArguments());
             name = ((SimpleType) node.getType()).getName();
         }
-        
+
         IBinding binding = name.resolveBinding();
         if (binding.getKind() != IBinding.TYPE) {
             error(node, "Non type binding when constructing an instance: " + binding.getName());
             return false;
         }
-        
+
         String clsName = getInternalName((ITypeBinding) binding, name);
         builder.addClassReference(name.getStartPosition(), name.getLength(), name.toString(), clsName, true);
         acceptChildren(node.arguments());
@@ -688,6 +703,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(CreationReference               node) { return true; }
         @Override public boolean visit(Dimension                       node) { return true; }
         @Override public boolean visit(DoStatement                     node) { return true; }
+        @Override public boolean visit(EitherOrMultiPattern            node) { return true; }
         @Override public boolean visit(EmptyStatement                  node) { return true; }
         @Override public boolean visit(EnhancedForStatement            node) { return true; }
         @Override public boolean visit(EnumConstantDeclaration         node) { return true; }
@@ -700,6 +716,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(ForStatement                    node) { return true; }
         @Override public boolean visit(GuardedPattern                  node) { return true; }
         @Override public boolean visit(IfStatement                     node) { return true; }
+        @Override public boolean visit(ImplicitTypeDeclaration         node) { return process(node); }
         @Override public boolean visit(ImportDeclaration               node) { return process(node); }
         @Override public boolean visit(InfixExpression                 node) { return true; }
         @Override public boolean visit(Initializer                     node) { return process(node); }
@@ -707,6 +724,8 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(PatternInstanceofExpression     node) { return true; }
         @Override public boolean visit(IntersectionType                node) { return true; }
         @Override public boolean visit(Javadoc                         node) { return true; }
+        @Override public boolean visit(JavaDocRegion                   node) { return true; }
+        @Override public boolean visit(JavaDocTextElement              node) { return true; }
         @Override public boolean visit(LabeledStatement                node) { return process(node); }
         @Override public boolean visit(LambdaExpression                node) { return process(node); }
         @Override public boolean visit(LineComment                     node) { return true; }
@@ -738,6 +757,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(QualifiedType                   node) { return true; }
         @Override public boolean visit(RequiresDirective               node) { return true; }
         @Override public boolean visit(RecordDeclaration               node) { return process(node); }
+        @Override public boolean visit(RecordPattern                   node) { return true; }
         @Override public boolean visit(ReturnStatement                 node) { return true; }
         @Override public boolean visit(SimpleName                      node) { return process(node); }
         @Override public boolean visit(SimpleType                      node) { return true; }
@@ -753,6 +773,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(SwitchStatement                 node) { return true; }
         @Override public boolean visit(SynchronizedStatement           node) { return true; }
         @Override public boolean visit(TagElement                      node) { return true; }
+        @Override public boolean visit(TagProperty                     node) { return true; }
         @Override public boolean visit(TextBlock                       node) { return true; }
         @Override public boolean visit(TextElement                     node) { return true; }
         @Override public boolean visit(ThisExpression                  node) { return true; }

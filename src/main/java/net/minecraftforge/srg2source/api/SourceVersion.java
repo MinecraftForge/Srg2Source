@@ -24,6 +24,8 @@ public enum SourceVersion {
     JAVA_19(JavaCore.VERSION_19),
     JAVA_20(JavaCore.VERSION_20),
     JAVA_21(JavaCore.VERSION_21),
+    JAVA_22(JavaCore.VERSION_22),
+    JAVA_23(JavaCore.VERSION_23),
     ;
 
     private String spec;

@@ -3,8 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'org.ow2.asm:asm:9.7'
-        classpath 'org.ow2.asm:asm-tree:9.7'
+        classpath libs.bundles.asm
     }
 }
 
@@ -13,14 +12,14 @@ plugins {
     id 'idea'
     id 'eclipse'
     id 'maven-publish'
-    id 'net.minecraftforge.licenser' version '1.0.1'
+    id 'net.minecraftforge.licenser' version '1.1.0'
     id 'net.minecraftforge.gradleutils' version '[2.3,2.4)'
+    id 'com.github.ben-manes.versions' version '0.52.0'
 }
 
 group = 'net.minecraftforge'
 archivesBaseName = 'srg2source'
 version = gradleutils.tagOffsetVersion
-println('Version: ' + version)
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)

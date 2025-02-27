@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -54,6 +55,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
     private boolean fatalMixins = false;
     private boolean logWarnings = false;
     private boolean enablePreview = false;
+    private boolean failOnError = false;
 
     public RangeExtractor(){}
 
@@ -84,6 +86,9 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
     }
     public void enablePreview() {
         this.enablePreview = true;
+    }
+    public void failOnError() {
+        this.failOnError = true;
     }
 
     public void addLibrary(File value) {
@@ -160,11 +165,20 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
                         parser.setUnitName(path);
                         parser.setSource(data.toCharArray());
                         CompilationUnit cu = (CompilationUnit)parser.createAST(null);
-                        if (cu.getProblems() != null && cu.getProblems().length > 0)
-                            Arrays.stream(cu.getProblems()).filter(p -> !p.isWarning()).forEach(p -> log("   Compile Error! " + p.toString()));
+                        if (cu.getProblems() != null && cu.getProblems().length > 0) {
+                            var errors = new ArrayList<String>();
+                            for (var p : cu.getProblems()) {
+                                if (!p.isWarning()) {
+                                    errors.add(p.toString());
+                                    log("   Compile Error! " + p.toString());
+                                }
+                            }
+                            if (this.failOnError && !errors.isEmpty())
+                                rethrow(new RuntimeException("Compile errors found in " + path + ": " + String.join(", ", errors)));
+                        }
 
                         SymbolReferenceWalker walker = new SymbolReferenceWalker(this, builder, enableMixins);
-                        walker.safeWalk(cu);
+                        rethrow(walker.safeWalk(cu));
                     }
 
                     RangeMap range = builder.build();
@@ -217,7 +231,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
                             Arrays.stream(cu.getProblems()).filter(p -> logWarnings || !p.isWarning()).forEach(p -> log("   Compile Error! " + p.toString()));
 
                         SymbolReferenceWalker walker = new SymbolReferenceWalker(RangeExtractor.this, builder, enableMixins);
-                        walker.safeWalk(cu);
+                        rethrow(walker.safeWalk(cu));
                     }
 
                     RangeMap range = builder.build();
@@ -239,6 +253,12 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
 
         RangeExtractor.INSTANCE = null;
         return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <E extends Throwable> void rethrow(Throwable error) throws E {
+        if (error != null && this.failOnError)
+            throw (E)error;
     }
 
     private void cleanup() {

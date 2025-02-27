@@ -6,7 +6,6 @@
 package net.minecraftforge.srg2source;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -15,14 +14,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import cpw.mods.modlauncher.Launcher;
-import cpw.mods.modlauncher.api.ServiceRunner;
 import net.minecraftforge.srg2source.extract.RangeExtractor;
 import net.minecraftforge.srg2source.util.TransformingUtil;
-import net.minecraftforge.srg2source.util.Util;
 
 public class ConsoleTool {
     public static void main(String[] args) throws Exception {
