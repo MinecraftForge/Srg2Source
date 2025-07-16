@@ -1,0 +1,14 @@
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+
+    versionCatalogs.register('libs') {
+        plugin 'licenser', 'net.minecraftforge.licenser' version '1.2.0'
+
+        version('asm', '9.7.1')
+        library('asm',      'org.ow2.asm', 'asm'     ).versionRef('asm')
+        library('asm-tree', 'org.ow2.asm', 'asm-tree').versionRef('asm')
+        bundle('asm', ['asm', 'asm-tree'])
+    }
+}
