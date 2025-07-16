@@ -1,0 +1,15 @@
+plugins {
+    id 'java-gradle-plugin'
+    id 'groovy'
+    alias libs.plugins.licenser
+}
+
+license {
+    header = rootProject.file('../LICENSE-header.txt')
+    newLine = false
+    exclude '**/*.properties'
+}
+
+dependencies {
+    implementation libs.bundles.asm
+}
