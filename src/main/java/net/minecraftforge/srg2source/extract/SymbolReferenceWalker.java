@@ -375,7 +375,7 @@ public class SymbolReferenceWalker {
                 error("Could not resolve method binding: " + builder.getFilename() + " @ " + node.getStartPosition() + " Text: " + node.toString());
             else */
                 error(node, "Null IBinding: " + node.toString());
-            return false;
+            return true;
         }
 
         switch (bind.getKind()) {
@@ -442,6 +442,52 @@ public class SymbolReferenceWalker {
             default:
                 error("Unknown IBinding Kind: " + bind.getKind() + " Text: " + node.toString());
                 return true;
+        }
+    }
+
+    // This is basically the same as QualifiedName, except it has the potential to have a annotation in the middle.
+    private boolean process(NameQualifiedType node) {
+        IBinding bind = node.resolveBinding();
+        if (bind == null) {
+            error(node, "Null IBinding: " + node.toString());
+            return false;
+        }
+        switch (bind.getKind()) {
+            case IBinding.TYPE:
+                ITypeBinding type = (ITypeBinding)bind;
+                if (type.isTypeVariable()) {
+                    error(node, "Named Qualified generic type variable?: " + node.toString());
+                    return false;
+                }
+                // Qualified type names are make up of two parts, the qualifier, and the name.
+                // Optionally they can have an array of annotations stuck in the middle.
+                // The qualifier itself can be a NameQualifiedType, SimpleName, QualifiedName, or some other node.
+                // We can recursively parse those nodes and export as normal.
+                // We need to mark the name reference as not requiring a import so that we don't add one during Apply.
+                // However, is the qualifier is a package, we need to output a special package reference so we can
+                // know which class the package belongs to.
+                IBinding qualifier = node.getQualifier().resolveBinding();
+                if (qualifier.getKind() == IBinding.PACKAGE) {
+                    Name pkg = node.getQualifier();
+                    String clsName = getInternalName(type, node);
+                    builder.addClassPackageReference(pkg.getStartPosition(), pkg.getLength(), pkg.toString(), clsName);
+                } else {
+                    acceptChild(node.getQualifier());
+                }
+                acceptChildren(node.annotations());
+
+                SimpleName name = node.getName();
+                ITypeBinding nameBind = name.resolveTypeBinding();
+                if (nameBind == null) {
+                    error(node, "Null ITypeBinding: " + name.toString());
+                } else {
+                    String clsName = getInternalName(nameBind, name);
+                    builder.addClassReference(name.getStartPosition(), name.getLength(), name.toString(), clsName, true);
+                }
+                return false;
+            default:
+                error(node, "Unknown IBinding Kind: " + bind.getKind() + " Text: " + node.toString());
+                return false;
         }
     }
 
@@ -740,7 +786,7 @@ public class SymbolReferenceWalker {
         @Override public boolean visit(ModuleDeclaration               node) { return true; }
         @Override public boolean visit(ModuleModifier                  node) { return true; }
         @Override public boolean visit(ModuleQualifiedName             node) { return true; }
-        @Override public boolean visit(NameQualifiedType               node) { return true; }
+        @Override public boolean visit(NameQualifiedType               node) { return process(node); }
         @Override public boolean visit(NormalAnnotation                node) { return process(node); }
         @Override public boolean visit(NullLiteral                     node) { return true; }
         @Override public boolean visit(NullPattern                     node) { return true; }

@@ -20,6 +20,7 @@ plugins {
 group = 'net.minecraftforge'
 archivesBaseName = 'srg2source'
 version = gradleutils.tagOffsetVersion
+logger.lifecycle("Version ${version}")
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
@@ -77,12 +78,12 @@ tasks.register('shadowJarPatched', Jar).configure {
     dependsOn patchJDT
     archiveClassifier = 'fatjar'
     manifest = jar.manifest
-    
+
     from(zipTree(patchJDT.output))
     from(sourceSets.main.output) {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
-  
+
     from { configurations.shadow.collect { it.isDirectory() ? it : zipTree(it) } } {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }

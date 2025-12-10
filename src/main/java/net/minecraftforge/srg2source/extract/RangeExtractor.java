@@ -16,12 +16,15 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraftforge.srg2source.api.InputSupplier;
 import net.minecraftforge.srg2source.api.SourceVersion;
@@ -204,6 +207,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
         //TODO: Check org.eclipse.jdt.internal.compiler.batch.FileSystem.getClasspath(String, String, boolean, AccessRuleSet, String, Map<String, String>, String)
         // That is where it loads sourceDirs as classpath entries. Try and hijack to include InputSuppliers?
         ASTParser parser = createParser(null);
+        Map<String, RangeMapBuilder> builders = new ConcurrentHashMap<>();
 
         FileASTRequestor requestor = new FileASTRequestor() {
             @Override
@@ -219,6 +223,7 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
                     String md5 = Util.md5(data, encoding);
 
                     RangeMapBuilder builder = new RangeMapBuilder(RangeExtractor.this, path, md5);
+                    builders.put(path, builder);
 
                     log("startProcessing \"" + path + "\" md5: " + md5);
 
@@ -233,10 +238,6 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
                         SymbolReferenceWalker walker = new SymbolReferenceWalker(RangeExtractor.this, builder, enableMixins);
                         rethrow(walker.safeWalk(cu));
                     }
-
-                    RangeMap range = builder.build();
-                    if (output != null)
-                        range.write(output, true);
                     log("endProcessing \"" + path + "\"");
                     log("");
                 } catch (IOException e) {
@@ -248,6 +249,17 @@ public class RangeExtractor extends ConfLogger<RangeExtractor> {
         IProgressMonitor monitor = new NullProgressMonitor();
 
         parser.createASTs(files, null, new String[0], requestor, monitor);
+
+        if (output != null) {
+            List<String> names = new ArrayList<>(builders.keySet());
+            Collections.sort(names);
+
+            for (String path : names) {
+                RangeMapBuilder builder = builders.get(path);
+                RangeMap range = builder.build();
+                range.write(output, true);
+            }
+        }
 
         cleanup();
 

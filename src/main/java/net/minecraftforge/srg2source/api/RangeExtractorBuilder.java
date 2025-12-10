@@ -124,7 +124,7 @@ public class RangeExtractorBuilder {
     }
 
     public RangeExtractorBuilder batch(boolean value) {
-        this.batch = true;
+        this.batch = value;
         return this;
     }
 

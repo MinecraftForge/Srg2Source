@@ -34,6 +34,7 @@ import net.minecraftforge.srg2source.api.InputSupplier;
 import net.minecraftforge.srg2source.api.OutputSupplier;
 import net.minecraftforge.srg2source.range.RangeMap;
 import net.minecraftforge.srg2source.range.entries.ClassLiteral;
+import net.minecraftforge.srg2source.range.entries.ClassPackageReference;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
 import net.minecraftforge.srg2source.range.entries.FieldLiteral;
 import net.minecraftforge.srg2source.range.entries.FieldReference;
@@ -263,6 +264,21 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
                                 fullname);
                         }
                     }
+                    break;
+                }
+                case CLASS_PACKAGE: {
+                    // This is much like the Class Reference, except that we only care about the package part.
+                    // We run into this when there are Type annotations on a fully qualified class name.
+                    // EXA: com.example.@Nullable Foo
+                    // This will be emitted as:
+                    //    CLASS_PACKAGE: `come.example.`
+                    //    CLASS: `Nullable`
+                    //    CLASS: `Foo`
+                    ClassPackageReference ref = (ClassPackageReference)info;
+                    String fullname = fixLocalClassName(mapClass(ref.getClassName()));
+                    idx = fullname.lastIndexOf('/');
+                    String packagename = idx == -1 ? null : fullname.substring(0, idx);
+                    newName = packagename.replace('/', '.');
                     break;
                 }
                 case FIELD: {

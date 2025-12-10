@@ -16,6 +16,7 @@ public abstract class RangeEntry implements IRange {
     public enum Type {
         PACKAGE(PackageReference::read),
         CLASS(ClassReference::read),
+        CLASS_PACKAGE(ClassPackageReference::read),
         CLASS_LITERAL(ClassLiteral::read),
         FIELD(FieldReference::read),
         FIELD_LITERAL(FieldLiteral::read),

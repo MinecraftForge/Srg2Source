@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 import net.minecraftforge.srg2source.range.entries.ClassLiteral;
+import net.minecraftforge.srg2source.range.entries.ClassPackageReference;
 import net.minecraftforge.srg2source.range.entries.ClassReference;
 import net.minecraftforge.srg2source.range.entries.FieldLiteral;
 import net.minecraftforge.srg2source.range.entries.FieldReference;
@@ -44,9 +45,18 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
     }
 
     public boolean loadCache(RangeMap cache) {
-        if (cache == null || !filename.equals(cache.getFilename()) || !hash.equals(cache.getHash()))
+        if (cache == null)
             return false;
-        return false;
+        if (!filename.equals(cache.getFilename()))
+            return false;
+        if (hash == null || !hash.equals(cache.getHash()))
+            return false;
+
+        this.entries.addAll(cache.getEntries());
+        this.structures.addAll(cache.getStructures());
+        this.meta.addAll(meta);
+
+        return true;
     }
 
     public RangeMap build() {
@@ -114,6 +124,10 @@ public class RangeMapBuilder extends ConfLogger<RangeMapBuilder> {
 
     public void addClassReference(int start, int length, String text, String internal, boolean qualified) {
         addCode(ClassReference.create(start, length, text, internal, qualified));
+    }
+
+    public void addClassPackageReference(int start, int length, String text, String internal) {
+        addCode(ClassPackageReference.create(start, length, text, internal));
     }
 
     public void addClassLiteral(int start, int length, String text, String internal) {
