@@ -15,7 +15,7 @@ dependencyResolutionManagement {
             // Main
             library('jopt-simple', 'net.sf.jopt-simple:jopt-simple:6.0-alpha-3')
             library('securemodules', 'net.minecraftforge:securemodules:2.2.21')
-            library('srgutils', 'net.minecraftforge:srgutils:0.5.11')
+            library('srgutils', 'net.minecraftforge:srgutils:0.6.6')
             library('nulls', 'org.jetbrains:annotations:26.0.2') // Got to have our null annotations!
 
             library('eclipse-jdt',       'org.eclipse.jdt:org.eclipse.jdt.core:3.40.0')
@@ -35,7 +35,7 @@ dependencyResolutionManagement {
             library('junit-platform-launcher', 'org.junit.platform:junit-platform-launcher:1.12.0')
             bundle('junit-runtime', ['junit-engine', 'junit-platform-launcher'])
 
-            version('asm', '9.7.1')
+            version('asm', '9.9.1')
             library('asm',      'org.ow2.asm', 'asm'     ).versionRef('asm')
             library('asm-tree', 'org.ow2.asm', 'asm-tree').versionRef('asm')
             bundle('asm', ['asm', 'asm-tree'])
