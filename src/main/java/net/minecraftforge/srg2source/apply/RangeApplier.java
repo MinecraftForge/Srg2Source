@@ -29,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
 import net.minecraftforge.srg2source.api.InputSupplier;
 import net.minecraftforge.srg2source.api.OutputSupplier;
@@ -65,7 +66,8 @@ public class RangeApplier extends ConfLogger<RangeApplier> {
 
     public void readSrg(Path srg) {
         try (InputStream in = Files.newInputStream(srg)) {
-            IMappingFile map = IMappingFile.load(in);
+            boolean isZiped = srg.getFileName().toString().endsWith(".gz");
+            IMappingFile map = IMappingFile.load(isZiped ? new GZIPInputStream(in) : in);
             srgs.add(map); //TODO: Add merge function to SrgUtils?
 
             map.getClasses().forEach(cls -> {
