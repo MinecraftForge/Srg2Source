@@ -7,6 +7,7 @@ package net.minecraftforge.srg2source;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,17 +70,18 @@ public class RangeExtractMain {
 
         try {
             OptionSet options = parser.parse(args);
+            var output = options.valueOf(outputArg);
             boolean enableMixins = options.has(mixins) && options.valueOf(mixins);
             boolean fatalMixins = enableMixins && (options.has(mixins_fatal) && options.valueOf(mixins_fatal));
             System.out.println("Compat: " + options.valueOf(jversionArg));
-            System.out.println("Output: " + options.valueOf(outputArg));
+            System.out.println("Output: " + output);
             System.out.println("Batch:  " + options.valueOf(batch));
             System.out.println("Mixins: " + enableMixins);
             System.out.println("Fatal:  " + fatalMixins);
 
             RangeExtractorBuilder builder = new RangeExtractorBuilder()
                 .sourceCompatibility(options.valueOf(jversionArg))
-                .output(options.valueOf(outputArg))
+                .output(output)
                 .batch(options.valueOf(batch));
 
             if (options.has(libArg)) {
@@ -98,6 +100,15 @@ public class RangeExtractMain {
                 builder.enableMixins();
             if (fatalMixins)
                 builder.fatalMixins();
+
+            var extractor = builder.build();
+            if (Files.exists(output)) {
+                try(var stream = Files.newInputStream(output)) {
+                    extractor.loadCache(stream);
+                } catch (Exception e) {
+                    // Couldn't read for some reason, so skip
+                }
+            }
 
             builder.build().run();
         } catch (OptionException e) {
